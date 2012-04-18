@@ -222,7 +222,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 			if key in event_hash:
 				event_hash[key]["trees"].append(causal_tree)
 			else:
-				event_hash[key] = {"frame": -1, "energy": kUnknownEnergy, "trees": [causal_tree,]}
+				event_hash[key] = {"agent": False, "frame": -1, "energy": kUnknownEnergy, "trees": [causal_tree,]}
 		for key in keys['fluents']:
 			if key in fluent_hash:
 				fluent_hash[key]["trees"].append(causal_tree)
@@ -321,8 +321,15 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 						energy = calculate_energy(active_parse_tree, fluent_hash, event_hash)
 						energy = energy[0] / energy[1]
 						print "{} PARSE TREE COMPLETED at {}: energy({})\n***{}***".format(fluent,frame,energy,active_parse_tree)
-						print_current_energies(fluent_hash, event_hash)
-						# TODO: if there are agents in the parse, print out who they were
+						# print_current_energies(fluent_hash, event_hash)
+						# if there are agents in the parse, print out who they were
+						keys = get_fluent_and_event_keys_we_care_about((active_parse_tree,))
+						agents_responsible = []
+						for event in keys["events"]:
+							agent = event_hash[event]["agent"]
+							if agent:
+								agents_responsible.append(agent,)
+						print "Agents responsible: {}".format(agents_responsible)
 		else:
 			frame = temporal_parse_frames[temporal_parse_index]
 			clear_outdated_events(event_hash, event_timeouts, frame)
@@ -336,6 +343,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 				# then are each of those separate parses, or are they a combined parse, or is one subsumed
 				# by the other...? NOT worrying about this now.
 				info = changes[event]
+				hr()
+				print info
 				event_hash[event]['energy'] = info['energy']
 				event_hash[event]['agent'] = info['agent']
 				event_hash[event]['frame'] = frame
