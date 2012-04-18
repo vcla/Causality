@@ -1,8 +1,7 @@
 """
 causal grammar parser and helper functions
 """
-# TODO: grammar should be more flexible, allowing fluent nodes to depend more flexibly on "previous" or "current" fluent values
-# TODO: events have to turn off after a while—which probably means they need to be handled differently in our parses so the parse energies don't depend on the event happening "now"
+# TODO: events have to turn off after a while, which probably means they need to be handled differently in our parses so the parse energies don't depend on the event happening "now"
 # TODO: filter out "competing" parse trees below thresh
 # TODO: complete parse trees after some "frame" threshold if key fluent not detected
 
@@ -13,6 +12,7 @@ kUnknownEnergy = 10.0 # TODO: may want to tune
 kFluentThresholdOnEnergy = 0.36 # TODO: may want to tune: 0.36 = 0.7 probability
 kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
 kReportingThresholdEnergy = 0.5 # TODO: may want to tune
+kDefaultEventTimeout = 10 # shouldn't need to tune because this should be tuned in grammar
 
 kFluentStatusUnknown = 1
 kFluentStatusOn = 2
@@ -59,6 +59,23 @@ def import_csv(filename, fluents, events):
 def hr():
 	print "---------------------------------"
 
+# TODO: a given event is assumed to have the same timeout everywhere in the grammar
+def get_event_timeouts(forest):
+	global kDefaultTimeout
+	events = {}
+	for tree in forest:
+		if "children" in tree:
+			child_timeouts = get_event_timeouts(tree["children"])
+			for key in child_timeouts:
+				events[key] = child_timeouts[key]
+		if "symbol_type" in tree:
+			if "event" == tree["symbol_type"]:
+				if "timeout" in tree:
+					events[tree["symbol"]] = tree["timeout"]
+				else:
+					events[tree["symbol"]] = kDefaultTimeout
+	return events
+
 def get_fluent_and_event_keys_we_care_about(forest):
 	fluents = []
 	events = []
@@ -68,7 +85,7 @@ def get_fluent_and_event_keys_we_care_about(forest):
 			fluents += child_keys['fluents']
 			events += child_keys['events']
 		if "symbol_type" in tree:
-			if "fluent" == tree["symbol_type"]:
+			if tree["symbol_type"] in ("fluent","prev_fluent"):
 				fluents.append(tree["symbol"])
 			elif "event" == tree["symbol_type"]:
 				events.append(tree["symbol"])
@@ -133,6 +150,11 @@ def calculate_energy(node, fluent_hash, event_hash):
 			if tmp_energy != kUnknownEnergy:
 				node_count += 1
 				node_energy += tmp_energy
+		elif node["symbol_type"] in ("prev_fluent",):
+			tmp_energy = fluent_hash[node["symbol"]]["prev_energy"]
+			if tmp_energy != kUnknownEnergy:
+				node_count += 1
+				node_energy += tmp_energy
 		elif node["symbol_type"] in ("event",):
 			tmp_energy = event_hash[node["symbol"]]["energy"]
 			if tmp_energy != kUnknownEnergy:
@@ -167,6 +189,15 @@ def print_current_energies(fluent_hash,event_hash):
 		event_energies[event] = event_hash[event]["energy"]
 	print event_energies
 
+# sets any events that haven't triggered within their timeout number of frames to kUnknownEnergy
+def clear_outdated_events(event_hash, event_timeouts, frame):
+	global kUnknownEnergy
+	for event in event_hash:
+		if event_hash[event]["energy"] != kUnknownEnergy and frame - event_hash[event]["frame"] > event_timeouts[event]:
+			event_hash[event]["frame"] = -1
+			event_hash[event]["energy"] = kUnknownEnergy
+			event_hash[event]["agent"] = False
+
 # clears out any parses that have not been touched within N frames, printing out any over reporting_threshold_energy
 def complete_outdated_parses(active_parses, frame, reporting_threshold_energy):
 	# TODO
@@ -184,18 +215,19 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 	# kind of a hack to attach fluent and event keys to each causal tree, lots of maps to make looking things up quick and easy
 	event_hash = {}
 	fluent_hash = {}
+	event_timeouts = get_event_timeouts(causal_forest)
 	for causal_tree in causal_forest:
 		keys = get_fluent_and_event_keys_we_care_about([causal_tree])
 		for key in keys['events']:
 			if key in event_hash:
 				event_hash[key]["trees"].append(causal_tree)
 			else:
-				event_hash[key] = {"energy": kUnknownEnergy, "trees": [causal_tree,]}
+				event_hash[key] = {"frame": -1, "energy": kUnknownEnergy, "trees": [causal_tree,]}
 		for key in keys['fluents']:
 			if key in fluent_hash:
 				fluent_hash[key]["trees"].append(causal_tree)
 			else:
-				fluent_hash[key] = {"energy": kUnknownEnergy, "trees": [causal_tree,]}
+				fluent_hash[key] = {"energy": kUnknownEnergy, "prev_energy": kUnknownEnergy, "trees": [causal_tree,]}
 			fluent_hash[key]["status"] = kFluentStatusUnknown
 	# print "INITIAL CONDITIONS"
 	# print_current_energies(fluent_hash, event_hash)
@@ -234,6 +266,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 		temporal_complete = temporal_parse_index >= len(temporal_parses)
 		if not fluents_complete and (temporal_complete or fluent_parse_frames[fluent_parse_index] <= temporal_parse_frames[temporal_parse_index]):
 			frame = fluent_parse_frames[fluent_parse_index]
+			clear_outdated_events(event_hash, event_timeouts, frame)
 			complete_outdated_parses(active_parse_trees, frame, reporting_threshold_energy)
 			changes = fluent_parses[frame]
 			filter_changes(changes, fluent_and_event_keys_we_care_about['fluents'])
@@ -266,6 +299,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 						fluent_hash[fluent_off_string]["status"] = kFluentStatusOn
 				elif fluent_off_energy > fluent_threshold_off_energy:
 					fluent_hash[fluent_off_string]["status"] = kFluentStatusOff
+				fluent_hash[fluent_on_string]["prev_energy"] = fluent_hash[fluent_on_string]["energy"]
+				fluent_hash[fluent_off_string]["prev_energy"] = fluent_hash[fluent_off_string]["energy"]
 				fluent_hash[fluent_on_string]["energy"] = fluent_on_energy
 				fluent_hash[fluent_off_string]["energy"] = fluent_off_energy
 				# fluent_on and fluent_off _should_ never both change to on, so we consider this safe
@@ -286,9 +321,11 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 						energy = calculate_energy(active_parse_tree, fluent_hash, event_hash)
 						energy = energy[0] / energy[1]
 						print "{} PARSE TREE COMPLETED at {}: energy({})\n***{}***".format(fluent,frame,energy,active_parse_tree)
+						print_current_energies(fluent_hash, event_hash)
 						# TODO: if there are agents in the parse, print out who they were
 		else:
 			frame = temporal_parse_frames[temporal_parse_index]
+			clear_outdated_events(event_hash, event_timeouts, frame)
 			complete_outdated_parses(active_parse_trees, frame, reporting_threshold_energy)
 			changes = temporal_parses[frame]
 			filter_changes(changes, fluent_and_event_keys_we_care_about['events'])
@@ -301,6 +338,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 				info = changes[event]
 				event_hash[event]['energy'] = info['energy']
 				event_hash[event]['agent'] = info['agent']
+				event_hash[event]['frame'] = frame
 				for parse_id in parse_id_hash_by_event[event]:
 					if parse_id not in active_parse_trees:
 						# create this parse if it's not in our list of active parses
@@ -324,4 +362,31 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 	print "DONE"
 
 if __name__ == 'main':
+	# our causal forest:
+	causal_forest = [ {
+		"node_type": "root",
+		"symbol_type": "fluent",
+		"symbol": "light_on",
+		"children": [
+			{ "node_type": "leaf", "probability": .3, "symbol": "light_on", "symbol_type": "prev_fluent" },
+			{ "node_type": "and", "probability": .7, "children": [
+					{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_off" },
+					{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1", "timeout": 10 },
+				]
+			},
+		],
+	}, {
+		"node_type": "root",
+		"symbol_type": "fluent",
+		"symbol": "light_off",
+		"children": [
+			{ "node_type": "leaf", "probability": .3, "symbol_type":"prev_fluent", "symbol": "light_off" },
+			{ "node_type": "and", "probability": .7, "children": [
+					{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_on" },
+					{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1", "timeout": 10 },
+				]
+			},
+		],
+	},
+	]
 	process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, kFluentThresholdOnEnergy, kFluentThresholdOffEnergy, kReportingThresholdEnergy)

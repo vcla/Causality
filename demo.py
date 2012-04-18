@@ -27,10 +27,10 @@ causal_forest = [ {
 	"symbol_type": "fluent",
 	"symbol": "light_on",
 	"children": [
-		{ "node_type": "leaf", "probability": .3, "symbol": "light_on" },
+		{ "node_type": "leaf", "probability": .3, "symbol": "light_on", "symbol_type": "prev_fluent" },
 		{ "node_type": "and", "probability": .7, "children": [
-				{ "node_type": "leaf", "symbol_type": "fluent", "symbol": "light_off" },
-				{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1" },
+				{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_off" },
+				{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1", "timeout": 10 },
 			]
 		},
 	],
@@ -39,10 +39,10 @@ causal_forest = [ {
 	"symbol_type": "fluent",
 	"symbol": "light_off",
 	"children": [
-		{ "node_type": "leaf", "probability": .3, "symbol": "light_off" },
+		{ "node_type": "leaf", "probability": .3, "symbol_type":"prev_fluent", "symbol": "light_off" },
 		{ "node_type": "and", "probability": .7, "children": [
-				{ "node_type": "leaf", "symbol_type": "fluent", "symbol": "light_on" },
-				{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1" },
+				{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_on" },
+				{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1", "timeout": 10 },
 			]
 		},
 	],
