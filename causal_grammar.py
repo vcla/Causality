@@ -8,7 +8,8 @@ causal grammar parser and helper functions
 import itertools
 import math # for log, etc
 
-kUnknownEnergy = 10.0 # TODO: may want to tune
+kUnknownEnergy = 0.7 # TODO: may want to tune
+kZeroProbabilityEnergy = 10.0 # TODO: may want to tune: 10.0 = very low
 kFluentThresholdOnEnergy = 0.36 # TODO: may want to tune: 0.36 = 0.7 probability
 kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
 kReportingThresholdEnergy = 0.5 # TODO: may want to tune
@@ -41,7 +42,7 @@ def import_csv(filename, fluents, events):
 					if on_value == 1:
 						on_value = 0.0
 					elif on_value == 0:
-						on_value = kUnknownEnergy
+						on_value = kZeroProbabilityEnergy
 					else:
 						raise Exception("{} not 1 or 0 for frame {}: {}".format(fluent, frame, on_value))
 					if frame not in fluent_parses:
@@ -137,32 +138,26 @@ def generate_parses(causal_tree):
 
 def calculate_energy(node, fluent_hash, event_hash):
 	node_energy = 0.0
-	node_count = 0
 	if "probability" in node:
 		# coming off a "root" or "or" node_type
 		tmp_energy = -math.log(node["probability"])
 		if tmp_energy != kUnknownEnergy:
-			node_count += 1
 			node_energy += tmp_energy
-	elif "symbol_type" in node:
+	if "symbol_type" in node:
 		if node["symbol_type"] in ("fluent",):
 			tmp_energy = fluent_hash[node["symbol"]]["energy"]
-			node_count += 1
 			node_energy += tmp_energy
 		elif node["symbol_type"] in ("prev_fluent",):
 			tmp_energy = fluent_hash[node["symbol"]]["prev_energy"]
-			node_count += 1
 			node_energy += tmp_energy
 		elif node["symbol_type"] in ("event",):
 			tmp_energy = event_hash[node["symbol"]]["energy"]
-			node_count += 1
 			node_energy += tmp_energy
 	if "children" in node:
 		for child in node["children"]:
-			(child_energy,child_count) = calculate_energy(child, fluent_hash, event_hash)
+			child_energy = calculate_energy(child, fluent_hash, event_hash)
 			node_energy += child_energy
-			node_count += child_count
-	return (node_energy,node_count)
+	return node_energy
 		
 def make_tree_like_lisp(causal_tree):
 	my_symbol = "?"
@@ -205,8 +200,6 @@ def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame):
 	# we have a winner! let's show them what they've won, bob!
 	hr()
 	energy = calculate_energy(active_parse_tree, fluent_hash, event_hash)
-	# print energy
-	energy = energy[0] / energy[1]
 	fluent = active_parse_tree["symbol"]
 	print "{} PARSE TREE COMPLETED at {}: energy({})\n***{}***".format(fluent,frame,energy,active_parse_tree)
 	print_current_energies(fluent_hash, event_hash)
@@ -241,6 +234,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 
 def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy):
 	global kUnknownEnergy
+	global kZeroProbabilityEnergy
 	fluent_parse_index = 0
 	temporal_parse_index = 0
 	fluent_parse_frames = sorted(fluent_parses, key=fluent_parses.get)
@@ -289,8 +283,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 				else:
 					parse_id_hash_by_fluent[key] = [parse_id,]
 			#print "*: {}".format(parse)
-			#(parse_energy, parse_count) = calculate_energy(parse, fluent_hash, event_hash)
-			#print "E: {}/{} ~ {}".format(parse_energy,parse_count,parse_energy/parse_count)
+			#parse_energy = calculate_energy(parse, fluent_hash, event_hash)
+			#print "E: {}".format(parse_energy)
 			parse_id += 1
 		#hr()
 	#print parse_array
@@ -314,7 +308,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 				fluent_on_probability = math.exp(-fluent_on_energy)
 				fluent_off_probability = 1 - fluent_on_probability
 				if 0 == fluent_off_probability:
-					fluent_off_energy = kUnknownEnergy
+					fluent_off_energy = kZeroProbabilityEnergy
 				else:
 					fluent_off_energy = -math.log(fluent_off_probability)
 				fluent_on_string = "{}_on".format(fluent)
@@ -381,8 +375,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 			for causal_tree in causal_forest:
 				for parse in causal_tree["parses"]:
 					print "*: {}".format(parse)
-					(parse_energy, parse_count) = calculate_energy(parse, fluent_hash, event_hash)
-					print "E: {}/{} ~ {}".format(parse_energy,parse_count,parse_energy/parse_count)
+					parse_energy = calculate_energy(parse, fluent_hash, event_hash)
+					print "E: {}".format(parse_energy)
 			print_current_energies(fluent_hash,event_hash)
 			# for any parse trees over reporting_threshold_energy, report?
 			# close any completed parse trees? maintain list of completed parse trees (over reporting_threshold_energy)

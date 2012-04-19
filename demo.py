@@ -5,9 +5,9 @@ import causal_grammar
 
 fluent_parses = {
 	1:  { "light": .105, "fluent_3": .511, "fluent_4": .916, "fluent_5": 1.61, "fluent_6": .105 },
-	6:  { "light": causal_grammar.kUnknownEnergy, "fluent_6": causal_grammar.kUnknownEnergy},
-	16:  { "light": causal_grammar.kUnknownEnergy, "fluent_4": 1.20},
-	17: { "fluent_3": causal_grammar.kUnknownEnergy, "fluent_4": 2.30},
+	6:  { "light": causal_grammar.kZeroProbabilityEnergy, "fluent_6": causal_grammar.kZeroProbabilityEnergy},
+	16:  { "light": causal_grammar.kZeroProbabilityEnergy, "fluent_4": 1.20},
+	17: { "fluent_3": causal_grammar.kZeroProbabilityEnergy, "fluent_4": 2.30},
 	400: { "fluent_5": .223, "light": .105},
 }
 
@@ -50,5 +50,5 @@ causal_forest = [ {
 ]
 
 # UNCOMMENT NEXT LINE TO LOAD ORIGINAL MATLAB CSV FILE FOR OFFICE SCENE, JUST PULLING LIGHT SWITCH INFO, OVERRIDING TRIVIAL fluent_parses AND temporal_parses ABOVE
-fluent_parses, temporal_parses = causal_grammar.import_csv("Exp2_output_data.txt",{"Light_Status": "light"},{"Touch_Switch":"E1"})
+#fluent_parses, temporal_parses = causal_grammar.import_csv("Exp2_output_data.txt",{"Light_Status": "light"},{"Touch_Switch":"E1"})
 causal_grammar.process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy)
