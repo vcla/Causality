@@ -230,7 +230,23 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 		# if parse was last updated longer ago than max event timeout frames, cull
 		if frame - active_parse['frame'] > max_event_timeout:
 			active_parses.pop(parse_id)
-			complete_parse_tree(active_parse, fluent_hash, event_hash, active_parse['frame']+max_event_timeout)
+			effective_frame = active_parse['frame'] + max_event_timeout
+			complete_parse_tree(active_parse, fluent_hash, event_hash, effective_frame)
+			possible_trees = fluent_hash[active_parse['symbol']]['trees']
+			parses_completed = [parse_id,]
+			for possible_tree in possible_trees:
+				# if this tree is a "primary" for this symbol
+				if possible_tree['symbol'] == active_parse['symbol']:
+					other_parses = possible_tree['parses']
+					for other_parse in other_parses:
+						if other_parse['id'] not in parses_completed:
+							# TODO: dealing with a bug somewhere that's adding duplicate
+							# copies of (some?) parses into fluent_hash[symbol][trees][parses]
+							# maybe the trees themselves are referenced multiple times and so
+							# added to? anyway, we can work around that by not doing the same
+							# id multiple times here
+							parses_completed.append(other_parse['id'])
+							complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frame)
 
 def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy):
 	global kUnknownEnergy
