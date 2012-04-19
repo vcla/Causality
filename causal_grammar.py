@@ -13,6 +13,7 @@ kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
 kReportingThresholdEnergy = 0.5 # TODO: may want to tune
 kDefaultEventTimeout = 10 # shouldn't need to tune because this should be tuned in grammar
 kFilterNonEventTriggeredParseTimeouts = False # what the uber-long variable name implies
+kDebugEnergies = True # if true, print out fluent current/prev and event energies when completing a parse tree
 
 kFluentStatusUnknown = 1
 kFluentStatusOn = 2
@@ -191,6 +192,7 @@ def clear_outdated_events(event_hash, event_timeouts, frame):
 	global kUnknownEnergy
 	for event in event_hash:
 		if event_hash[event]["energy"] != kUnknownEnergy and frame - event_hash[event]["frame"] > event_timeouts[event]:
+			# print("RESETTING EVENT {} AT {}".format(event,frame))
 			event_hash[event]["frame"] = -1
 			event_hash[event]["energy"] = kUnknownEnergy
 			event_hash[event]["agent"] = False
@@ -198,11 +200,13 @@ def clear_outdated_events(event_hash, event_timeouts, frame):
 def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame):
 	# we have a winner! let's show them what they've won, bob!
 	hr()
+	global kDebugEnergies
 	energy = calculate_energy(active_parse_tree, fluent_hash, event_hash)
 	fluent = active_parse_tree["symbol"]
-	print "{} PARSE TREE COMPLETED at {}: energy({})\n***{}***".format(fluent,frame,energy,active_parse_tree)
-	print_current_energies(fluent_hash, event_hash)
-	print_previous_energies(fluent_hash)
+	print "{} PARSE TREE COMPLETED at {}: energy({})\n{}\n***{}***".format(fluent,frame,energy,make_tree_like_lisp(active_parse_tree),active_parse_tree)
+	if kDebugEnergies:
+		print_current_energies(fluent_hash, event_hash)
+		print_previous_energies(fluent_hash)
 	# if there are agents in the parse, print out who they were
 	keys = get_fluent_and_event_keys_we_care_about((active_parse_tree,))
 	agents_responsible = []
@@ -381,9 +385,11 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 				# then are each of those separate parses, or are they a combined parse, or is one subsumed
 				# by the other...? NOT worrying about this now.
 				info = changes[event]
+				# print("SETTING EVENT {} AT {} TO {}".format(event,frame,info['energy']))
 				event_hash[event]['energy'] = info['energy']
 				event_hash[event]['agent'] = info['agent']
 				event_hash[event]['frame'] = frame
+				# print_current_energies(fluent_hash,event_hash)
 				for parse_id in parse_id_hash_by_event[event]:
 					if parse_id not in active_parse_trees:
 						# create this parse if it's not in our list of active parses
