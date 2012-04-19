@@ -1,9 +1,7 @@
 """
 causal grammar parser and helper functions
 """
-# TODO: events have to turn off after a while, which probably means they need to be handled differently in our parses so the parse energies don't depend on the event happening "now"
 # TODO: filter out "competing" parse trees below thresh
-# TODO: complete parse trees after some "frame" threshold if key fluent not detected
 
 import itertools
 import math # for log, etc
@@ -14,6 +12,7 @@ kFluentThresholdOnEnergy = 0.36 # TODO: may want to tune: 0.36 = 0.7 probability
 kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
 kReportingThresholdEnergy = 0.5 # TODO: may want to tune
 kDefaultEventTimeout = 10 # shouldn't need to tune because this should be tuned in grammar
+kFilterNonEventTriggeredParseTimeouts = False # what the uber-long variable name implies
 
 kFluentStatusUnknown = 1
 kFluentStatusOn = 2
@@ -251,6 +250,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy):
 	global kUnknownEnergy
 	global kZeroProbabilityEnergy
+	global kFilterNonEventTriggeredParseTimeouts
 	fluent_parse_index = 0
 	temporal_parse_index = 0
 	fluent_parse_frames = sorted(fluent_parses, key=fluent_parses.get)
@@ -364,6 +364,10 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 					if active_parse_tree["symbol"] == fluent:
 						active_parse_trees.pop(key)
 						complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame)
+					elif kFilterNonEventTriggeredParseTimeouts:
+						# if we want to remove the case of parses timing out when they never
+						# actually had an event create them
+						active_parse_trees.pop(key)
 		else:
 			frame = temporal_parse_frames[temporal_parse_index]
 			complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy)
