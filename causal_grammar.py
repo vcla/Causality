@@ -19,6 +19,55 @@ kFluentStatusUnknown = 1
 kFluentStatusOn = 2
 kFluentStatusOff = 3
 
+def import_xml(filename): #, causal_forest):
+	global kZeroProbabilityEnergy
+	fluent_parses = {}
+	temporal_parses = {}
+	# keys =  get_fluent_and_event_keys_we_care_about(causal_forest)
+	from xml.dom.minidom import parse
+	document = parse(filename)
+	interpretation_chunk = document.getElementsByTagName('interpretation')[0]
+	interpretation_probability = float(interpretation_chunk.attributes['probability'].nodeValue)
+	interpretation_energy = probability_to_energy(interpretation_probability)
+	temporal_chunk = document.getElementsByTagName('temporal')[0]
+	for fluent_change in temporal_chunk.getElementsByTagName('fluent_change'):
+		fluent_attributes = fluent_change.attributes;
+		frame_number = int(fluent_attributes['frame'].nodeValue)
+		fluent = fluent_attributes['fluent'].nodeValue
+		if frame_number not in fluent_parses:
+			fluent_parses[frame_number] = {}
+		frame = fluent_parses[frame_number]
+		new_value = fluent_attributes['new_value'].nodeValue
+		if new_value == 1 or new_value == '1':
+			new_value = interpretation_energy
+		elif new_value == 0 or new_value == '0':
+			new_value = kZeroProbabilityEnergy
+		else:
+			raise Exception("{} not 1 or 0 for frame {}: {}".format(fluent, frame_number, new_value))
+		frame[fluent] = new_value
+	def add_event(events, agent, frame, name, energy):
+		if frame not in events:
+			events[frame] = {}
+		frame = events[frame]
+		frame[name] = {'energy': energy, 'agent': agent}
+	for event in temporal_chunk.getElementsByTagName('event'):
+		# get actor from first element (there must always be a first "action" in the event)
+		# @TODO: handle start _and_ end frames
+		# @TODO: handle multiple actors (one per action, many per event)
+		actions = event.getElementsByTagName('action')
+		event_attributes = event.attributes;
+		frame_number = int(event_attributes['end_frame'].nodeValue)
+		event_name = event_attributes['name'].nodeValue
+		event_agent = actions[0].attributes['agent'].nodeValue
+		add_event(temporal_parses,event_agent,frame_number,event_name,interpretation_energy)
+		for action in actions:
+			action_attributes = action.attributes
+			frame_number = int(action_attributes['end_frame'].nodeValue)
+			action_name = action_attributes['name'].nodeValue
+			action_agent = action_attributes['agent'].nodeValue
+			add_event(temporal_parses,action_agent,frame_number,action_name,interpretation_energy)
+	return [fluent_parses,temporal_parses]
+
 def import_csv(filename, fluents, events):
 	fluent_parses = {}
 	temporal_parses = {}
@@ -112,7 +161,7 @@ def filter_changes(changes, keys_in_grammar):
 def generate_parses(causal_tree):
 	node_type = causal_tree["node_type"]
 	if "children" not in causal_tree:
-		return (causal_tree,);
+		return (causal_tree,)
 	partial_causal_parses = []
 	# make a copy of the current node, minus the children (so we're keeping symbol_type, symbol, energy, node_type, etc)
 	current_node = causal_tree.copy()
@@ -136,11 +185,14 @@ def generate_parses(causal_tree):
 		raise Exception("UNKNOWN NODE TYPE: {}".format(node_type))
 	return partial_causal_parses
 
+def probability_to_energy(probability):
+	return -math.log(probability)
+
 def calculate_energy(node, fluent_hash, event_hash):
 	node_energy = 0.0
 	if "probability" in node:
 		# coming off a "root" or "or" node_type
-		tmp_energy = -math.log(node["probability"])
+		tmp_energy = probability_to_energy(node["probability"])
 		if tmp_energy != kUnknownEnergy:
 			node_energy += tmp_energy
 	if "symbol_type" in node:
@@ -255,6 +307,9 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 	global kUnknownEnergy
 	global kZeroProbabilityEnergy
 	global kFilterNonEventTriggeredParseTimeouts
+	global kFluentStatusUnknown
+	global kFluentStatusOn
+	global kFluentStatusOff
 	fluent_parse_index = 0
 	temporal_parse_index = 0
 	fluent_parse_frames = sorted(fluent_parses, key=fluent_parses.get)
@@ -327,7 +382,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 				fluent_on_energy = changes[fluent]
 				fluent_on_probability = math.exp(-fluent_on_energy)
 				fluent_off_probability = 1 - fluent_on_probability
-				if 0 == fluent_off_probability:
+				if 0 == fluent_off_probability:  
+					# TODO: might also need to cathc this for fluent_on_probability 
 					fluent_off_energy = kZeroProbabilityEnergy
 				else:
 					fluent_off_energy = -math.log(fluent_off_probability)
@@ -369,6 +425,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 						active_parse_trees.pop(key)
 						complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame)
 					elif kFilterNonEventTriggeredParseTimeouts:
+						# TODO: this is a bug!  this will kill all but the first type of fluent
 						# if we want to remove the case of parses timing out when they never
 						# actually had an event create them
 						active_parse_trees.pop(key)

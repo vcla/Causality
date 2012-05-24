@@ -1,0 +1,376 @@
+<?xml version="1.0"?>
+<video camera_id="33bed309-c7a5-50e9-a4e1-b3b625398bcf" width="640" height="480" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+	<dictionary>
+		<object id="06bdaed9-0f8a-4f8f-9f46-b022b8865104">
+			<symbol grammar="GEOMETRY">OBJECT</symbol>
+		</object>
+		<object id="071df953-8214-52cf-82e9-f922a2e96939">
+			<symbol grammar="GEOMETRY">PLANE</symbol>
+			<symbol grammar="SEMANTIC">FLOOR</symbol>
+		</object>
+		<object id="077796d8-8331-48cc-9bdb-c49130248f1c">
+			<symbol grammar="GEOMETRY">OBJECT</symbol>
+		</object>
+		<object id="08c6d605-7ec6-5a69-b532-d2cf150a2eb0">
+			<symbol grammar="GEOMETRY">PLANE</symbol>
+			<symbol grammar="SEMANTIC">FRONTWALL</symbol>
+		</object>
+		<object id="146b1e25-c8e1-527e-bded-d5fb3dad2c63">
+			<symbol grammar="GEOMETRY">BOX</symbol>
+		</object>
+		<object id="25535f1f-7e13-5c27-bd0b-034ca0575343">
+			<symbol grammar="SEMANTIC">HUMAN</symbol>
+		</object>
+		<object id="2b1a14a6-583a-5b7d-87db-2a0b35b75b0c">
+			<symbol grammar="GEOMETRY">PLANE</symbol>
+			<symbol grammar="SEMANTIC">CEILING</symbol>
+		</object>
+		<object id="387542ab-2b42-5a51-8ee6-573d2ebe4ef3">
+			<symbol grammar="SEMANTIC">HUMAN</symbol>
+		</object>
+		<object id="4352c362-6569-513d-98b5-e6a4633c2f99">
+			<symbol grammar="SEMANTIC">HUMAN</symbol>
+		</object>
+		<object id="4433b7b2-55a9-54fc-bbc7-bd3aa7f82561">
+			<symbol grammar="SEMANTIC">HUMAN</symbol>
+		</object>
+		<object id="45fce52a-ea74-521f-8767-9c23ce99a18c">
+			<symbol grammar="SEMANTIC">DOOR</symbol>
+		</object>
+		<object id="46211d77-61b9-5f5d-a863-d2e0dc304eab">
+			<symbol grammar="SEMANTIC">HUMAN</symbol>
+		</object>
+		<object id="4ae0f271-b50e-56d4-9539-94045a765a2e">
+			<symbol grammar="GEOMETRY">PLANE</symbol>
+			<symbol grammar="SEMANTIC">RIGHTWALL</symbol>
+		</object>
+		<object id="4bebb07d-8727-576f-b98b-e1b6af682962">
+			<symbol grammar="SEMANTIC">HUMAN</symbol>
+		</object>
+		<object id="56a8ba41-cba9-51a5-9e8e-623f9270fd1a">
+			<symbol grammar="SEMANTIC">HUMAN</symbol>
+		</object>
+		<object id="5bd82c7f-2b0a-53ee-9719-0c104992daed">
+			<symbol grammar="SEMANTIC">HUMAN</symbol>
+		</object>
+		<object id="6ae6a6df-0d71-5ed9-bef8-13447795ab43">
+			<symbol grammar="SEMANTIC">FLOOR</symbol>
+		</object>
+		<object id="7876d2b9-7a92-58e1-9287-82134c426fc2">
+			<symbol grammar="SEMANTIC">TRASH CAN</symbol>
+		</object>
+		<object id="9ec1daa2-ed63-5f8f-a748-62570cef59bd">
+			<symbol grammar="SEMANTIC">HUMAN</symbol>
+		</object>
+		<object id="a5f00d78-5cb0-4008-b2b6-bd8ce47c075c">
+			<symbol grammar="GEOMETRY">OBJECT</symbol>
+		</object>
+		<object id="a66d4c61-19af-4276-8967-0b1e676682e3">
+			<symbol grammar="GEOMETRY">OBJECT</symbol>
+		</object>
+		<object id="ad803368-3f87-5ae3-b7c2-b116d9ae7511">
+			<symbol grammar="SEMANTIC">HUMAN</symbol>
+		</object>
+		<object id="b4324ed6-be38-5b50-ae90-751a13db7058">
+			<symbol grammar="SEMANTIC">FOUNTAIN</symbol>
+		</object>
+		<object id="b48f7cd6-c512-57d3-bc9d-f8478cde7c79">
+			<symbol grammar="SEMANTIC">CELLPHONE</symbol>
+		</object>
+		<object id="c798fe1e-7883-599e-8a1b-6d9f612b2939">
+			<symbol grammar="GEOMETRY">SCENE</symbol>
+			<symbol grammar="SEMANTIC">ROOM</symbol>
+		</object>
+		<object id="c976fbe6-00da-50f3-b73d-1099161fef2b">
+			<symbol grammar="SEMANTIC">HUMAN</symbol>
+		</object>
+		<object id="d08a887e-4e1c-5997-bdc7-18ce8e2be60b">
+			<symbol grammar="SEMANTIC">ELEVATOR BUTTON</symbol>
+		</object>
+		<object id="d6b448bd-68eb-5896-aeab-069b7c5917d6">
+			<symbol grammar="GEOMETRY">BACKGROUND</symbol>
+		</object>
+		<object id="e346f1ec-2739-4095-b6bd-05e196e03c42">
+			<symbol grammar="GEOMETRY">OBJECT</symbol>
+		</object>
+		<object id="e34c1927-c5b2-416b-8fad-6194df1dbae6">
+			<symbol grammar="GEOMETRY">OBJECT</symbol>
+		</object>
+		<object id="e995c308-08e1-5454-b307-7e86a07c2c4b">
+			<symbol grammar="GEOMETRY">FOREGROUND</symbol>
+		</object>
+		<object id="e9d56a27-f925-40ab-92aa-ea914343a367">
+			<symbol grammar="GEOMETRY">OBJECT</symbol>
+		</object>
+		<object id="ed3ad097-1f42-543e-a481-d1c3a1e8a82a">
+			<symbol grammar="SEMANTIC">HUMAN</symbol>
+		</object>
+		<object id="f8afa471-cf4e-4ab1-811b-43a2b586e985">
+			<symbol grammar="GEOMETRY">OBJECT</symbol>
+		</object>
+		<object id="ff0884d2-d5e3-5220-a7bd-7a79f1232a96">
+			<symbol grammar="SEMANTIC">HUMAN</symbol>
+		</object>
+	</dictionary>
+	<interpretation probability="1.">
+		<spatial>
+			<geometry vanishing_points="305.890484, 5684.320454, 361.757592, 195.950085, -6259.803699, 186.537041" camera_intrinsic_matrix="5.30091980e+002, 0., 3.28219299e+002, 0., 5.26358582e+002, 2.68727814e+002, 0., 0., 1." camera_rotation_matrix="9.96350646e-001, 1.41367433e-003, -8.53441730e-002, 1.01414584e-002, -9.94740725e-001, 1.01921201e-001, -8.47495571e-002, -1.02414772e-001, -9.91124809e-001">
+				<object id="c798fe1e-7883-599e-8a1b-6d9f612b2939" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+					<children production_rule="d8646b89-70cd-47f8-af0b-4198ec43c055">
+						<object id="d6b448bd-68eb-5896-aeab-069b7c5917d6" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+							<children production_rule="88cd126f-1991-4c9f-938d-890aec4f089d">
+								<object id="146b1e25-c8e1-527e-bded-d5fb3dad2c63" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+									<properties>
+										<property name="COORDINATES" initial_value="-2.5, 1.4, 3.79, -2.5, 1.4, 1.5, -2.5, -1, 1.5, -2.5, -1, 3.79, 0.93, 1.4, 3.79, 0.93, 1.4, 1.5, 0.93, -1, 1.5, 0.93, -1, 3.79" />
+									</properties>
+									<children production_rule="ccb1ec25-547d-4b5a-ba1f-129322545d19">
+										<object id="08c6d605-7ec6-5a69-b532-d2cf150a2eb0" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+											<properties>
+												<property name="COORDINATES" initial_value="694,310,75,349,16,479,639,479" />
+											</properties>
+										</object>
+										<object id="e0785795-da0a-555d-85b9-37c44c6d443b" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+											<properties>
+												<property name="COORDINATES" initial_value="37,0,75,349,694,310,773,0" />
+											</properties>
+										</object>
+										<object id="4ae0f271-b50e-56d4-9539-94045a765a2e" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+											<properties>
+												<property name="COORDINATES" initial_value="37,0,75,349,694,310,773,0" />
+											</properties>
+										</object>
+										<object id="071df953-8214-52cf-82e9-f922a2e96939" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+											<properties>
+												<property name="COORDINATES" initial_value="75,349,37,0,0,0,0,479,16,479" />
+											</properties>
+										</object>
+										<object id="2b1a14a6-583a-5b7d-87db-2a0b35b75b0c" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+											<properties>
+												<property name="COORDINATES" initial_value="75,349,37,0,0,0,0,479,16,479" />
+											</properties>
+										</object>
+									</children>
+								</object>
+							</children>
+						</object>
+						<object id="e995c308-08e1-5454-b307-7e86a07c2c4b" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+							<children production_rule="a12b9d97-17e2-40a8-997f-d9b9394452f4">
+								<object id="e346f1ec-2739-4095-b6bd-05e196e03c42" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+									<properties>
+										<property name="COORDINATES" initial_value="-0.448086,-1.4,-2.92468,-0.448086,-1.4,-3.2077,-0.448086,-0.954844,-3.2077,-0.448086,-0.954844,-2.92468,0.512584,-1.4,-2.92468,0.512584,-1.4,-3.2077,0.512584,-0.954844,-3.2077,0.512584,-0.954844,-2.92468" />
+									</properties>
+								</object>
+								<object id="e9d56a27-f925-40ab-92aa-ea914343a367" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+									<properties>
+										<property name="COORDINATES" initial_value="0,0,0,0,0,0,0,0,0,0,0,0" />
+									</properties>
+								</object>
+								<object id="077796d8-8331-48cc-9bdb-c49130248f1c" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+									<properties>
+										<property name="COORDINATES" initial_value="0,0,0,0,0,0,0,0,0,0,0,0" />
+									</properties>
+								</object>
+								<object id="06bdaed9-0f8a-4f8f-9f46-b022b8865104" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+									<properties>
+										<property name="COORDINATES" initial_value="0,0,0,0,0,0,0,0,0,0,0,0" />
+									</properties>
+								</object>
+								<object id="a5f00d78-5cb0-4008-b2b6-bd8ce47c075c" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+									<properties>
+										<property name="COORDINATES" initial_value="0,0,0,0,0,0,0,0,0,0,0,0" />
+									</properties>
+								</object>
+								<object id="a66d4c61-19af-4276-8967-0b1e676682e3" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+									<properties>
+										<property name="COORDINATES" initial_value="0,0,0,0,0,0,0,0,0,0,0,0" />
+									</properties>
+								</object>
+								<object id="f8afa471-cf4e-4ab1-811b-43a2b586e985" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+									<properties>
+										<property name="COORDINATES" initial_value="0,0,0,0,0,0,0,0,0,0,0,0" />
+									</properties>
+								</object>
+								<object id="e34c1927-c5b2-416b-8fad-6194df1dbae6" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+									<properties>
+										<property name="COORDINATES" initial_value="0,0,0,0,0,0,0,0,0,0,0,0" />
+									</properties>
+								</object>
+							</children>
+						</object>
+					</children>
+				</object>
+			</geometry>
+			<semantic>
+				<object id="c798fe1e-7883-599e-8a1b-6d9f612b2939" begin_frame="0" end_frame="11999" begin_time="0" end_time="677">
+					<properties>
+						<property name="CATEGORY" initial_value="HALLWAY" />
+					</properties>
+				</object>
+			</semantic>
+		</spatial>
+		<temporal>
+			<fluent_changes>
+				<fluent_change id="37bb941f-0342-41c9-a324-7622ed9d1e1d" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="853" time="6061" />
+				<fluent_change id="da67269c-0b02-481c-a572-9dcc5991901c" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="984" time="6067" />
+				<fluent_change id="8c99254f-e3c1-43e9-88ad-545c427513ba" object="c384efac-6075-5f35-9fca-89a2831185d5" fluent="[LIGHT_ON]" old_value="1" new_value="0" frame="1345" time="6083" />
+				<fluent_change id="9cc5fcb3-5066-41c0-bcd7-1a27c51f5e3b" object="c384efac-6075-5f35-9fca-89a2831185d5" fluent="[LIGHT_ON]" old_value="0" new_value="1" frame="1347" time="6083" />
+				<fluent_change id="4ca48910-8e47-4f67-8d31-cba2ea7bc97f" object="c384efac-6075-5f35-9fca-89a2831185d5" fluent="[LIGHT_ON]" old_value="1" new_value="0" frame="1348" time="6083" />
+				<fluent_change id="dc508fa6-78f1-4968-af37-a982c9a462fc" object="c384efac-6075-5f35-9fca-89a2831185d5" fluent="[LIGHT_ON]" old_value="0" new_value="1" frame="1352" time="6083" />
+				<fluent_change id="9460b5b4-efb8-4a21-8647-ecd5b8edac4d" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="0" new_value="1" frame="1951" time="6110" />
+				<fluent_change id="dc9afa25-4a5f-4487-9c34-897757d8c0ba" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="1" new_value="0" frame="2099" time="6117" />
+				<fluent_change id="77332930-441e-4efe-8cf1-c7d09a535883" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="0" new_value="1" frame="2846" time="6149" />
+				<fluent_change id="c219c01a-e313-470c-ba3d-ad5b2b9f36b5" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="1" new_value="0" frame="3008" time="6157" />
+				<fluent_change id="861c0a24-92b0-4ee5-a14c-1d54789db239" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="0" new_value="1" frame="3009" time="6157" />
+				<fluent_change id="abcde6d0-72d0-4935-88fc-40ce8ac64f99" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="1" new_value="0" frame="3011" time="6157" />
+				<fluent_change id="926e6d09-d0be-4ea6-8041-056293e375b1" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="3074" time="6162" />
+				<fluent_change id="1df649f9-b83c-4bf2-acc5-fd0752e47c8f" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="3188" time="6167" />
+				<fluent_change id="22a77473-1fc3-4eb2-9974-53d0cceb6054" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="3342" time="6174" />
+				<fluent_change id="f34b64af-1e8f-456c-be11-3928a7c5013f" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="3404" time="6178" />
+				<fluent_change id="0e289ab6-538e-4b10-bead-d2e4a250f439" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="3507" time="6186" />
+				<fluent_change id="0865c724-a57a-401f-b163-e458f877c196" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="3545" time="6188" />
+				<fluent_change id="ed6b0040-da09-4ed3-89a6-8a68bdcf2140" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="3679" time="6193" />
+				<fluent_change id="99ddad9c-9f31-4f53-8947-311a502bd937" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="3774" time="6198" />
+				<fluent_change id="ff661072-b6a2-4c4a-ae1e-a3bb5922722a" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="0" new_value="1" frame="4209" time="6223" />
+				<fluent_change id="c9e30f22-652e-4457-ba54-fa33e3b7298d" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="1" new_value="0" frame="4354" time="6231" />
+				<fluent_change id="17b2793d-2384-4806-9220-321b6960aca4" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="5869" time="6312" />
+				<fluent_change id="3053c045-a7ad-4c93-8563-381d321eed57" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="5992" time="6318" />
+				<fluent_change id="7a8fcbf2-dd58-4384-a670-f2dea4236f55" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="0" new_value="1" frame="6621" time="6357" />
+				<fluent_change id="27cdf3b5-b4f8-44c7-a3e9-e8354bd98d57" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="1" new_value="0" frame="6795" time="6365" />
+				<fluent_change id="6e95b709-83bc-46d9-9c21-c10c0b5a7323" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="7295" time="6395" />
+				<fluent_change id="98fa367f-efca-4140-9a36-7ff4256810a0" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="7394" time="6404" />
+				<fluent_change id="1a4bd479-f173-4443-b4a5-55c9da451c3e" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="0" new_value="1" frame="8092" time="6449" />
+				<fluent_change id="a8dde128-f708-4b0b-b122-6e2377691ff1" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="1" new_value="0" frame="8193" time="6458" />
+				<fluent_change id="595eb555-c193-4e1a-9814-6a1a4d1add19" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="0" new_value="1" frame="8704" time="6489" />
+				<fluent_change id="31ad1bf4-52ae-45fc-9545-402988c08994" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="8838" time="6495" />
+				<fluent_change id="3d66db41-82e1-4b77-a392-7920fe1e5579" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="1" new_value="0" frame="8870" time="6497" />
+				<fluent_change id="31ec8cad-e486-4921-9f05-e53321d761b7" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="8932" time="6500" />
+				<fluent_change id="61241d65-d429-4225-adbd-dca6e4ce574b" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="9033" time="6505" />
+				<fluent_change id="4d2f19da-48eb-44c7-8aae-b276025120a9" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="9108" time="6508" />
+				<fluent_change id="6c1511b7-85cd-47f5-a816-3426dd61c856" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="0" new_value="1" frame="9412" time="6531" />
+				<fluent_change id="f4efbb50-aa97-4c59-8159-f1ea88c649da" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="1" new_value="0" frame="9576" time="6539" />
+				<fluent_change id="cc7fc3a2-13b1-4115-bc55-072323e6e9f2" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="0" new_value="1" frame="10218" time="6576" />
+				<fluent_change id="10b7d8f1-c90f-4f32-89dd-b55e35148261" object="c384efac-6075-5f35-9fca-89a2831185d5" fluent="[LIGHT_ON]" old_value="1" new_value="0" frame="10333" time="6582" />
+				<fluent_change id="da74559b-a906-4bc0-b985-1b016e0f3d9d" object="c384efac-6075-5f35-9fca-89a2831185d5" fluent="[LIGHT_ON]" old_value="0" new_value="1" frame="10335" time="6582" />
+				<fluent_change id="dcd78080-a025-49fe-980c-2ef6dc7249b3" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="1" new_value="0" frame="10356" time="6587" />
+				<fluent_change id="06ea9b56-ad2e-4a92-abdd-86ac2e6cae99" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="10483" time="6593" />
+				<fluent_change id="0877c34f-e00c-46f5-ab7d-04b40defa621" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="10485" time="6593" />
+				<fluent_change id="c13aa20f-be7f-47c6-bbde-5aee37f2e197" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="10554" time="6596" />
+				<fluent_change id="b10eb5a3-9972-480d-8e0b-984d11fabe5c" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="10598" time="6603" />
+				<fluent_change id="feec29c6-23aa-49fd-b5b6-6da3146079c6" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="0" new_value="1" frame="11100" time="6628" />
+				<fluent_change id="2d148942-44c3-4cda-a969-0c7451897d25" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="11115" time="6636" />
+				<fluent_change id="0a0a3b39-a70f-4510-9b90-70bac944e174" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="1" new_value="0" frame="11115" time="6636" />
+				<fluent_change id="73858ef2-422f-4c6e-b1e5-66ffe407187d" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="0" new_value="1" frame="11116" time="6636" />
+				<fluent_change id="954b938f-a5d7-49ef-a007-501d7011a850" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="1" new_value="0" frame="11117" time="6636" />
+				<fluent_change id="a321b673-fbf4-4977-a6b3-532e828c7773" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="11183" time="6639" />
+				<fluent_change id="15b525ef-7b13-43aa-adb8-d3cea58ff020" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="11682" time="6670" />
+				<fluent_change id="22b3dd2a-955e-49e3-aa8e-7e3d7f4cf137" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="11751" time="6674" />
+				<fluent_change id="59de5c96-d00e-4186-96c1-615d8ed16d44" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="0" new_value="1" frame="11777" time="6675" />
+				<fluent_change id="b17d8800-dc2a-41f9-b42c-082a7a7011b7" object="77076d0c-18c7-5608-913e-bc38064a050b" fluent="[ELEVATOR_OPEN]" old_value="1" new_value="0" frame="11778" time="6675" />
+				<fluent_change id="0e962f4f-26bc-4208-9698-14935312d8a0" object="c384efac-6075-5f35-9fca-89a2831185d5" fluent="[LIGHT_ON]" old_value="1" new_value="0" frame="11877" time="6683" />
+				<fluent_change id="ab86bf9e-1b9a-4e56-a5e9-15babed5eec2" object="c384efac-6075-5f35-9fca-89a2831185d5" fluent="[LIGHT_ON]" old_value="0" new_value="1" frame="11881" time="6683" />
+				<fluent_change id="f8da6e41-781a-402a-b09b-ecf265ce2c1c" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="11906" time="6685" />
+				<fluent_change id="c669446c-7114-4cb2-b66e-c11002f04827" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="11908" time="6685" />
+				<fluent_change id="c86290f9-af7d-4002-81dd-b3c7e9f91ec8" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="11929" time="6686" />
+				<fluent_change id="96c99107-c28c-4d66-ba58-b85cff941042" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="11934" time="6686" />
+				<fluent_change id="a0783d06-e264-4dea-88fb-c8ac1066df59" object="c384efac-6075-5f35-9fca-89a2831185d5" fluent="[LIGHT_ON]" old_value="1" new_value="0" frame="11941" time="6686" />
+				<fluent_change id="cbb3486f-2978-4fad-9252-b02446e40e7e" object="c384efac-6075-5f35-9fca-89a2831185d5" fluent="[LIGHT_ON]" old_value="0" new_value="1" frame="11949" time="6687" />
+				<fluent_change id="c53cf4dc-af6d-4fba-956c-e9082ea6f50c" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="0" new_value="1" frame="12057" time="6696" />
+				<fluent_change id="a791a56e-25f7-4c64-81a4-54e095a74b43" object="d3a14a04-b1b8-56da-85bf-4607c4118c9c" fluent="[DOOR_OPEN]" old_value="1" new_value="0" frame="12127" time="6699" />
+			</fluent_changes>
+			<events>
+				<event id="ade787bb-e27c-4331-84ef-b0f45ca825e2" name="[WALK ON FLOOR]" production_rule="d2ee4dd4-2d7d-419d-a1a2-67357f474681" begin_frame="499" end_frame="754" begin_time="21" end_time="33">
+					<action id="e462ea9b-6bcc-4ce8-8227-78a8cc0012e3" name="[WALK ON FLOOR POSE C]" agent="ed3ad097-1f42-543e-a481-d1c3a1e8a82a" object="6ae6a6df-0d71-5ed9-bef8-13447795ab43" position="293,282" begin_frame="499" end_frame="754" begin_time="21" end_time="33" />
+				</event>
+				<event id="fff15de6-2882-4a10-8468-3e1727760249" name="[USE FOUNTAIN]" production_rule="7160891a-7990-4efa-937f-abecf0164145" begin_frame="755" end_frame="1206" begin_time="33" end_time="53">
+					<action id="33749601-2bcf-47d9-9bcd-25721535b6c3" name="[LEAVE FOUNTAIN]" agent="ed3ad097-1f42-543e-a481-d1c3a1e8a82a" object="b4324ed6-be38-5b50-ae90-751a13db7058" position="381,414" begin_frame="755" end_frame="1206" begin_time="33" end_time="53" />
+				</event>
+				<event id="52f3223b-5162-4640-a5e3-6466c1900eaf" name="[WALK ON FLOOR]" production_rule="d2ee4dd4-2d7d-419d-a1a2-67357f474681" begin_frame="2427" end_frame="2570" begin_time="106" end_time="116">
+					<action id="b8e1540c-2de1-4303-8431-8f6854ae22d2" name="[WALK ON FLOOR POSE B]" agent="46211d77-61b9-5f5d-a863-d2e0dc304eab" object="6ae6a6df-0d71-5ed9-bef8-13447795ab43" position="293,289" begin_frame="2427" end_frame="2434" begin_time="106" end_time="107" />
+					<action id="745bfb56-78b2-43d1-91d6-e5ac2bc0db9b" name="[WALK ON FLOOR POSE C]" agent="46211d77-61b9-5f5d-a863-d2e0dc304eab" object="6ae6a6df-0d71-5ed9-bef8-13447795ab43" position="328,308" begin_frame="2435" end_frame="2570" begin_time="107" end_time="116" />
+				</event>
+				<event id="14a78b81-3157-42af-9b00-2a6b5e35c9ed" name="[PUSH DOOR]" production_rule="3e6033d6-861e-460e-9f87-77046a0761d2" begin_frame="2571" end_frame="2590" begin_time="116" end_time="117">
+					<action id="39173dc9-b8b1-481a-9eb1-0d5dc581bce0" name="[LEAVE DOOR]" agent="46211d77-61b9-5f5d-a863-d2e0dc304eab" object="45fce52a-ea74-521f-8767-9c23ce99a18c" position="339,327" begin_frame="2571" end_frame="2590" begin_time="116" end_time="117" />
+				</event>
+				<event id="44233c11-fd3a-45b7-96f0-1fb3e4c447a4" name="[USE TRASH CAN]" production_rule="ab5fb284-50c7-4766-aa4c-3c106e1d4e4b" begin_frame="2896" end_frame="2979" begin_time="130" end_time="135">
+					<action id="e7fa33b0-ebee-4e12-8e3e-4e5b0f355bca" name="[BEND DOWN AT TRASH CAN]" agent="4bebb07d-8727-576f-b98b-e1b6af682962" object="7876d2b9-7a92-58e1-9287-82134c426fc2" position="312,306" begin_frame="2896" end_frame="2944" begin_time="130" end_time="134" />
+					<action id="22ecac32-185a-4960-bd9e-fb563dbbab93" name="[DROP TRASH]" agent="4bebb07d-8727-576f-b98b-e1b6af682962" object="7876d2b9-7a92-58e1-9287-82134c426fc2" position="298,286" begin_frame="2945" end_frame="2979" begin_time="134" end_time="135" />
+				</event>
+				<event id="47e86bf8-68bc-4f08-bb3b-91ce22eedc28" name="[USE CELLPHONE]" production_rule="5fcdab59-9480-4df2-b44a-4002df63c630" begin_frame="2980" end_frame="3006" begin_time="135" end_time="137">
+					<action id="c9ef6173-677b-46f0-9aef-e16c9a889536" name="[TALK ON CELLPHONE]" agent="4bebb07d-8727-576f-b98b-e1b6af682962" object="b48f7cd6-c512-57d3-bc9d-f8478cde7c79" position="302,286" begin_frame="2980" end_frame="2981" begin_time="135" end_time="135" />
+					<action id="58a40c91-98dc-4f4c-99df-ed0e7ed3d5a9" name="[PUT BACK CELLPHONE]" agent="4bebb07d-8727-576f-b98b-e1b6af682962" object="b48f7cd6-c512-57d3-bc9d-f8478cde7c79" position="310,296" begin_frame="2982" end_frame="3006" begin_time="136" end_time="137" />
+				</event>
+				<event id="fa81a722-0cbe-4fb1-b18b-c8d1dd7ac512" name="[USE TRASH CAN]" production_rule="ab5fb284-50c7-4766-aa4c-3c106e1d4e4b" begin_frame="3232" end_frame="3749" begin_time="150" end_time="178">
+					<action id="881c30e7-9774-41c6-9cfc-675546af22b8" name="[DROP TRASH]" agent="c976fbe6-00da-50f3-b73d-1099161fef2b" object="7876d2b9-7a92-58e1-9287-82134c426fc2" position="333,322" begin_frame="3232" end_frame="3337" begin_time="150" end_time="156" />
+					<action id="74130d4b-19b0-4788-a285-c444cb8662a8" name="[STRAIGHTEN UP AT TRASH CAN]" agent="c976fbe6-00da-50f3-b73d-1099161fef2b" object="7876d2b9-7a92-58e1-9287-82134c426fc2" position="241,246" begin_frame="3338" end_frame="3749" begin_time="157" end_time="178" />
+				</event>
+				<event id="1f032daa-08a4-4b85-a9bb-d9e09259be18" name="[USE CELLPHONE]" production_rule="5fcdab59-9480-4df2-b44a-4002df63c630" begin_frame="5442" end_frame="6159" begin_time="269" end_time="313">
+					<action id="c67f3443-251a-4ab0-bc52-5cf5a5194237" name="[TAKE OUT CELLPHONE]" agent="4352c362-6569-513d-98b5-e6a4633c2f99" object="b48f7cd6-c512-57d3-bc9d-f8478cde7c79" position="311,298" begin_frame="5442" end_frame="5517" begin_time="269" end_time="273" />
+					<action id="d5318d84-27a7-4086-b861-2c0a7c325b47" name="[TALK ON CELLPHONE]" agent="4352c362-6569-513d-98b5-e6a4633c2f99" object="b48f7cd6-c512-57d3-bc9d-f8478cde7c79" position="293,284" begin_frame="5518" end_frame="5570" begin_time="273" end_time="275" />
+					<action id="c9c1ebb3-4b00-4f3a-9bbc-278f86e2aad8" name="[PUT BACK CELLPHONE]" agent="4352c362-6569-513d-98b5-e6a4633c2f99" object="b48f7cd6-c512-57d3-bc9d-f8478cde7c79" position="293,281" begin_frame="5571" end_frame="6159" begin_time="278" end_time="313" />
+				</event>
+				<event id="9f2d22bc-727d-4baa-8600-7bcc44fcf732" name="[WALK ON FLOOR]" production_rule="d2ee4dd4-2d7d-419d-a1a2-67357f474681" begin_frame="6918" end_frame="7046" begin_time="359" end_time="366">
+					<action id="fde6906f-dc0d-4477-a900-58df2a857bf4" name="[WALK ON FLOOR POSE C]" agent="ad803368-3f87-5ae3-b7c2-b116d9ae7511" object="6ae6a6df-0d71-5ed9-bef8-13447795ab43" position="292,286" begin_frame="6918" end_frame="7046" begin_time="359" end_time="366" />
+				</event>
+				<event id="f3682d54-b1b1-4452-9a3d-f4c6299a1687" name="[USE FOUNTAIN]" production_rule="7160891a-7990-4efa-937f-abecf0164145" begin_frame="7047" end_frame="7203" begin_time="366" end_time="378">
+					<action id="bc944a58-f8fb-4003-b55d-8a9bc924369e" name="[LEAVE FOUNTAIN]" agent="ad803368-3f87-5ae3-b7c2-b116d9ae7511" object="b4324ed6-be38-5b50-ae90-751a13db7058" position="416,424" begin_frame="7047" end_frame="7203" begin_time="366" end_time="378" />
+				</event>
+				<event id="8ca3feba-e1f7-4e0f-b3e4-ed5f31cd5825" name="[USE ELEVATOR BUTTON]" production_rule="554968f7-6f93-4e4f-b0b2-2d906780be93" begin_frame="7204" end_frame="7628" begin_time="378" end_time="405">
+					<action id="5964a45c-b30c-457c-94b9-f3010d7335aa" name="[APPROACH ELEVATOR BUTTON]" agent="ad803368-3f87-5ae3-b7c2-b116d9ae7511" object="d08a887e-4e1c-5997-bdc7-18ce8e2be60b" position="271,273" begin_frame="7204" end_frame="7628" begin_time="378" end_time="405" />
+				</event>
+				<event id="153a0708-26a9-4eb5-b492-f01f66821365" name="[WALK ON FLOOR]" production_rule="d2ee4dd4-2d7d-419d-a1a2-67357f474681" begin_frame="8260" end_frame="8291" begin_time="445" end_time="447">
+					<action id="665149ed-95aa-43ca-9b6f-ec8b5f79eb45" name="[WALK ON FLOOR POSE C]" agent="ff0884d2-d5e3-5220-a7bd-7a79f1232a96" object="6ae6a6df-0d71-5ed9-bef8-13447795ab43" position="220,222" begin_frame="8260" end_frame="8291" begin_time="445" end_time="447" />
+				</event>
+				<event id="15d9b2fb-0f3a-4ec8-a485-a5ee4c21abc5" name="[USE ELEVATOR BUTTON]" production_rule="554968f7-6f93-4e4f-b0b2-2d906780be93" begin_frame="8292" end_frame="8351" begin_time="447" end_time="450">
+					<action id="24e23628-2ca1-4c2b-aef4-cb9288f773e4" name="[PRESS ELEVATOR BUTTON]" agent="ff0884d2-d5e3-5220-a7bd-7a79f1232a96" object="d08a887e-4e1c-5997-bdc7-18ce8e2be60b" position="311,294" begin_frame="8292" end_frame="8351" begin_time="447" end_time="450" />
+				</event>
+				<event id="2795ec5b-1325-4cef-95a4-4af9ff57f0e5" name="[PUSH DOOR]" production_rule="3e6033d6-861e-460e-9f87-77046a0761d2" begin_frame="8653" end_frame="8706" begin_time="465" end_time="471">
+					<action id="73dbe93f-90b8-47f4-80f7-4a03eba70712" name="[APPROACH DOOR]" agent="25535f1f-7e13-5c27-bd0b-034ca0575343" object="45fce52a-ea74-521f-8767-9c23ce99a18c" position="267,274" begin_frame="8653" end_frame="8680" begin_time="465" end_time="469" />
+					<action id="7079b49e-19ad-4486-afca-e5950801ff43" name="[TOUCH DOOR]" agent="25535f1f-7e13-5c27-bd0b-034ca0575343" object="45fce52a-ea74-521f-8767-9c23ce99a18c" position="270,269" begin_frame="8681" end_frame="8681" begin_time="469" end_time="469" />
+					<action id="dda75560-301f-4173-80c9-2ce315eec07f" name="[LEAVE DOOR]" agent="25535f1f-7e13-5c27-bd0b-034ca0575343" object="45fce52a-ea74-521f-8767-9c23ce99a18c" position="257,255" begin_frame="8682" end_frame="8706" begin_time="469" end_time="471" />
+				</event>
+				<event id="171850c4-9307-4064-ae00-030eddfc0772" name="[USE FOUNTAIN]" production_rule="7160891a-7990-4efa-937f-abecf0164145" begin_frame="8707" end_frame="8712" begin_time="471" end_time="471">
+					<action id="d0eba682-55b8-4718-8f32-1a4824ceb57e" name="[LEAVE FOUNTAIN]" agent="25535f1f-7e13-5c27-bd0b-034ca0575343" object="b4324ed6-be38-5b50-ae90-751a13db7058" position="298,302" begin_frame="8707" end_frame="8712" begin_time="471" end_time="471" />
+				</event>
+				<event id="e9344dfc-0e7e-4e79-98df-9ee51b2d0f1a" name="[USE FOUNTAIN]" production_rule="7160891a-7990-4efa-937f-abecf0164145" begin_frame="8713" end_frame="8872" begin_time="471" end_time="479">
+					<action id="dcaa01c6-9fac-42e5-90c9-fec7fbc0624e" name="[APPROACH FOUNTAIN]" agent="25535f1f-7e13-5c27-bd0b-034ca0575343" object="b4324ed6-be38-5b50-ae90-751a13db7058" position="289,299" begin_frame="8713" end_frame="8713" begin_time="471" end_time="471" />
+					<action id="a14f1dcd-7f64-427a-9404-0cb8c29f8e8e" name="[DRINK FROM FOUNTAIN]" agent="25535f1f-7e13-5c27-bd0b-034ca0575343" object="b4324ed6-be38-5b50-ae90-751a13db7058" position="293,302" begin_frame="8714" end_frame="8872" begin_time="471" end_time="479" />
+				</event>
+				<event id="5cbfc5df-62c7-4dda-a77f-a8ec77deca45" name="[USE TRASH CAN]" production_rule="ab5fb284-50c7-4766-aa4c-3c106e1d4e4b" begin_frame="8873" end_frame="8904" begin_time="479" end_time="480">
+					<action id="7a7496bd-9482-4b60-9bc3-ed82d9bd2a06" name="[BEND DOWN AT TRASH CAN]" agent="25535f1f-7e13-5c27-bd0b-034ca0575343" object="7876d2b9-7a92-58e1-9287-82134c426fc2" position="294,299" begin_frame="8873" end_frame="8873" begin_time="479" end_time="479" />
+					<action id="848e9281-4224-4d3b-9840-a7181434b779" name="[DROP TRASH]" agent="25535f1f-7e13-5c27-bd0b-034ca0575343" object="7876d2b9-7a92-58e1-9287-82134c426fc2" position="294,298" begin_frame="8875" end_frame="8904" begin_time="479" end_time="480" />
+				</event>
+				<event id="e254c723-fa7f-4237-bf81-fa3ba25d5bdd" name="[PUSH DOOR]" production_rule="3e6033d6-861e-460e-9f87-77046a0761d2" begin_frame="8905" end_frame="8951" begin_time="480" end_time="487">
+					<action id="96ffa81c-aa78-4bc6-9610-35befcf2208f" name="[APPROACH DOOR]" agent="25535f1f-7e13-5c27-bd0b-034ca0575343" object="45fce52a-ea74-521f-8767-9c23ce99a18c" position="288,292" begin_frame="8905" end_frame="8947" begin_time="480" end_time="487" />
+					<action id="92c98a2b-b41b-4378-b676-775a362f2e71" name="[TOUCH DOOR]" agent="25535f1f-7e13-5c27-bd0b-034ca0575343" object="45fce52a-ea74-521f-8767-9c23ce99a18c" position="211,207" begin_frame="8948" end_frame="8951" begin_time="487" end_time="487" />
+				</event>
+				<event id="506b881f-0eb1-4d82-bbb3-70942e115f05" name="[WALK ON FLOOR]" production_rule="d2ee4dd4-2d7d-419d-a1a2-67357f474681" begin_frame="9808" end_frame="9896" begin_time="535" end_time="543">
+					<action id="f423dd15-4d93-444a-9380-85c82272c0cf" name="[WALK ON FLOOR POSE C]" agent="4433b7b2-55a9-54fc-bbc7-bd3aa7f82561" object="6ae6a6df-0d71-5ed9-bef8-13447795ab43" position="231,240" begin_frame="9808" end_frame="9896" begin_time="535" end_time="543" />
+				</event>
+				<event id="f814f49e-1fa5-4a06-be20-4f7853a9ace8" name="[USE FOUNTAIN]" production_rule="7160891a-7990-4efa-937f-abecf0164145" begin_frame="9897" end_frame="10071" begin_time="543" end_time="551">
+					<action id="d837ee7b-2a2d-4f55-8afb-f8a0d612a5c0" name="[APPROACH FOUNTAIN]" agent="4433b7b2-55a9-54fc-bbc7-bd3aa7f82561" object="b4324ed6-be38-5b50-ae90-751a13db7058" position="424,440" begin_frame="9897" end_frame="9953" begin_time="543" end_time="545" />
+					<action id="bf169ad9-0efe-4ee5-9df1-1ac5bb6b7d52" name="[DRINK FROM FOUNTAIN]" agent="4433b7b2-55a9-54fc-bbc7-bd3aa7f82561" object="b4324ed6-be38-5b50-ae90-751a13db7058" position="344,330" begin_frame="9954" end_frame="10071" begin_time="545" end_time="551" />
+				</event>
+				<event id="017b8eb2-d9c1-4da7-adad-45989ef63255" name="[USE CELLPHONE]" production_rule="5fcdab59-9480-4df2-b44a-4002df63c630" begin_frame="11213" end_frame="11281" begin_time="626" end_time="629">
+					<action id="f2a00d21-a81d-4814-8ef1-f367bfb95560" name="[TAKE OUT CELLPHONE]" agent="387542ab-2b42-5a51-8ee6-573d2ebe4ef3" object="b48f7cd6-c512-57d3-bc9d-f8478cde7c79" position="304,300" begin_frame="11213" end_frame="11269" begin_time="626" end_time="628" />
+					<action id="b288eca7-48ce-43f8-b37a-31755dc49cf5" name="[TALK ON CELLPHONE]" agent="387542ab-2b42-5a51-8ee6-573d2ebe4ef3" object="b48f7cd6-c512-57d3-bc9d-f8478cde7c79" position="266,267" begin_frame="11270" end_frame="11281" begin_time="628" end_time="629" />
+				</event>
+				<event id="63fb0bf5-b754-42a2-b659-068167a8e055" name="[USE CELLPHONE]" production_rule="5fcdab59-9480-4df2-b44a-4002df63c630" begin_frame="11335" end_frame="11485" begin_time="635" end_time="643">
+					<action id="21f72e44-c712-40e9-80d7-1eaf13dcf5a4" name="[TAKE OUT CELLPHONE]" agent="9ec1daa2-ed63-5f8f-a748-62570cef59bd" object="b48f7cd6-c512-57d3-bc9d-f8478cde7c79" position="206,223" begin_frame="11335" end_frame="11449" begin_time="635" end_time="641" />
+					<action id="68db90da-68d9-496c-9792-39c45c977ae2" name="[TALK ON CELLPHONE]" agent="9ec1daa2-ed63-5f8f-a748-62570cef59bd" object="b48f7cd6-c512-57d3-bc9d-f8478cde7c79" position="313,292" begin_frame="11450" end_frame="11450" begin_time="641" end_time="641" />
+					<action id="5940887d-23f7-4e07-b0fd-a6b7de8be3b5" name="[PUT BACK CELLPHONE]" agent="9ec1daa2-ed63-5f8f-a748-62570cef59bd" object="b48f7cd6-c512-57d3-bc9d-f8478cde7c79" position="312,291" begin_frame="11451" end_frame="11485" begin_time="641" end_time="643" />
+				</event>
+				<event id="f859258b-2b63-4fcf-8c40-f979c96bcf3b" name="[USE TRASH CAN]" production_rule="ab5fb284-50c7-4766-aa4c-3c106e1d4e4b" begin_frame="11487" end_frame="11502" begin_time="643" end_time="643">
+					<action id="d0d11542-9af9-4fe7-9a56-4f1e49ebb6d2" name="[BEND DOWN AT TRASH CAN]" agent="9ec1daa2-ed63-5f8f-a748-62570cef59bd" object="7876d2b9-7a92-58e1-9287-82134c426fc2" position="244,241" begin_frame="11487" end_frame="11502" begin_time="643" end_time="643" />
+				</event>
+				<event id="705d216a-ca12-49c1-988f-74f75ed6208e" name="[USE ELEVATOR BUTTON]" production_rule="554968f7-6f93-4e4f-b0b2-2d906780be93" begin_frame="11522" end_frame="11571" begin_time="648" end_time="651">
+					<action id="6bab9292-821d-4497-8b4b-0aafc241d433" name="[PRESS ELEVATOR BUTTON]" agent="56a8ba41-cba9-51a5-9e8e-623f9270fd1a" object="d08a887e-4e1c-5997-bdc7-18ce8e2be60b" position="308,291" begin_frame="11522" end_frame="11571" begin_time="648" end_time="651" />
+				</event>
+			</events>
+		</temporal>
+		<causal>
+			<instance id="1c0fd34a-58d4-4de2-b1bc-057aa2cafb16" causal_relation="24e23628-2ca1-4c2b-aef4-cb9288f773e4" action="6fa8dfa8-0f58-4316-81a6-f79fc2872311" fluent_change="861c0a24-92b0-4ee5-a14c-1d54789db239" />
+			<instance id="6883b246-2056-4a15-9950-cade2da82aa2" causal_relation="7079b49e-19ad-4486-afca-e5950801ff43" action="dea37759-fc5d-4819-ba6d-49356b267454" fluent_change="926e6d09-d0be-4ea6-8041-056293e375b1" />
+			<instance id="b7a708b4-d8ac-45d3-84b1-32ce26fbfd4b" causal_relation="6bab9292-821d-4497-8b4b-0aafc241d433" action="6fa8dfa8-0f58-4316-81a6-f79fc2872311" fluent_change="ff661072-b6a2-4c4a-ae1e-a3bb5922722a" />
+		</causal>
+	</interpretation>
+</video>
