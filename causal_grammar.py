@@ -51,24 +51,29 @@ def import_xml(filename): #, causal_forest):
 		frame = events[frame]
 		frame[name] = {'energy': energy, 'agent': agent}
 	for event in temporal_chunk.getElementsByTagName('event'):
-		# get actor from first element (there must always be a first "action" in the event)
-		# @TODO: handle start _and_ end frames
-		# @TODO: handle multiple actors (one per action, many per event)
+		# all 'action' agents are pulled in as the event agents; actions have one and only one agent
+		# events (and actions) are now split into _START and _END
 		actions = event.getElementsByTagName('action')
 		event_attributes = event.attributes;
-		frame_number = int(event_attributes['end_frame'].nodeValue)
+		event_start_frame = int(event_attributes['start_frame'].nodeValue)
+		event_end_frame = int(event_attributes['end_frame'].nodeValue)
 		event_name = event_attributes['name'].nodeValue
-		event_agent = actions[0].attributes['agent'].nodeValue
-		add_event(temporal_parses,event_agent,frame_number,event_name,interpretation_energy)
+		event_agents = []
 		for action in actions:
 			action_attributes = action.attributes
-			frame_number = int(action_attributes['end_frame'].nodeValue)
+			action_start_frame = int(action_attributes['start_frame'].nodeValue)
+			action_end_frame = int(action_attributes['end_frame'].nodeValue)
 			action_name = action_attributes['name'].nodeValue
-			action_agent = action_attributes['agent'].nodeValue
-			add_event(temporal_parses,action_agent,frame_number,action_name,interpretation_energy)
+			action_agent = [action_attributes['agent'].nodeValue]
+			event_agents.append(action_agent[0])
+			add_event(temporal_parses,action_agent,action_start_frame,"{}_START".format(action_name),interpretation_energy)
+			add_event(temporal_parses,action_agent,action_end_frame,"{}_END".format(action_name),interpretation_energy)
+		add_event(temporal_parses,event_agents,event_start_frame,"{}_START".format(event_name),interpretation_energy)
+		add_event(temporal_parses,event_agents,event_end_frame,"{}_END".format(event_name),interpretation_energy)
 	return [fluent_parses,temporal_parses]
 
 def import_csv(filename, fluents, events):
+	raise Exception("THIS IS OUT OF DATE: IT HAS NOT BEEN UPDATED TO HAVE _START AND _END AT THE VERY LEAST")
 	fluent_parses = {}
 	temporal_parses = {}
 	with open(filename,'r') as file:
@@ -123,7 +128,7 @@ def get_event_timeouts(forest):
 				if "timeout" in tree:
 					events[tree["symbol"]] = tree["timeout"]
 				else:
-					events[tree["symbol"]] = kDefaultTimeout
+					events[tree["symbol"]] = (-kDefaultTimeout,kDefaultTimeout)
 	return events
 
 def get_fluent_and_event_keys_we_care_about(forest):
@@ -185,8 +190,22 @@ def generate_parses(causal_tree):
 		raise Exception("UNKNOWN NODE TYPE: {}".format(node_type))
 	return partial_causal_parses
 
+def energy_to_probability(energy):
+	return math.exp(-energy)
+
 def probability_to_energy(probability):
 	return -math.log(probability)
+
+# changes '.*_on' to '.*_off' and vice versa
+def invert_name(fluent):
+	parts = fluent.split('_')
+	if parts[-1] in ('on','off'):
+		completion = {'on': 'off', 'off': 'on'}
+	else:
+		raise Exception("Unable to invert fluent '{}'".format(fluent))
+	# which is more perverse? :)
+	#return "{}_{}".format('_'.join(parts[:-1]),completion[parts[-1]])
+	return '_'.join(parts[:-1] + [completion[parts[-1]],])
 
 def calculate_energy(node, fluent_hash, event_hash):
 	node_energy = 0.0
@@ -205,6 +224,11 @@ def calculate_energy(node, fluent_hash, event_hash):
 		elif node["symbol_type"] in ("event",):
 			tmp_energy = event_hash[node["symbol"]]["energy"]
 			node_energy += tmp_energy
+		elif node["symbol_type"] in ("nonevent",):
+			tmp_energy = event_hash[node["symbol"]]["energy"]
+			node_energy += probability_to_energy(1-energy_to_probability(tmp_energy))
+		else:
+			raise Exception("unhandled symbol_type '{}'".format(node['symbol_type']))
 	if "children" in node:
 		for child in node["children"]:
 			child_energy = calculate_energy(child, fluent_hash, event_hash)
@@ -243,7 +267,7 @@ def print_previous_energies(fluent_hash):
 def clear_outdated_events(event_hash, event_timeouts, frame):
 	global kUnknownEnergy
 	for event in event_hash:
-		if event_hash[event]["energy"] != kUnknownEnergy and frame - event_hash[event]["frame"] > event_timeouts[event]:
+		if event_hash[event]["energy"] != kUnknownEnergy and frame - event_hash[event]["frame"] > event_timeouts[event][1]:
 			# print("RESETTING EVENT {} AT {}".format(event,frame))
 			event_hash[event]["frame"] = -1
 			event_hash[event]["energy"] = kUnknownEnergy
@@ -279,7 +303,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 		events = keys["events"]
 		max_event_timeout = 0
 		for event in events:
-			event_timeout = event_timeouts[event]
+			event_timeout = event_timeouts[event][1]
 			if event_timeout > max_event_timeout:
 				max_event_timeout = event_timeout
 		# if parse was last updated longer ago than max event timeout frames, cull
@@ -428,6 +452,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 						# TODO: this is a bug!  this will kill all but the first type of fluent
 						# if we want to remove the case of parses timing out when they never
 						# actually had an event create them
+						print("@TODO: this is a bug!")
 						active_parse_trees.pop(key)
 		else:
 			frame = temporal_parse_frames[temporal_parse_index]
@@ -469,32 +494,6 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 	# report all ... stuff ... at ... end
 	print "DONE"
 
-if __name__ == 'main':
-	# our causal forest:
-	causal_forest = [ {
-		"node_type": "root",
-		"symbol_type": "fluent",
-		"symbol": "light_on",
-		"children": [
-			{ "node_type": "leaf", "probability": .3, "symbol": "light_on", "symbol_type": "prev_fluent" },
-			{ "node_type": "and", "probability": .7, "children": [
-					{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_off" },
-					{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1", "timeout": 10 },
-				]
-			},
-		],
-	}, {
-		"node_type": "root",
-		"symbol_type": "fluent",
-		"symbol": "light_off",
-		"children": [
-			{ "node_type": "leaf", "probability": .3, "symbol_type":"prev_fluent", "symbol": "light_off" },
-			{ "node_type": "and", "probability": .7, "children": [
-					{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_on" },
-					{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1", "timeout": 10 },
-				]
-			},
-		],
-	},
-	]
-	process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, kFluentThresholdOnEnergy, kFluentThresholdOffEnergy, kReportingThresholdEnergy)
+if __name__ == '__main__':
+	# WHOO!
+	import demo
