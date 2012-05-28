@@ -7,6 +7,7 @@ import itertools
 import math # for log, etc
 
 kUnknownEnergy = 0.7 # TODO: may want to tune
+kUnlikelyEnergy = 5.0 # TODO: may want to tune
 kZeroProbabilityEnergy = 10.0 # TODO: may want to tune: 10.0 = very low
 kFluentThresholdOnEnergy = 0.36 # TODO: may want to tune: 0.36 = 0.7 probability
 kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
@@ -38,17 +39,16 @@ def generate_causal_forest_from_abbreviated_forest(abbreviated_forest):
 		forest.append(tree)
 	return forest
 
-def import_xml(filename): #, causal_forest):
-	global kZeroProbabilityEnergy
-	fluent_parses = {}
+def import_xml(filename):
+	fluent_parses = {"initial":{}}
 	temporal_parses = {}
-	# keys =  get_fluent_and_event_keys_we_care_about(causal_forest)
 	from xml.dom.minidom import parse
 	document = parse(filename)
 	interpretation_chunk = document.getElementsByTagName('interpretation')[0]
 	interpretation_probability = float(interpretation_chunk.attributes['probability'].nodeValue)
 	interpretation_energy = probability_to_energy(interpretation_probability)
 	temporal_chunk = document.getElementsByTagName('temporal')[0]
+	initial_fluents = fluent_parses["initial"];
 	for fluent_change in temporal_chunk.getElementsByTagName('fluent_change'):
 		fluent_attributes = fluent_change.attributes;
 		frame_number = int(fluent_attributes['frame'].nodeValue)
@@ -62,7 +62,16 @@ def import_xml(filename): #, causal_forest):
 		elif new_value == 0 or new_value == '0':
 			new_value = kZeroProbabilityEnergy
 		else:
-			raise Exception("{} not 1 or 0 for frame {}: {}".format(fluent, frame_number, new_value))
+			raise Exception("new value {} not 1 or 0 for frame {}: {}".format(fluent, frame_number, new_value))
+		if fluent not in initial_fluents:
+			old_value = fluent_attributes['old_value'].nodeValue
+			if old_value == 1 or old_value == '1':
+				old_value = interpretation_energy
+			elif old_value == 0 or old_value == '0':
+				old_value = kZeroProbabilityEnergy
+			else:
+				raise Exception("old value {} not 1 or 0 for frame {}: {}".format(fluent, frame_number, old_value))
+			initial_fluents[fluent] = old_value
 		frame[fluent] = new_value
 	def add_event(events, agent, frame, name, energy):
 		if frame not in events:
@@ -135,7 +144,6 @@ def hr():
 
 # TODO: a given event is assumed to have the same timeout everywhere in the grammar
 def get_event_timeouts(forest):
-	global kDefaultTimeout
 	events = {}
 	for tree in forest:
 		if "children" in tree:
@@ -173,10 +181,7 @@ def filter_changes(changes, keys_in_grammar):
 		# print "testing: {}".format(key)
 		if "_" in key:
 			prefix, postfix = key.rsplit("_",1)
-			if postfix in ("on",):
-				keys_for_filtering.append(prefix)
-				continue
-			elif postfix in ("off",):
+			if postfix in ("on","off"):
 				keys_for_filtering.append(prefix)
 				continue
 		keys_for_filtering.append(key)
@@ -262,7 +267,10 @@ def make_tree_like_lisp(causal_tree):
 	if "symbol" in causal_tree:
 		my_symbol = causal_tree["symbol"]
 	if "children" not in causal_tree:
-		return my_symbol
+		if "symbol_type" in causal_tree and causal_tree["symbol_type"] in ("nonevent",):
+			return "".join(("NOT ",my_symbol))
+		else:
+			return my_symbol
 	simple_children = []
 	for child in causal_tree["children"]:
 		simple_children.append(make_tree_like_lisp(child))
@@ -285,20 +293,18 @@ def print_previous_energies(fluent_hash):
 		fluent_energies[fluent] = fluent_hash[fluent]["prev_energy"]
 	print "PREV FLUENT: {}".format(fluent_energies)
 
-# sets any events that haven't triggered within their timeout number of frames to kUnknownEnergy
+# sets any events that haven't triggered within their timeout number of frames to kUnlikelyEnergy
 def clear_outdated_events(event_hash, event_timeouts, frame):
-	global kUnknownEnergy
 	for event in event_hash:
-		if event_hash[event]["energy"] != kUnknownEnergy and frame - event_hash[event]["frame"] > event_timeouts[event]:
+		if event_hash[event]["energy"] != kUnlikelyEnergy and frame - event_hash[event]["frame"] > event_timeouts[event]:
 			# print("RESETTING EVENT {} AT {}".format(event,frame))
 			event_hash[event]["frame"] = -1
-			event_hash[event]["energy"] = kUnknownEnergy
+			event_hash[event]["energy"] = kUnlikelyEnergy
 			event_hash[event]["agent"] = False
 
 def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame):
 	# we have a winner! let's show them what they've won, bob!
 	hr()
-	global kDebugEnergies
 	energy = calculate_energy(active_parse_tree, fluent_hash, event_hash)
 	fluent = active_parse_tree["symbol"]
 	print "{} PARSE TREE COMPLETED at {}: energy({})\n{}\n***{}***".format(fluent,frame,energy,make_tree_like_lisp(active_parse_tree),active_parse_tree)
@@ -346,18 +352,17 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 							# maybe the trees themselves are referenced multiple times and so
 							# added to? anyway, we can work around that by not doing the same
 							# id multiple times here
+							# raise Exception("TODO, EH??")
 							parses_completed.append(other_parse['id'])
 							complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frame)
 
 def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy):
-	global kUnknownEnergy
-	global kZeroProbabilityEnergy
-	global kFilterNonEventTriggeredParseTimeouts
-	global kFluentStatusUnknown
-	global kFluentStatusOn
-	global kFluentStatusOff
 	fluent_parse_index = 0
 	temporal_parse_index = 0
+	initial_conditions = False
+	if "initial" in fluent_parses:
+		initial_conditions = fluent_parses["initial"]
+		del fluent_parses["initial"]
 	fluent_parse_frames = sorted(fluent_parses, key=fluent_parses.get)
 	fluent_parse_frames.sort()
 	temporal_parse_frames = sorted(temporal_parses, key=temporal_parses.get)
@@ -373,14 +378,35 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 			if key in event_hash:
 				event_hash[key]["trees"].append(causal_tree)
 			else:
-				event_hash[key] = {"agent": False, "frame": -1, "energy": kUnknownEnergy, "trees": [causal_tree,]}
+				event_hash[key] = {"agent": False, "frame": -1, "energy": kUnlikelyEnergy, "trees": [causal_tree,]}
 		for key in keys['fluents']:
 			if key in fluent_hash:
 				fluent_hash[key]["trees"].append(causal_tree)
 			else:
-				fluent_hash[key] = {"energy": kUnknownEnergy, "prev_energy": kUnknownEnergy, "trees": [causal_tree,]}
+				initial_condition = kUnknownEnergy
+				key_chop = key
+				postfix = False
+				if "_" in key:
+					prefix, postfix = key.rsplit("_",1)
+					if postfix in ("on","off",):
+						key_chop = prefix
+				if initial_conditions and key_chop in initial_conditions:
+					if postfix == "on":
+						initial_condition = initial_conditions[key_chop]
+					else:
+						initial_condition = initial_conditions[key_chop]
+						if initial_condition == 0:
+							initial_condition = kZeroProbabilityEnergy
+						else:
+							initial_condition = probability_to_energy(1-energy_to_probability(initial_condition))
+					#print("USING INITIAL CONDITIONS FOR KEY {}: {}".format(key,initial_condition))
+				#else:
+					#print("NOT USING INITIAL CONDITIONS FOR KEY {}".format(key))
+				fluent_hash[key] = {"energy": initial_condition, "prev_energy": initial_condition, "trees": [causal_tree,]}
 			fluent_hash[key]["status"] = kFluentStatusUnknown
-	# print "INITIAL CONDITIONS"
+	#for key in fluent_hash.keys():
+	#	print "{}: {}".format(key,fluent_hash[key]['energy'])
+	#print initial_conditions
 	# print_current_energies(fluent_hash, event_hash)
 	parse_id = 0 # give each parse tree a unique id
 	parse_array = []
@@ -429,7 +455,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 				fluent_on_probability = math.exp(-fluent_on_energy)
 				fluent_off_probability = 1 - fluent_on_probability
 				if 0 == fluent_off_probability:  
-					# TODO: might also need to cathc this for fluent_on_probability 
+					# TODO: might also need to catch this for fluent_on_probability 
 					fluent_off_energy = kZeroProbabilityEnergy
 				else:
 					fluent_off_energy = -math.log(fluent_off_probability)
