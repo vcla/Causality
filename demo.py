@@ -101,5 +101,6 @@ if False:
 	event_maps = {"Touch_Switch":"E1", "Close_Door_Inside": "door_close_inside", "Close_Door_Outside": "door_close_outside", "Open_Door_Inside":"door_open_inside", "Open_Door_Outside":"door_open_outside"}
 	fluent_parses, temporal_parses = causal_grammar.import_csv("Exp2_output_data.txt",fluent_maps,event_maps)
 
+print "--RUNNING DEMO--"
 causal_grammar.process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy)
-print "BOY HOWDY!"
+print "--DEMO COMPLETE--"

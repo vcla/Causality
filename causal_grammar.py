@@ -19,6 +19,25 @@ kFluentStatusUnknown = 1
 kFluentStatusOn = 2
 kFluentStatusOff = 3
 
+def generate_causal_forest_from_abbreviated_forest(abbreviated_forest):
+	forest = []
+	for child in abbreviated_forest:
+		tree = {}
+		if child[0]:
+			tree["node_type"] = child[0]
+		if child[1]:
+			tree["symbol_type"] = child[1]
+		if child[2]:
+			tree["symbol"] = child[2]
+		if child[3]:
+			tree["probability"] = child[3]
+		if child[4]:
+			tree["timeout"] = child[4]
+		if child[5]:
+			tree["children"] = generate_causal_forest_from_abbreviated_forest(child[5])
+		forest.append(tree)
+	return forest
+
 def import_xml(filename): #, causal_forest):
 	global kZeroProbabilityEnergy
 	fluent_parses = {}
@@ -55,13 +74,13 @@ def import_xml(filename): #, causal_forest):
 		# events (and actions) are now split into _START and _END
 		actions = event.getElementsByTagName('action')
 		event_attributes = event.attributes;
-		event_start_frame = int(event_attributes['start_frame'].nodeValue)
+		event_start_frame = int(event_attributes['begin_frame'].nodeValue)
 		event_end_frame = int(event_attributes['end_frame'].nodeValue)
 		event_name = event_attributes['name'].nodeValue
 		event_agents = []
 		for action in actions:
 			action_attributes = action.attributes
-			action_start_frame = int(action_attributes['start_frame'].nodeValue)
+			action_start_frame = int(action_attributes['begin_frame'].nodeValue)
 			action_end_frame = int(action_attributes['end_frame'].nodeValue)
 			action_name = action_attributes['name'].nodeValue
 			action_agent = [action_attributes['agent'].nodeValue]
@@ -151,15 +170,18 @@ def get_fluent_and_event_keys_we_care_about(forest):
 def filter_changes(changes, keys_in_grammar):
 	keys_for_filtering = []
 	for key in keys_in_grammar:
+		# print "testing: {}".format(key)
 		if "_" in key:
-			prefix, postfix = key.split("_",1)
-			if postfix == "on":
+			prefix, postfix = key.rsplit("_",1)
+			if postfix in ("on",):
 				keys_for_filtering.append(prefix)
 				continue
-			elif postfix == "off":
+			elif postfix in ("off",):
 				keys_for_filtering.append(prefix)
 				continue
 		keys_for_filtering.append(key)
+	keys_for_filtering = set(keys_for_filtering)
+	# print "KEYS FOR FILTERING: {}".format(keys_for_filtering)
 	for x in [x for x in changes.keys() if x not in keys_for_filtering]:
 		changes.pop(x)
 
@@ -490,9 +512,9 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 			# close any completed parse trees? maintain list of completed parse trees (over reporting_threshold_energy)
 			hr()
 		"""
-	hr()
+	# hr()
 	# report all ... stuff ... at ... end
-	print "DONE"
+	# print "DONE"
 
 if __name__ == '__main__':
 	# WHOO!

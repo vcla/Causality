@@ -1,0 +1,27 @@
+### GRAMMAR FOR ZHU OFFICE -- NIPS 2012 ###
+abbreviated_office_grammar = [
+	# TRASH MORE
+	# TRASH LESS
+	# AGENT HAS TRASH
+	# AGENT DOESN"T HAVE TRASH (AGENT_TRASH_OFF)
+	# MONITOR DISPLAY ON
+	# MONITOR DISPLAY OFF
+	# MONITOR POWER ON
+	# MONITOR POWER OFF
+	# COMPUTER AWAKE ON
+	# COMPUTER AWAKE OFF
+	# WATER STREAM ON
+	# WATER STREAM OFF
+	# CUP MORE
+	# CUP LESS
+	# AGENT THIRSTY
+	# AGENT SATIATED (AGENT_THIRSTY_OFF)
+	# PHONE ACTIVE
+	# PHONE STANDBY
+	# PHONE RINGING
+	# PHONE RINGING OFF
+]
+
+
+import causal_grammar
+causal_forest = causal_grammar.generate_causal_forest_from_abbreviated_forest(abbreviated_office_grammar)
