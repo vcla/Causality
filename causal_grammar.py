@@ -267,7 +267,7 @@ def print_previous_energies(fluent_hash):
 def clear_outdated_events(event_hash, event_timeouts, frame):
 	global kUnknownEnergy
 	for event in event_hash:
-		if event_hash[event]["energy"] != kUnknownEnergy and frame - event_hash[event]["frame"] > event_timeouts[event][1]:
+		if event_hash[event]["energy"] != kUnknownEnergy and frame - event_hash[event]["frame"] > event_timeouts[event]:
 			# print("RESETTING EVENT {} AT {}".format(event,frame))
 			event_hash[event]["frame"] = -1
 			event_hash[event]["energy"] = kUnknownEnergy
@@ -303,7 +303,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 		events = keys["events"]
 		max_event_timeout = 0
 		for event in events:
-			event_timeout = event_timeouts[event][1]
+			event_timeout = event_timeouts[event]
 			if event_timeout > max_event_timeout:
 				max_event_timeout = event_timeout
 		# if parse was last updated longer ago than max event timeout frames, cull

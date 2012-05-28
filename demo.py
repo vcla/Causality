@@ -34,11 +34,11 @@ causal_forest = [
 	"children": [
 		{ "node_type": "and", "probability": .3, "children": [
 				{ "node_type": "leaf", "symbol": "light_on", "symbol_type": "prev_fluent" },
-				{ "node_type": "leaf", "symbol": "E1_START", "symbol_type": "nonevent", "timeout": (-10,10) },
+				{ "node_type": "leaf", "symbol": "E1_START", "symbol_type": "nonevent", "timeout": 10 },
 		]},
 		{ "node_type": "and", "probability": .7, "children": [
 				{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_off" },
-				{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1_START", "timeout": (-10,10) },
+				{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1_START", "timeout": 10 },
 			]
 		},
 	],
@@ -49,11 +49,11 @@ causal_forest = [
 	"children": [
 		{ "node_type": "and", "probability": .3, "children": [
 				{ "node_type": "leaf", "symbol": "light_off", "symbol_type": "prev_fluent" },
-				{ "node_type": "leaf", "symbol": "E1_START", "symbol_type": "nonevent", "timeout": (-10,10) },
+				{ "node_type": "leaf", "symbol": "E1_START", "symbol_type": "nonevent", "timeout": 10 },
 		]},
 		{ "node_type": "and", "probability": .7, "children": [
 				{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_on" },
-				{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1_START", "timeout": (-10,10) },
+				{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1_START", "timeout": 10 },
 			]
 		},
 	],
@@ -66,12 +66,12 @@ causal_forest = [
 		{ "node_type": "inertial", "probability": .6, "symbol": "dooropen_on", "symbol_type": "prev_fluent" },
 		{ "node_type": "and", "probability": .2, "children": [
 				{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "dooropen_off" },
-				{ "node_type": "leaf", "symbol_type": "event", "symbol": "door_open_outside", "timeout": (-20,20) },
+				{ "node_type": "leaf", "symbol_type": "event", "symbol": "door_open_outside", "timeout": 20 },
 			]
 		},
 		{ "node_type": "and", "probability": .2, "children": [
 				{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "dooropen_off" },
-				{ "node_type": "leaf", "symbol_type": "event", "symbol": "door_open_inside", "timeout": (-20,20) },
+				{ "node_type": "leaf", "symbol_type": "event", "symbol": "door_open_inside", "timeout": 20 },
 			]
 		},
 	],
@@ -83,12 +83,12 @@ causal_forest = [
 		{ "node_type": "inertial", "probability": .6, "symbol_type":"prev_fluent", "symbol": "dooropen_off" },
 		{ "node_type": "and", "probability": .2, "children": [
 				{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "dooropen_on" },
-				{ "node_type": "leaf", "symbol_type": "event", "symbol": "door_close_outside", "timeout": (-20,20) },
+				{ "node_type": "leaf", "symbol_type": "event", "symbol": "door_close_outside", "timeout": 20 },
 			]
 		},
 		{ "node_type": "and", "probability": .2, "children": [
 				{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "dooropen_on" },
-				{ "node_type": "leaf", "symbol_type": "event", "symbol": "door_close_inside", "timeout": (-20,20) },
+				{ "node_type": "leaf", "symbol_type": "event", "symbol": "door_close_inside", "timeout": 20 },
 			]
 		},
 	],
