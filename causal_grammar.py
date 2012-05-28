@@ -7,7 +7,7 @@ import itertools
 import math # for log, etc
 
 kUnknownEnergy = 0.7 # TODO: may want to tune
-kUnlikelyEnergy = 5.0 # TODO: may want to tune
+kUnlikelyEnergy = 10.0 # TODO: may want to tune
 kZeroProbabilityEnergy = 10.0 # TODO: may want to tune: 10.0 = very low
 kFluentThresholdOnEnergy = 0.36 # TODO: may want to tune: 0.36 = 0.7 probability
 kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
@@ -169,7 +169,7 @@ def get_fluent_and_event_keys_we_care_about(forest):
 		if "symbol_type" in tree:
 			if tree["symbol_type"] in ("fluent","prev_fluent"):
 				fluents.append(tree["symbol"])
-			elif "event" == tree["symbol_type"]:
+			elif tree["symbol_type"] in ("event","nonevent"):
 				events.append(tree["symbol"])
 	return { "fluents": fluents, "events": events }
 
@@ -383,6 +383,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 			if key in fluent_hash:
 				fluent_hash[key]["trees"].append(causal_tree)
 			else:
+				# new fluent goes into our hash, set it up with initial conditions if we have those
 				initial_condition = kUnknownEnergy
 				key_chop = key
 				postfix = False
@@ -399,9 +400,6 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 							initial_condition = kZeroProbabilityEnergy
 						else:
 							initial_condition = probability_to_energy(1-energy_to_probability(initial_condition))
-					#print("USING INITIAL CONDITIONS FOR KEY {}: {}".format(key,initial_condition))
-				#else:
-					#print("NOT USING INITIAL CONDITIONS FOR KEY {}".format(key))
 				fluent_hash[key] = {"energy": initial_condition, "prev_energy": initial_condition, "trees": [causal_tree,]}
 			fluent_hash[key]["status"] = kFluentStatusUnknown
 	#for key in fluent_hash.keys():
@@ -412,6 +410,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 	parse_array = []
 	parse_id_hash_by_fluent = {}
 	parse_id_hash_by_event = {}
+	# build lookups by fluent and event
 	for causal_tree in causal_forest:
 		# print "PARSES FOR CAUSAL TREE {}:".format(causal_tree["symbol"])
 		causal_tree["parses"] = generate_parses(causal_tree)
@@ -433,8 +432,6 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 			#parse_energy = calculate_energy(parse, fluent_hash, event_hash)
 			#print "E: {}".format(parse_energy)
 			parse_id += 1
-		#hr()
-	#print parse_array
 	# loop through the parses, getting the "next frame a change happens in"; if a change happens
 	# in both at the same time, they will be handled sequentially, the fluent first
 	active_parse_trees = {}
@@ -515,12 +512,13 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 				# then are each of those separate parses, or are they a combined parse, or is one subsumed
 				# by the other...? NOT worrying about this now.
 				info = changes[event]
-				# print("SETTING EVENT {} AT {} TO {}".format(event,frame,info['energy']))
+				print("SETTING EVENT {} AT {} TO {}".format(event,frame,info['energy']))
 				event_hash[event]['energy'] = info['energy']
 				event_hash[event]['agent'] = info['agent']
 				event_hash[event]['frame'] = frame
 				# print_current_energies(fluent_hash,event_hash)
 				for parse_id in parse_id_hash_by_event[event]:
+					print("PARSE ID {} is good for it".format(parse_id))
 					if parse_id not in active_parse_trees:
 						# create this parse if it's not in our list of active parses
 						active_parse_trees[parse_id] = parse_array[parse_id]

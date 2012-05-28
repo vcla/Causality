@@ -22,7 +22,7 @@ abbreviated_hallway_grammar = [
 			# inertially ON
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "DOOR_OPEN_on", False, False, False),
-					("leaf", "nonevent", "", False, (0,10), False), # TODO: non-action
+					("leaf", "nonevent", "@TODO@", False, (0,10), False), # TODO: non-action
 				]
 			),
 			# causally ON (open door inside)  # TODO
@@ -153,7 +153,7 @@ abbreviated_hallway_grammar = [
 	("root", "fluent", "AGENT_THIRST_off", False, False, [
 			# OFF INERTIALLY
 			("and", False, False, .6, False, [
-					("inertial", "prev_fluent", "AGENT_THIRST_off", False, False, False),
+					("leaf", "prev_fluent", "AGENT_THIRST_off", False, False, False),
 					# TODO: Timer for on causally
 				]
 			),

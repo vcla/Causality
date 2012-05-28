@@ -63,7 +63,7 @@ causal_forest = [
 	"symbol_type": "fluent",
 	"symbol": "dooropen_on",
 	"children": [
-		{ "node_type": "inertial", "probability": .6, "symbol": "dooropen_on", "symbol_type": "prev_fluent" },
+		{ "node_type": "leaf", "probability": .6, "symbol": "dooropen_on", "symbol_type": "prev_fluent" },
 		{ "node_type": "and", "probability": .2, "children": [
 				{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "dooropen_off" },
 				{ "node_type": "leaf", "symbol_type": "event", "symbol": "door_open_outside", "timeout": 20 },
@@ -80,7 +80,7 @@ causal_forest = [
 	"symbol_type": "fluent",
 	"symbol": "dooropen_off",
 	"children": [
-		{ "node_type": "inertial", "probability": .6, "symbol_type":"prev_fluent", "symbol": "dooropen_off" },
+		{ "node_type": "leaf", "probability": .6, "symbol_type":"prev_fluent", "symbol": "dooropen_off" },
 		{ "node_type": "and", "probability": .2, "children": [
 				{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "dooropen_on" },
 				{ "node_type": "leaf", "symbol_type": "event", "symbol": "door_close_outside", "timeout": 20 },
@@ -101,6 +101,18 @@ if False:
 	event_maps = {"Touch_Switch":"E1", "Close_Door_Inside": "door_close_inside", "Close_Door_Outside": "door_close_outside", "Open_Door_Inside":"door_open_inside", "Open_Door_Outside":"door_open_outside"}
 	fluent_parses, temporal_parses = causal_grammar.import_csv("Exp2_output_data.txt",fluent_maps,event_maps)
 
+print "--PREPPING DEMO--"
+import pprint
+pp = pprint.PrettyPrinter(indent=1)
+print("causal_forest")
+pp.pprint(causal_forest)
+causal_grammar.hr()
+print("fluent_parses")
+pp.pprint(fluent_parses)
+causal_grammar.hr()
+print("temporal_parses")
+pp.pprint(temporal_parses)
+causal_grammar.hr()
 print "--RUNNING DEMO--"
 causal_grammar.process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy)
 print "--DEMO COMPLETE--"
