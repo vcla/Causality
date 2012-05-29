@@ -23,6 +23,8 @@ temporal_parses = {
 	15: { "E1_START": {"energy": .223, "agent": ("uuid9") } },
 	19: { "E1_END": {"energy": .223, "agent": ("uuid9") } },
 	45: { "E3_END": {"energy": .916, "agent": ("uuid3") } },
+	450: { "E1_START": {"energy": .916, "agent": ("uuid3") } },
+	455: { "E1_END": {"energy": .916, "agent": ("uuid3") } },
 }
 
 # our causal forest:

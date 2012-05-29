@@ -22,7 +22,7 @@ abbreviated_hallway_grammar = [
 			# inertially ON
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "DOOR_OPEN_on", False, False, False),
-					("leaf", "nonevent", "@TODO@", False, (0,10), False), # TODO: non-action
+					("leaf", "nonevent", "@TODO@", False, 10, False), # TODO: non-action
 				]
 			),
 			# causally ON (open door inside)  # TODO
@@ -36,13 +36,13 @@ abbreviated_hallway_grammar = [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
-					("leaf", "nonevent", "TOUCH_SWITCH_START",  False, (0,10), False),
+					("leaf", "nonevent", "TOUCH_SWITCH_START",  False, 10, False),
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
-					("leaf", "event", "TOUCH_SWITCH_START",  False, (0,10), False),
+					("leaf", "event", "TOUCH_SWITCH_START",  False, 10, False),
 				]
 			)
 		]
@@ -52,13 +52,13 @@ abbreviated_hallway_grammar = [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
-					("leaf", "nonevent", "TOUCH_SWITCH_START",  False, (0,10), False),
+					("leaf", "nonevent", "TOUCH_SWITCH_START",  False, 10, False),
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
-					("leaf", "event", "TOUCH_SWITCH_START",  False, (0,10), False),
+					("leaf", "event", "TOUCH_SWITCH_START",  False, 10, False),
 				]
 			)
 		]
@@ -68,13 +68,13 @@ abbreviated_hallway_grammar = [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "WATER_STREAM_on", False, False, False),
-					("leaf", "nonevent", "[USE FOUNTAIN]_END", False, (0,1), False),
+					("leaf", "nonevent", "[USE FOUNTAIN]_END", False, 1, False),
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "WATER_STREAM_off", False, False, False),
-					("leaf", "event", "[USE FOUNTAIN]_START", False, (0,1), False),
+					("leaf", "event", "[USE FOUNTAIN]_START", False, 1, False),
 				]
 			)
 		]
@@ -84,13 +84,13 @@ abbreviated_hallway_grammar = [
 			# OFF INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "WATER_STREAM_off", False, False, False),
-					("leaf", "nonevent", "[USE FOUNTAIN]_START", False, (0,1), False),
+					("leaf", "nonevent", "[USE FOUNTAIN]_START", False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "WATER_STREAM_on", False, False, False),
-					("leaf", "event", "[USE FOUNTAIN]_END", False, (0,1), False)
+					("leaf", "event", "[USE FOUNTAIN]_END", False, 1, False)
 				]
 			)
 		]
@@ -100,13 +100,13 @@ abbreviated_hallway_grammar = [
 			# ON CAUSALLY (NEVER ON INERTIALLY)
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "TRASH_MORE_on", False, False, False),
-					("leaf", "event", "[DROP TRASH]_END", False, (0,1), False),
+					("leaf", "event", "[DROP TRASH]_END", False, 1, False),
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "TRASH_MORE_off", False, False, False),
-					("leaf", "event", "[DROP TRASH]_END", False, (0,1), False)
+					("leaf", "event", "[DROP TRASH]_END", False, 1, False)
 				]
 			)
 		]
@@ -116,13 +116,13 @@ abbreviated_hallway_grammar = [
 			# OFF INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "TRASH_MORE_off", False, False, False),
-					("leaf", "nonevent", "[DROP TRASH]_END", False, (0,1), False),
+					("leaf", "nonevent", "[DROP TRASH]_END", False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "TRASH_MORE_on", False, False, False),
-					("leaf", "nonevent", "[DROP TRASH]_END", False, (0,1), False),
+					("leaf", "nonevent", "[DROP TRASH]_END", False, 1, False),
 				]
 			)
 		]
@@ -138,7 +138,7 @@ abbreviated_hallway_grammar = [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "AGENT_THIRST_on", False, False, False),
-					("leaf", "nonevent", "[USE FOUNTAIN]_END", False, (0,1), False),
+					("leaf", "nonevent", "[USE FOUNTAIN]_END", False, 1, False),
 				]
 			),
 			# ON CAUSALLY
@@ -160,7 +160,7 @@ abbreviated_hallway_grammar = [
 			# OFF CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "AGENT_THIRST_on", False, False, False),
-					("leaf", "event", "[USE FOUNTAIN]_END", False, (0,1), False)
+					("leaf", "event", "[USE FOUNTAIN]_END", False, 1, False)
 				]
 			)
 		]

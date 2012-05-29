@@ -14,7 +14,7 @@ kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
 kReportingThresholdEnergy = 0.5 # TODO: may want to tune
 kDefaultEventTimeout = 10 # shouldn't need to tune because this should be tuned in grammar
 kFilterNonEventTriggeredParseTimeouts = False # what the uber-long variable name implies
-kDebugEnergies = True # if true, print out fluent current/prev and event energies when completing a parse tree
+kDebugEnergies = False # if true, print out fluent current/prev and event energies when completing a parse tree
 
 kFluentStatusUnknown = 1
 kFluentStatusOn = 2
@@ -140,7 +140,7 @@ def import_csv(filename, fluents, events):
 	return [fluent_parses,temporal_parses]
 
 def hr():
-	print "---------------------------------"
+	print("---------------------------------")
 
 # TODO: a given event is assumed to have the same timeout everywhere in the grammar
 def get_event_timeouts(forest):
@@ -149,13 +149,13 @@ def get_event_timeouts(forest):
 		if "children" in tree:
 			child_timeouts = get_event_timeouts(tree["children"])
 			for key in child_timeouts:
-				events[key] = child_timeouts[key]
+				events[key] = int(child_timeouts[key])
 		if "symbol_type" in tree:
 			if "event" == tree["symbol_type"]:
 				if "timeout" in tree:
-					events[tree["symbol"]] = tree["timeout"]
+					events[tree["symbol"]] = int(tree["timeout"])
 				else:
-					events[tree["symbol"]] = (-kDefaultTimeout,kDefaultTimeout)
+					events[tree["symbol"]] = int(kDefaultTimeout)
 	return events
 
 def get_fluent_and_event_keys_we_care_about(forest):
@@ -178,7 +178,7 @@ def get_fluent_and_event_keys_we_care_about(forest):
 def filter_changes(changes, keys_in_grammar):
 	keys_for_filtering = []
 	for key in keys_in_grammar:
-		# print "testing: {}".format(key)
+		# print("testing: {}".format(key))
 		if "_" in key:
 			prefix, postfix = key.rsplit("_",1)
 			if postfix in ("on","off"):
@@ -186,7 +186,7 @@ def filter_changes(changes, keys_in_grammar):
 				continue
 		keys_for_filtering.append(key)
 	keys_for_filtering = set(keys_for_filtering)
-	# print "KEYS FOR FILTERING: {}".format(keys_for_filtering)
+	# print("KEYS FOR FILTERING: {}".format(keys_for_filtering))
 	for x in [x for x in changes.keys() if x not in keys_for_filtering]:
 		changes.pop(x)
 
@@ -221,7 +221,10 @@ def energy_to_probability(energy):
 	return math.exp(-energy)
 
 def probability_to_energy(probability):
-	return -math.log(probability)
+	if probability == 0:
+		return kZeroProbabilityEnergy
+	else:
+		return -math.log(probability)
 
 # changes '.*_on' to '.*_off' and vice versa
 def invert_name(fluent):
@@ -281,44 +284,45 @@ def print_current_energies(fluent_hash,event_hash):
 	fluent_energies = {}
 	for fluent in fluent_hash:
 		fluent_energies[fluent] = fluent_hash[fluent]["energy"]
-	print "CURRENT FLUENT: {}".format(fluent_energies)
+	print("CURRENT FLUENT: {}".format(fluent_energies))
 	event_energies = {}
 	for event in event_hash:
 		event_energies[event] = event_hash[event]["energy"]
-	print "CURRENT EVENT: {}".format(event_energies)
+	print("CURRENT EVENT: {}".format(event_energies))
 
 def print_previous_energies(fluent_hash):
 	fluent_energies = {}
 	for fluent in fluent_hash:
 		fluent_energies[fluent] = fluent_hash[fluent]["prev_energy"]
-	print "PREV FLUENT: {}".format(fluent_energies)
+	print("PREV FLUENT: {}".format(fluent_energies))
 
 # sets any events that haven't triggered within their timeout number of frames to kUnlikelyEnergy
 def clear_outdated_events(event_hash, event_timeouts, frame):
 	for event in event_hash:
 		if event_hash[event]["energy"] != kUnlikelyEnergy and frame - event_hash[event]["frame"] > event_timeouts[event]:
-			# print("RESETTING EVENT {} AT {}".format(event,frame))
+			# print("CLEARING EVENT {} @ {}".format(event,frame))
 			event_hash[event]["frame"] = -1
 			event_hash[event]["energy"] = kUnlikelyEnergy
 			event_hash[event]["agent"] = False
 
 def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame):
 	# we have a winner! let's show them what they've won, bob!
-	hr()
 	energy = calculate_energy(active_parse_tree, fluent_hash, event_hash)
 	fluent = active_parse_tree["symbol"]
-	print "{} PARSE TREE COMPLETED at {}: energy({})\n{}\n***{}***".format(fluent,frame,energy,make_tree_like_lisp(active_parse_tree),active_parse_tree)
-	if kDebugEnergies:
-		print_current_energies(fluent_hash, event_hash)
-		print_previous_energies(fluent_hash)
+	# print("{} PARSE TREE {} COMPLETED at {}: energy({})\n{}\n***{}***".format(fluent,active_parse_tree['id'],frame,energy,make_tree_like_lisp(active_parse_tree),active_parse_tree))
+	agents_responsible = []
 	# if there are agents in the parse, print out who they were
 	keys = get_fluent_and_event_keys_we_care_about((active_parse_tree,))
-	agents_responsible = []
 	for event in keys["events"]:
 		agent = event_hash[event]["agent"]
 		if agent:
 			agents_responsible.append(agent,)
-	print "Agents responsible: {}".format(agents_responsible)
+	print("{}".format("\t".join([str(fluent),str(frame),"{:g}".format(energy),str(make_tree_like_lisp(active_parse_tree)),str(agents_responsible)])))
+	if kDebugEnergies:
+		print_current_energies(fluent_hash, event_hash)
+		print_previous_energies(fluent_hash)
+		hr()
+	# print("Agents responsible: {}".format(agents_responsible))
 
 # clears out any parses that have not been touched within N frames, printing out any over reporting_threshold_energy
 def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy):
@@ -336,6 +340,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 				max_event_timeout = event_timeout
 		# if parse was last updated longer ago than max event timeout frames, cull
 		if frame - active_parse['frame'] > max_event_timeout:
+			# print("REMOVING {}".format(parse_id))
 			active_parses.pop(parse_id)
 			effective_frame = active_parse['frame'] + max_event_timeout
 			complete_parse_tree(active_parse, fluent_hash, event_hash, effective_frame)
@@ -403,8 +408,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 				fluent_hash[key] = {"energy": initial_condition, "prev_energy": initial_condition, "trees": [causal_tree,]}
 			fluent_hash[key]["status"] = kFluentStatusUnknown
 	#for key in fluent_hash.keys():
-	#	print "{}: {}".format(key,fluent_hash[key]['energy'])
-	#print initial_conditions
+	#	print("{}: {}".format(key,fluent_hash[key]['energy']))
+	#print(initial_conditions)
 	# print_current_energies(fluent_hash, event_hash)
 	parse_id = 0 # give each parse tree a unique id
 	parse_array = []
@@ -412,7 +417,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 	parse_id_hash_by_event = {}
 	# build lookups by fluent and event
 	for causal_tree in causal_forest:
-		# print "PARSES FOR CAUSAL TREE {}:".format(causal_tree["symbol"])
+		# print("PARSES FOR CAUSAL TREE {}:".format(causal_tree["symbol"]))
 		causal_tree["parses"] = generate_parses(causal_tree)
 		for parse in causal_tree["parses"]:
 			parse["id"] = parse_id
@@ -428,9 +433,9 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 					parse_id_hash_by_fluent[key].append(parse_id)
 				else:
 					parse_id_hash_by_fluent[key] = [parse_id,]
-			#print "*: {}".format(parse)
+			#print("*: {}".format(parse))
 			#parse_energy = calculate_energy(parse, fluent_hash, event_hash)
-			#print "E: {}".format(parse_energy)
+			#print("E: {}".format(parse_energy))
 			parse_id += 1
 	# loop through the parses, getting the "next frame a change happens in"; if a change happens
 	# in both at the same time, they will be handled sequentially, the fluent first
@@ -497,7 +502,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 						# TODO: this is a bug!  this will kill all but the first type of fluent
 						# if we want to remove the case of parses timing out when they never
 						# actually had an event create them
-						print("@TODO: this is a bug!")
+						raise Exception("@TODO: this is a bug! WUT!?")
 						active_parse_trees.pop(key)
 		else:
 			frame = temporal_parse_frames[temporal_parse_index]
@@ -512,33 +517,35 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 				# then are each of those separate parses, or are they a combined parse, or is one subsumed
 				# by the other...? NOT worrying about this now.
 				info = changes[event]
-				print("SETTING EVENT {} AT {} TO {}".format(event,frame,info['energy']))
+				# print("SETTING EVENT {} AT {} TO {}".format(event,frame,info['energy']))
 				event_hash[event]['energy'] = info['energy']
 				event_hash[event]['agent'] = info['agent']
 				event_hash[event]['frame'] = frame
 				# print_current_energies(fluent_hash,event_hash)
 				for parse_id in parse_id_hash_by_event[event]:
-					print("PARSE ID {} is good for it".format(parse_id))
 					if parse_id not in active_parse_trees:
 						# create this parse if it's not in our list of active parses
 						active_parse_trees[parse_id] = parse_array[parse_id]
 					active_parse_trees[parse_id]["frame"] = frame
 		"""
 		if changes:
-			print "{}: {}".format(frame,changes)
+			print("{}: {}".format(frame,changes))
 			for causal_tree in causal_forest:
 				for parse in causal_tree["parses"]:
-					print "*: {}".format(parse)
+					print("*: {}".format(parse))
 					parse_energy = calculate_energy(parse, fluent_hash, event_hash)
-					print "E: {}".format(parse_energy)
+					print("E: {}".format(parse_energy))
 			print_current_energies(fluent_hash,event_hash)
 			# for any parse trees over reporting_threshold_energy, report?
 			# close any completed parse trees? maintain list of completed parse trees (over reporting_threshold_energy)
 			hr()
 		"""
+	# clean up
+	complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame+999999, reporting_threshold_energy)
+	clear_outdated_events(event_hash, event_timeouts, frame+999999)
 	# hr()
 	# report all ... stuff ... at ... end
-	# print "DONE"
+	# print("DONE")
 
 if __name__ == '__main__':
 	# WHOO!
