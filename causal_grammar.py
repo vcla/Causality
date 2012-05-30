@@ -264,7 +264,18 @@ def calculate_energy(node, fluent_hash, event_hash):
 			child_energy = calculate_energy(child, fluent_hash, event_hash)
 			node_energy += child_energy
 	return node_energy
-		
+
+def parse_is_consistent_with_requirement(parse,requirement):
+	if 'symbol_type' in parse:
+		antithesis = invert_name(requirement)
+		if parse['symbol_type'] in ('prev_fluent',) and parse['symbol'] == antithesis:
+			return False
+	if "children" in parse:
+		for child in parse['children']:
+			if not parse_is_consistent_with_requirement(child,requirement):
+				return False
+	return True
+
 def make_tree_like_lisp(causal_tree):
 	my_symbol = "?"
 	if "symbol" in causal_tree:
@@ -326,7 +337,7 @@ def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, compl
 		if frame not in completion:
 			completion[frame] = []
 		completion_frame = completion[frame]
-		completion_frame.append({"energy": energy, "parse": active_parse_tree, "agents": agents_responsible})
+		completion_frame.append({"frame": frame, "fluent": fluent, "energy": energy, "parse": active_parse_tree, "agents": agents_responsible, "status": fluent_hash[active_parse_tree['symbol']]['energy']})
 	# print("{}".format("\t".join([str(fluent),str(frame),"{:g}".format(energy),str(make_tree_like_lisp(active_parse_tree)),str(agents_responsible)])))
 	# print("{} PARSE TREE {} COMPLETED at {}: energy({})\n{}\n***{}***".format(fluent,active_parse_tree['id'],frame,energy,make_tree_like_lisp(active_parse_tree),active_parse_tree))
 	# print("Agents responsible: {}".format(agents_responsible))
@@ -559,11 +570,36 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 	# report all ... stuff ... at ... end
 	# print("DONE")
 	for fluent in completions.keys():
+		parent_chains = []
 		print fluent
 		hr()
 		for frame in sorted(completions[fluent].iterkeys()):
-			for completion_data in sorted(completions[fluent][frame], key=lambda (k): k['energy']):
-				print("{}".format("\t".join([str(fluent),str(frame),"{:g}".format(completion_data['energy']),str(make_tree_like_lisp(completion_data['parse'])),str(completion_data['agents'])])))
+			completion_data_sorted = sorted(completions[fluent][frame], key=lambda (k): k['energy'])
+			if not parent_chains:
+				for child in completion_data_sorted:
+					parent_chains.append((child,))
+			else:
+				children = []	
+				for parent_chain in parent_chains:
+					last_parent_node = parent_chain[-1]
+					last_parent_symbol = last_parent_node['parse']['symbol'] # TRASH_MORE_on, for example
+					for child in completion_data_sorted:
+						# if this pairing is possible, cross it on down
+						# pairing is considered "possible" if the parent's primary fluent status agrees with all relevant child fluent pre-requisites
+						if parse_is_consistent_with_requirement(child['parse'],last_parent_symbol):
+							chain = list(parent_chain)
+							chain.append(child)
+							children.append(chain)
+				parent_chains = children
+			for completion_data in completion_data_sorted:
+				print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(completion_data['status']), "{:>6.3f}".format(completion_data['energy']), "{:d}".format(completion_data['parse']['id']), str(make_tree_like_lisp(completion_data['parse'])), str(completion_data['agents'])])))
+		for chain in parent_chains:
+			items = []
+			energy = 0
+			for item in chain:
+				items.append((item['frame'],item['parse']['id']))
+				energy += item['energy']
+			print([items,energy])
 		hr()
 
 if __name__ == '__main__':
