@@ -305,11 +305,10 @@ def clear_outdated_events(event_hash, event_timeouts, frame):
 			event_hash[event]["energy"] = kUnlikelyEnergy
 			event_hash[event]["agent"] = False
 
-def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame):
+def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions):
 	# we have a winner! let's show them what they've won, bob!
 	energy = calculate_energy(active_parse_tree, fluent_hash, event_hash)
 	fluent = active_parse_tree["symbol"]
-	# print("{} PARSE TREE {} COMPLETED at {}: energy({})\n{}\n***{}***".format(fluent,active_parse_tree['id'],frame,energy,make_tree_like_lisp(active_parse_tree),active_parse_tree))
 	agents_responsible = []
 	# if there are agents in the parse, print out who they were
 	keys = get_fluent_and_event_keys_we_care_about((active_parse_tree,))
@@ -317,15 +316,27 @@ def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame):
 		agent = event_hash[event]["agent"]
 		if agent:
 			agents_responsible.append(agent,)
-	print("{}".format("\t".join([str(fluent),str(frame),"{:g}".format(energy),str(make_tree_like_lisp(active_parse_tree)),str(agents_responsible)])))
+		if "_" in fluent:
+			prefix, postfix = fluent.rsplit("_",1)
+			if postfix in ("on","off",):
+				fluent = prefix
+		if fluent not in completions:
+			completions[fluent] = {}
+		completion = completions[fluent]
+		if frame not in completion:
+			completion[frame] = []
+		completion_frame = completion[frame]
+		completion_frame.append({"energy": energy, "parse": active_parse_tree, "agents": agents_responsible})
+	# print("{}".format("\t".join([str(fluent),str(frame),"{:g}".format(energy),str(make_tree_like_lisp(active_parse_tree)),str(agents_responsible)])))
+	# print("{} PARSE TREE {} COMPLETED at {}: energy({})\n{}\n***{}***".format(fluent,active_parse_tree['id'],frame,energy,make_tree_like_lisp(active_parse_tree),active_parse_tree))
+	# print("Agents responsible: {}".format(agents_responsible))
 	if kDebugEnergies:
 		print_current_energies(fluent_hash, event_hash)
 		print_previous_energies(fluent_hash)
 		hr()
-	# print("Agents responsible: {}".format(agents_responsible))
 
 # clears out any parses that have not been touched within N frames, printing out any over reporting_threshold_energy
-def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy):
+def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy, completions):
 	# we're planning to remove things from active_parses while we loop through, so....
 	active_parses_copy = active_parses.copy()
 	for parse_id in active_parses_copy:
@@ -343,7 +354,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 			# print("REMOVING {}".format(parse_id))
 			active_parses.pop(parse_id)
 			effective_frame = active_parse['frame'] + max_event_timeout
-			complete_parse_tree(active_parse, fluent_hash, event_hash, effective_frame)
+			complete_parse_tree(active_parse, fluent_hash, event_hash, effective_frame, completions)
 			possible_trees = fluent_hash[active_parse['symbol']]['trees']
 			parses_completed = [parse_id,]
 			for possible_tree in possible_trees:
@@ -359,7 +370,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 							# id multiple times here
 							# raise Exception("TODO, EH??")
 							parses_completed.append(other_parse['id'])
-							complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frame)
+							complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frame, completions)
 
 def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy):
 	fluent_parse_index = 0
@@ -440,12 +451,13 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 	# loop through the parses, getting the "next frame a change happens in"; if a change happens
 	# in both at the same time, they will be handled sequentially, the fluent first
 	active_parse_trees = {}
+	completions = {}
 	while fluent_parse_index < len(fluent_parses) or temporal_parse_index < len(temporal_parses):
 		fluents_complete = fluent_parse_index >= len(fluent_parses)
 		temporal_complete = temporal_parse_index >= len(temporal_parses)
 		if not fluents_complete and (temporal_complete or fluent_parse_frames[fluent_parse_index] <= temporal_parse_frames[temporal_parse_index]):
 			frame = fluent_parse_frames[fluent_parse_index]
-			complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy)
+			complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy, completions)
 			clear_outdated_events(event_hash, event_timeouts, frame)
 			changes = fluent_parses[frame]
 			filter_changes(changes, fluent_and_event_keys_we_care_about['fluents'])
@@ -497,7 +509,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 					active_parse_tree = active_parse_trees[key]
 					if active_parse_tree["symbol"] == fluent:
 						active_parse_trees.pop(key)
-						complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame)
+						complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions)
 					elif kFilterNonEventTriggeredParseTimeouts:
 						# TODO: this is a bug!  this will kill all but the first type of fluent
 						# if we want to remove the case of parses timing out when they never
@@ -506,7 +518,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 						active_parse_trees.pop(key)
 		else:
 			frame = temporal_parse_frames[temporal_parse_index]
-			complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy)
+			complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy, completions)
 			clear_outdated_events(event_hash, event_timeouts, frame)
 			changes = temporal_parses[frame]
 			filter_changes(changes, fluent_and_event_keys_we_care_about['events'])
@@ -541,11 +553,18 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 			hr()
 		"""
 	# clean up
-	complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame+999999, reporting_threshold_energy)
+	complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame+999999, reporting_threshold_energy, completions)
 	clear_outdated_events(event_hash, event_timeouts, frame+999999)
 	# hr()
 	# report all ... stuff ... at ... end
 	# print("DONE")
+	for fluent in completions.keys():
+		print fluent
+		hr()
+		for frame in sorted(completions[fluent].iterkeys()):
+			for completion_data in sorted(completions[fluent][frame], key=lambda (k): k['energy']):
+				print("{}".format("\t".join([str(fluent),str(frame),"{:g}".format(completion_data['energy']),str(make_tree_like_lisp(completion_data['parse'])),str(completion_data['agents'])])))
+		hr()
 
 if __name__ == '__main__':
 	# WHOO!
