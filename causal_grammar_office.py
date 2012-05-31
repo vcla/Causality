@@ -37,72 +37,6 @@ abbreviated_office_grammar = [
 	# MONITOR DISPLAY ON TODO
 	# MONITOR DISPLAY OFF TODO
 	# MONITOR POWER ON TODO
-"""	("root", "fluent", "[LIGHT_ON]_on", False, False, [
-			# ON INERTIALLY
-			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
-					("leaf", "nonevent", "press switch_START",  False, 10, False),
-				]
-			),
-			# ON CAUSALLY
-			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
-					("leaf", "event", "press switch_START",  False, 10, False),
-				]
-			)
-		]
-	),
-	# LIGHT OFF	(LIGHT_ON_OFF)
-	("root", "fluent", "[LIGHT_ON]_off", False, False, [
-			# ON INERTIALLY
-			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
-					("leaf", "nonevent", "press switch_START",  False, 10, False),
-				]
-			),
-			# OFF CAUSALLY
-			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
-					("leaf", "event", "press switch_START",  False, 10, False),
-				]
-			)
-		]
-	),
-	# MONITOR POWER OFF TODO
-	# COMPUTER AWAKE ON TODO
-	("root", "fluent", "[LIGHT_ON]_on", False, False, [
-			# ON INERTIALLY
-			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
-					("leaf", "nonevent", "press switch_START",  False, 10, False),
-				]
-			),
-			# ON CAUSALLY
-			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
-					("leaf", "event", "press switch_START",  False, 10, False),
-				]
-			)
-		]
-	),
-	# LIGHT OFF	(LIGHT_ON_OFF)
-	("root", "fluent", "[LIGHT_ON]_off", False, False, [
-			# ON INERTIALLY
-			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
-					("leaf", "nonevent", "press switch_START",  False, 10, False),
-				]
-			),
-			# OFF CAUSALLY
-			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
-					("leaf", "event", "press switch_START",  False, 10, False),
-				]
-			)
-		]
-	),
-	# COMPUTER AWAKE OFF TODO
-"""
 	# CUP MORE -- NOTE if implementation fails for some reason, i moved probabilities around on this one
 	("root", "fluent", "[cup_MORE]_on", .4, False, [
 			# ON CAUSALLY (NEVER ON INERTIALLY)
@@ -263,7 +197,8 @@ abbreviated_office_grammar = [
 			)
 		]
 	),
-	"""
+]
+"""
 	### IGNORING ONES BELOW HERE ###
 	# TRASH MORE # NOT INCLUDED
 	# TRASH LESS # NOT INCLUDED
@@ -271,8 +206,73 @@ abbreviated_office_grammar = [
 	# AGENT DOESN"T HAVE TRASH (AGENT_TRASH_OFF) # NOT INCLUDED
 	# PHONE RINGING # NOT INCLUDED
 	# PHONE RINGING OFF # NOT INCLUDED
-	"""
-]
+"""
+"""	("root", "fluent", "[LIGHT_ON]_on", False, False, [
+			# ON INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
+					("leaf", "nonevent", "press switch_START",  False, 10, False),
+				]
+			),
+			# ON CAUSALLY
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
+					("leaf", "event", "press switch_START",  False, 10, False),
+				]
+			)
+		]
+	),
+	# LIGHT OFF	(LIGHT_ON_OFF)
+	("root", "fluent", "[LIGHT_ON]_off", False, False, [
+			# ON INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
+					("leaf", "nonevent", "press switch_START",  False, 10, False),
+				]
+			),
+			# OFF CAUSALLY
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
+					("leaf", "event", "press switch_START",  False, 10, False),
+				]
+			)
+		]
+	),
+	# MONITOR POWER OFF TODO
+	# COMPUTER AWAKE ON TODO
+	("root", "fluent", "[LIGHT_ON]_on", False, False, [
+			# ON INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
+					("leaf", "nonevent", "press switch_START",  False, 10, False),
+				]
+			),
+			# ON CAUSALLY
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
+					("leaf", "event", "press switch_START",  False, 10, False),
+				]
+			)
+		]
+	),
+	# LIGHT OFF	(LIGHT_ON_OFF)
+	("root", "fluent", "[LIGHT_ON]_off", False, False, [
+			# ON INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
+					("leaf", "nonevent", "press switch_START",  False, 10, False),
+				]
+			),
+			# OFF CAUSALLY
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
+					("leaf", "event", "press switch_START",  False, 10, False),
+				]
+			)
+		]
+	),
+	# COMPUTER AWAKE OFF TODO
+"""
 
 
 import causal_grammar

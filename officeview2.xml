@@ -1,0 +1,488 @@
+<video>
+	<interpretation probability="1.">
+		<temporal>
+			<fluent_changes>
+			</fluent_changes>
+			<events>
+				<event id="1" name="toplevel" begin_frame="1" end_frame="3120">
+					<action agent="1" name="watch monitor" begin_frame="42" end_frame="43" />
+					<action agent="1" name="walk on floor" begin_frame="44" end_frame="50" />
+					<action agent="1" name="watch monitor" begin_frame="51" end_frame="78" />
+					<action agent="1" name="walk on floor" begin_frame="79" end_frame="79" />
+					<action agent="1" name="use keyboard" begin_frame="80" end_frame="81" />
+					<action agent="1" name="watch monitor" begin_frame="82" end_frame="82" />
+					<action agent="1" name="use keyboard" begin_frame="83" end_frame="94" />
+					<action agent="1" name="watch monitor" begin_frame="95" end_frame="95" />
+					<action agent="1" name="walk on floor" begin_frame="96" end_frame="96" />
+					<action agent="1" name="watch monitor" begin_frame="97" end_frame="105" />
+					<action agent="1" name="press switch" begin_frame="106" end_frame="106" />
+					<action agent="1" name="walk on floor" begin_frame="107" end_frame="122" />
+					<action agent="1" name="watch monitor" begin_frame="123" end_frame="123" />
+					<action agent="1" name="walk on floor" begin_frame="124" end_frame="127" />
+					<action agent="1" name="watch monitor" begin_frame="128" end_frame="128" />
+					<action agent="1" name="walk on floor" begin_frame="129" end_frame="132" />
+					<action agent="1" name="watch monitor" begin_frame="133" end_frame="136" />
+					<action agent="1" name="walk on floor" begin_frame="137" end_frame="137" />
+					<action agent="1" name="watch monitor" begin_frame="138" end_frame="138" />
+					<action agent="1" name="walk on floor" begin_frame="139" end_frame="140" />
+					<action agent="1" name="walk on floor" begin_frame="184" end_frame="184" />
+					<action agent="1" name="drink with cup" begin_frame="185" end_frame="185" />
+					<action agent="1" name="walk on floor" begin_frame="186" end_frame="188" />
+					<action agent="1" name="use keyboard" begin_frame="189" end_frame="189" />
+					<action agent="1" name="walk on floor" begin_frame="190" end_frame="190" />
+					<action agent="1" name="walk on floor" begin_frame="192" end_frame="226" />
+					<action agent="1" name="watch monitor" begin_frame="227" end_frame="228" />
+					<action agent="1" name="walk on floor" begin_frame="229" end_frame="241" />
+					<action agent="1" name="press switch" begin_frame="242" end_frame="242" />
+					<action agent="1" name="watch monitor" begin_frame="243" end_frame="246" />
+					<action agent="1" name="walk on floor" begin_frame="247" end_frame="255" />
+					<action agent="1" name="watch monitor" begin_frame="256" end_frame="258" />
+					<action agent="1" name="walk on floor" begin_frame="259" end_frame="259" />
+					<action agent="1" name="press switch" begin_frame="261" end_frame="263" />
+					<action agent="1" name="watch monitor" begin_frame="264" end_frame="282" />
+					<action agent="1" name="walk on floor" begin_frame="283" end_frame="288" />
+					<action agent="1" name="use dispenser" begin_frame="289" end_frame="289" />
+					<action agent="1" name="walk on floor" begin_frame="290" end_frame="292" />
+					<action agent="1" name="use dispenser" begin_frame="293" end_frame="293" />
+					<action agent="1" name="walk on floor" begin_frame="294" end_frame="296" />
+					<action agent="1" name="watch monitor" begin_frame="297" end_frame="302" />
+					<action agent="1" name="walk on floor" begin_frame="303" end_frame="303" />
+					<action agent="1" name="watch monitor" begin_frame="304" end_frame="318" />
+					<action agent="1" name="walk on floor" begin_frame="319" end_frame="320" />
+					<action agent="1" name="watch monitor" begin_frame="321" end_frame="323" />
+					<action agent="1" name="walk on floor" begin_frame="324" end_frame="324" />
+					<action agent="1" name="watch monitor" begin_frame="325" end_frame="325" />
+					<action agent="1" name="walk on floor" begin_frame="326" end_frame="326" />
+					<action agent="1" name="watch monitor" begin_frame="327" end_frame="336" />
+					<action agent="1" name="walk on floor" begin_frame="337" end_frame="337" />
+					<action agent="1" name="watch monitor" begin_frame="338" end_frame="381" />
+					<action agent="1" name="use keyboard" begin_frame="382" end_frame="386" />
+					<action agent="1" name="use dispenser" begin_frame="387" end_frame="387" />
+					<action agent="1" name="watch monitor" begin_frame="388" end_frame="394" />
+					<action agent="1" name="use dispenser" begin_frame="395" end_frame="395" />
+					<action agent="1" name="watch monitor" begin_frame="396" end_frame="398" />
+					<action agent="1" name="use dispenser" begin_frame="399" end_frame="399" />
+					<action agent="1" name="use keyboard" begin_frame="400" end_frame="400" />
+					<action agent="1" name="watch monitor" begin_frame="401" end_frame="401" />
+					<action agent="1" name="use keyboard" begin_frame="402" end_frame="402" />
+					<action agent="1" name="watch monitor" begin_frame="403" end_frame="405" />
+					<action agent="1" name="use dispenser" begin_frame="406" end_frame="406" />
+					<action agent="1" name="watch monitor" begin_frame="407" end_frame="415" />
+					<action agent="1" name="use dispenser" begin_frame="416" end_frame="418" />
+					<action agent="1" name="watch monitor" begin_frame="419" end_frame="424" />
+					<action agent="1" name="watch monitor" begin_frame="426" end_frame="437" />
+					<action agent="1" name="use dispenser" begin_frame="438" end_frame="438" />
+					<action agent="1" name="watch monitor" begin_frame="439" end_frame="462" />
+					<action agent="1" name="use dispenser" begin_frame="463" end_frame="464" />
+					<action agent="1" name="watch monitor" begin_frame="465" end_frame="491" />
+					<action agent="1" name="watch monitor" begin_frame="493" end_frame="523" />
+					<action agent="1" name="use dispenser" begin_frame="524" end_frame="529" />
+					<action agent="1" name="watch monitor" begin_frame="530" end_frame="531" />
+					<action agent="1" name="use dispenser" begin_frame="532" end_frame="537" />
+					<action agent="1" name="watch monitor" begin_frame="538" end_frame="587" />
+					<action agent="1" name="watch monitor" begin_frame="589" end_frame="598" />
+					<action agent="1" name="use keyboard" begin_frame="599" end_frame="600" />
+					<action agent="1" name="watch monitor" begin_frame="601" end_frame="625" />
+					<action agent="1" name="watch monitor" begin_frame="627" end_frame="650" />
+					<action agent="1" name="drink with cup" begin_frame="651" end_frame="651" />
+					<action agent="1" name="watch monitor" begin_frame="652" end_frame="652" />
+					<action agent="1" name="drink with cup" begin_frame="653" end_frame="653" />
+					<action agent="1" name="watch monitor" begin_frame="654" end_frame="654" />
+					<action agent="1" name="watch monitor" begin_frame="656" end_frame="660" />
+					<action agent="1" name="drink with cup" begin_frame="661" end_frame="662" />
+					<action agent="1" name="watch monitor" begin_frame="663" end_frame="663" />
+					<action agent="1" name="drink with cup" begin_frame="664" end_frame="664" />
+					<action agent="1" name="watch monitor" begin_frame="665" end_frame="678" />
+					<action agent="1" name="drink with cup" begin_frame="679" end_frame="679" />
+					<action agent="1" name="watch monitor" begin_frame="680" end_frame="682" />
+					<action agent="1" name="drink with cup" begin_frame="683" end_frame="683" />
+					<action agent="1" name="watch monitor" begin_frame="684" end_frame="684" />
+					<action agent="1" name="drink with cup" begin_frame="685" end_frame="685" />
+					<action agent="1" name="watch monitor" begin_frame="686" end_frame="687" />
+					<action agent="1" name="drink with cup" begin_frame="688" end_frame="688" />
+					<action agent="1" name="watch monitor" begin_frame="689" end_frame="720" />
+					<action agent="1" name="drink with cup" begin_frame="721" end_frame="721" />
+					<action agent="1" name="watch monitor" begin_frame="722" end_frame="724" />
+					<action agent="1" name="drink with cup" begin_frame="725" end_frame="725" />
+					<action agent="1" name="watch monitor" begin_frame="726" end_frame="732" />
+					<action agent="1" name="drink with cup" begin_frame="733" end_frame="733" />
+					<action agent="1" name="watch monitor" begin_frame="734" end_frame="734" />
+					<action agent="1" name="drink with cup" begin_frame="735" end_frame="735" />
+					<action agent="1" name="watch monitor" begin_frame="736" end_frame="740" />
+					<action agent="1" name="drink with cup" begin_frame="741" end_frame="741" />
+					<action agent="1" name="watch monitor" begin_frame="742" end_frame="743" />
+					<action agent="1" name="drink with cup" begin_frame="744" end_frame="744" />
+					<action agent="1" name="watch monitor" begin_frame="745" end_frame="762" />
+					<action agent="1" name="drink with cup" begin_frame="763" end_frame="763" />
+					<action agent="1" name="watch monitor" begin_frame="764" end_frame="768" />
+					<action agent="1" name="drink with cup" begin_frame="769" end_frame="769" />
+					<action agent="1" name="watch monitor" begin_frame="770" end_frame="772" />
+					<action agent="1" name="drink with cup" begin_frame="773" end_frame="775" />
+					<action agent="1" name="watch monitor" begin_frame="776" end_frame="789" />
+					<action agent="1" name="drink with cup" begin_frame="790" end_frame="790" />
+					<action agent="1" name="watch monitor" begin_frame="791" end_frame="793" />
+					<action agent="1" name="drink with cup" begin_frame="794" end_frame="796" />
+					<action agent="1" name="watch monitor" begin_frame="797" end_frame="798" />
+					<action agent="1" name="drink with cup" begin_frame="799" end_frame="799" />
+					<action agent="1" name="watch monitor" begin_frame="800" end_frame="804" />
+					<action agent="1" name="drink with cup" begin_frame="805" end_frame="805" />
+					<action agent="1" name="watch monitor" begin_frame="806" end_frame="823" />
+					<action agent="1" name="use keyboard" begin_frame="824" end_frame="824" />
+					<action agent="1" name="watch monitor" begin_frame="825" end_frame="827" />
+					<action agent="1" name="use keyboard" begin_frame="828" end_frame="828" />
+					<action agent="1" name="watch monitor" begin_frame="829" end_frame="831" />
+					<action agent="1" name="use keyboard" begin_frame="832" end_frame="833" />
+					<action agent="1" name="watch monitor" begin_frame="834" end_frame="839" />
+					<action agent="1" name="use keyboard" begin_frame="840" end_frame="841" />
+					<action agent="1" name="watch monitor" begin_frame="842" end_frame="843" />
+					<action agent="1" name="use keyboard" begin_frame="844" end_frame="844" />
+					<action agent="1" name="watch monitor" begin_frame="845" end_frame="851" />
+					<action agent="1" name="use keyboard" begin_frame="852" end_frame="852" />
+					<action agent="1" name="watch monitor" begin_frame="853" end_frame="856" />
+					<action agent="1" name="use keyboard" begin_frame="857" end_frame="857" />
+					<action agent="1" name="watch monitor" begin_frame="858" end_frame="864" />
+					<action agent="1" name="use keyboard" begin_frame="865" end_frame="866" />
+					<action agent="1" name="watch monitor" begin_frame="867" end_frame="868" />
+					<action agent="1" name="use keyboard" begin_frame="869" end_frame="869" />
+					<action agent="1" name="watch monitor" begin_frame="870" end_frame="870" />
+					<action agent="1" name="use keyboard" begin_frame="871" end_frame="871" />
+					<action agent="1" name="watch monitor" begin_frame="872" end_frame="884" />
+					<action agent="1" name="use keyboard" begin_frame="885" end_frame="885" />
+					<action agent="1" name="watch monitor" begin_frame="886" end_frame="888" />
+					<action agent="1" name="use keyboard" begin_frame="889" end_frame="889" />
+					<action agent="1" name="watch monitor" begin_frame="890" end_frame="908" />
+					<action agent="1" name="use keyboard" begin_frame="909" end_frame="910" />
+					<action agent="1" name="watch monitor" begin_frame="911" end_frame="912" />
+					<action agent="1" name="watch monitor" begin_frame="914" end_frame="928" />
+					<action agent="1" name="use mouse" begin_frame="929" end_frame="929" />
+					<action agent="1" name="watch monitor" begin_frame="930" end_frame="930" />
+					<action agent="1" name="use mouse" begin_frame="931" end_frame="931" />
+					<action agent="1" name="watch monitor" begin_frame="932" end_frame="941" />
+					<action agent="1" name="watch monitor" begin_frame="943" end_frame="944" />
+					<action agent="1" name="use mouse" begin_frame="945" end_frame="945" />
+					<action agent="1" name="watch monitor" begin_frame="946" end_frame="947" />
+					<action agent="1" name="drink with cup" begin_frame="948" end_frame="948" />
+					<action agent="1" name="watch monitor" begin_frame="949" end_frame="955" />
+					<action agent="1" name="use mouse" begin_frame="956" end_frame="956" />
+					<action agent="1" name="watch monitor" begin_frame="958" end_frame="960" />
+					<action agent="1" name="use keyboard" begin_frame="961" end_frame="962" />
+					<action agent="1" name="watch monitor" begin_frame="963" end_frame="971" />
+					<action agent="1" name="watch monitor" begin_frame="973" end_frame="1041" />
+					<action agent="1" name="watch monitor" begin_frame="1043" end_frame="1101" />
+					<action agent="1" name="use dispenser" begin_frame="1102" end_frame="1102" />
+					<action agent="1" name="watch monitor" begin_frame="1104" end_frame="1146" />
+					<action agent="1" name="watch monitor" begin_frame="1148" end_frame="1150" />
+					<action agent="1" name="use dispenser" begin_frame="1151" end_frame="1161" />
+					<action agent="1" name="use dispenser" begin_frame="1163" end_frame="1182" />
+					<action agent="1" name="watch monitor" begin_frame="1183" end_frame="1187" />
+					<action agent="1" name="use dispenser" begin_frame="1188" end_frame="1189" />
+					<action agent="1" name="watch monitor" begin_frame="1190" end_frame="1196" />
+					<action agent="1" name="use dispenser" begin_frame="1197" end_frame="1197" />
+					<action agent="1" name="watch monitor" begin_frame="1198" end_frame="1217" />
+					<action agent="1" name="use dispenser" begin_frame="1218" end_frame="1219" />
+					<action agent="1" name="watch monitor" begin_frame="1220" end_frame="1245" />
+					<action agent="1" name="use keyboard" begin_frame="1246" end_frame="1246" />
+					<action agent="1" name="watch monitor" begin_frame="1247" end_frame="1255" />
+					<action agent="1" name="drink with cup" begin_frame="1256" end_frame="1258" />
+					<action agent="1" name="watch monitor" begin_frame="1259" end_frame="1291" />
+					<action agent="1" name="call with phone" begin_frame="1292" end_frame="1293" />
+					<action agent="1" name="watch monitor" begin_frame="1294" end_frame="1298" />
+					<action agent="1" name="drink with cup" begin_frame="1299" end_frame="1299" />
+					<action agent="1" name="watch monitor" begin_frame="1300" end_frame="1311" />
+					<action agent="1" name="drink with cup" begin_frame="1312" end_frame="1313" />
+					<action agent="1" name="watch monitor" begin_frame="1314" end_frame="1314" />
+					<action agent="1" name="drink with cup" begin_frame="1316" end_frame="1316" />
+					<action agent="1" name="watch monitor" begin_frame="1317" end_frame="1318" />
+					<action agent="1" name="call with phone" begin_frame="1319" end_frame="1329" />
+					<action agent="1" name="drink with cup" begin_frame="1330" end_frame="1330" />
+					<action agent="1" name="call with phone" begin_frame="1331" end_frame="1342" />
+					<action agent="1" name="drink with cup" begin_frame="1343" end_frame="1344" />
+					<action agent="1" name="call with phone" begin_frame="1346" end_frame="1356" />
+					<action agent="1" name="watch monitor" begin_frame="1357" end_frame="1359" />
+					<action agent="1" name="watch monitor" begin_frame="1361" end_frame="1361" />
+					<action agent="1" name="walk on floor" begin_frame="1362" end_frame="1362" />
+					<action agent="1" name="watch monitor" begin_frame="1363" end_frame="1363" />
+					<action agent="1" name="walk on floor" begin_frame="1364" end_frame="1371" />
+					<action agent="1" name="use keyboard" begin_frame="1372" end_frame="1372" />
+					<action agent="1" name="drink with cup" begin_frame="1373" end_frame="1374" />
+					<action agent="1" name="walk on floor" begin_frame="1375" end_frame="1376" />
+					<action agent="1" name="use keyboard" begin_frame="1377" end_frame="1377" />
+					<action agent="1" name="walk on floor" begin_frame="1378" end_frame="1381" />
+					<action agent="1" name="drink with cup" begin_frame="1382" end_frame="1387" />
+					<action agent="1" name="use keyboard" begin_frame="1389" end_frame="1389" />
+					<action agent="1" name="walk on floor" begin_frame="1390" end_frame="1390" />
+					<action agent="1" name="call with phone" begin_frame="1391" end_frame="1391" />
+					<action agent="1" name="walk on floor" begin_frame="1392" end_frame="1393" />
+					<action agent="1" name="use keyboard" begin_frame="1394" end_frame="1396" />
+					<action agent="1" name="drink with cup" begin_frame="1397" end_frame="1397" />
+					<action agent="1" name="call with phone" begin_frame="1398" end_frame="1398" />
+					<action agent="1" name="watch monitor" begin_frame="1399" end_frame="1402" />
+					<action agent="1" name="watch monitor" begin_frame="1404" end_frame="1404" />
+					<action agent="1" name="drink with cup" begin_frame="1405" end_frame="1406" />
+					<action agent="1" name="watch monitor" begin_frame="1407" end_frame="1432" />
+					<action agent="1" name="watch monitor" begin_frame="1434" end_frame="1437" />
+					<action agent="1" name="call with phone" begin_frame="1438" end_frame="1438" />
+					<action agent="1" name="watch monitor" begin_frame="1439" end_frame="1439" />
+					<action agent="1" name="call with phone" begin_frame="1440" end_frame="1442" />
+					<action agent="1" name="watch monitor" begin_frame="1443" end_frame="1444" />
+					<action agent="1" name="drink with cup" begin_frame="1445" end_frame="1445" />
+					<action agent="1" name="watch monitor" begin_frame="1446" end_frame="1459" />
+					<action agent="1" name="use dispenser" begin_frame="1460" end_frame="1465" />
+					<action agent="1" name="watch monitor" begin_frame="1466" end_frame="1470" />
+					<action agent="1" name="use dispenser" begin_frame="1471" end_frame="1474" />
+					<action agent="1" name="watch monitor" begin_frame="1475" end_frame="1479" />
+					<action agent="1" name="use dispenser" begin_frame="1480" end_frame="1484" />
+					<action agent="1" name="watch monitor" begin_frame="1485" end_frame="1486" />
+					<action agent="1" name="use dispenser" begin_frame="1487" end_frame="1490" />
+					<action agent="1" name="watch monitor" begin_frame="1491" end_frame="1492" />
+					<action agent="1" name="use dispenser" begin_frame="1493" end_frame="1508" />
+					<action agent="1" name="watch monitor" begin_frame="1509" end_frame="1509" />
+					<action agent="1" name="use dispenser" begin_frame="1510" end_frame="1514" />
+					<action agent="1" name="watch monitor" begin_frame="1515" end_frame="1518" />
+					<action agent="1" name="use dispenser" begin_frame="1519" end_frame="1521" />
+					<action agent="1" name="watch monitor" begin_frame="1522" end_frame="1522" />
+					<action agent="1" name="use dispenser" begin_frame="1523" end_frame="1525" />
+					<action agent="1" name="watch monitor" begin_frame="1526" end_frame="1527" />
+					<action agent="1" name="use dispenser" begin_frame="1528" end_frame="1531" />
+					<action agent="1" name="watch monitor" begin_frame="1532" end_frame="1538" />
+					<action agent="1" name="walk on floor" begin_frame="1539" end_frame="1540" />
+					<action agent="1" name="use dispenser" begin_frame="1541" end_frame="1550" />
+					<action agent="1" name="use dispenser" begin_frame="1552" end_frame="1552" />
+					<action agent="1" name="watch monitor" begin_frame="1553" end_frame="1558" />
+					<action agent="1" name="watch monitor" begin_frame="1560" end_frame="1593" />
+					<action agent="1" name="use keyboard" begin_frame="1594" end_frame="1595" />
+					<action agent="1" name="watch monitor" begin_frame="1596" end_frame="1596" />
+					<action agent="1" name="call with phone" begin_frame="1597" end_frame="1597" />
+					<action agent="1" name="watch monitor" begin_frame="1598" end_frame="1633" />
+					<action agent="1" name="watch monitor" begin_frame="1635" end_frame="1648" />
+					<action agent="1" name="call with phone" begin_frame="1649" end_frame="1655" />
+					<action agent="1" name="watch monitor" begin_frame="1656" end_frame="1663" />
+					<action agent="1" name="watch monitor" begin_frame="1665" end_frame="1692" />
+					<action agent="1" name="call with phone" begin_frame="1693" end_frame="1695" />
+					<action agent="1" name="watch monitor" begin_frame="1696" end_frame="1702" />
+					<action agent="1" name="call with phone" begin_frame="1703" end_frame="1704" />
+					<action agent="1" name="call with phone" begin_frame="1706" end_frame="1707" />
+					<action agent="1" name="watch monitor" begin_frame="1708" end_frame="1719" />
+					<action agent="1" name="watch monitor" begin_frame="1721" end_frame="1735" />
+					<action agent="1" name="watch monitor" begin_frame="1737" end_frame="1739" />
+					<action agent="1" name="call with phone" begin_frame="1740" end_frame="1740" />
+					<action agent="1" name="watch monitor" begin_frame="1741" end_frame="1743" />
+					<action agent="1" name="call with phone" begin_frame="1744" end_frame="1744" />
+					<action agent="1" name="watch monitor" begin_frame="1745" end_frame="1745" />
+					<action agent="1" name="call with phone" begin_frame="1746" end_frame="1746" />
+					<action agent="1" name="watch monitor" begin_frame="1747" end_frame="1748" />
+					<action agent="1" name="call with phone" begin_frame="1749" end_frame="1749" />
+					<action agent="1" name="watch monitor" begin_frame="1750" end_frame="1763" />
+					<action agent="1" name="call with phone" begin_frame="1764" end_frame="1765" />
+					<action agent="1" name="watch monitor" begin_frame="1766" end_frame="1775" />
+					<action agent="1" name="call with phone" begin_frame="1776" end_frame="1784" />
+					<action agent="1" name="watch monitor" begin_frame="1785" end_frame="1815" />
+					<action agent="1" name="call with phone" begin_frame="1816" end_frame="1816" />
+					<action agent="1" name="watch monitor" begin_frame="1817" end_frame="1821" />
+					<action agent="1" name="call with phone" begin_frame="1822" end_frame="1822" />
+					<action agent="1" name="watch monitor" begin_frame="1823" end_frame="1833" />
+					<action agent="1" name="call with phone" begin_frame="1834" end_frame="1834" />
+					<action agent="1" name="watch monitor" begin_frame="1835" end_frame="1850" />
+					<action agent="1" name="watch monitor" begin_frame="1852" end_frame="1919" />
+					<action agent="1" name="use keyboard" begin_frame="1920" end_frame="1920" />
+					<action agent="1" name="walk on floor" begin_frame="1921" end_frame="1922" />
+					<action agent="1" name="use keyboard" begin_frame="1923" end_frame="1923" />
+					<action agent="1" name="watch monitor" begin_frame="1924" end_frame="1929" />
+					<action agent="1" name="use dispenser" begin_frame="1930" end_frame="1933" />
+					<action agent="1" name="watch monitor" begin_frame="1934" end_frame="1948" />
+					<action agent="1" name="use dispenser" begin_frame="1949" end_frame="1956" />
+					<action agent="1" name="watch monitor" begin_frame="1957" end_frame="1962" />
+					<action agent="1" name="use dispenser" begin_frame="1963" end_frame="1967" />
+					<action agent="1" name="watch monitor" begin_frame="1968" end_frame="1969" />
+					<action agent="1" name="use dispenser" begin_frame="1970" end_frame="1986" />
+					<action agent="1" name="use dispenser" begin_frame="1988" end_frame="1999" />
+					<action agent="1" name="watch monitor" begin_frame="2000" end_frame="2000" />
+					<action agent="1" name="use dispenser" begin_frame="2001" end_frame="2001" />
+					<action agent="1" name="use dispenser" begin_frame="2003" end_frame="2007" />
+					<action agent="1" name="watch monitor" begin_frame="2008" end_frame="2024" />
+					<action agent="1" name="use keyboard" begin_frame="2025" end_frame="2026" />
+					<action agent="1" name="watch monitor" begin_frame="2027" end_frame="2030" />
+					<action agent="1" name="drink with cup" begin_frame="2031" end_frame="2031" />
+					<action agent="1" name="watch monitor" begin_frame="2032" end_frame="2040" />
+					<action agent="1" name="use keyboard" begin_frame="2041" end_frame="2041" />
+					<action agent="1" name="watch monitor" begin_frame="2042" end_frame="2045" />
+					<action agent="1" name="watch monitor" begin_frame="2047" end_frame="2051" />
+					<action agent="1" name="use keyboard" begin_frame="2052" end_frame="2052" />
+					<action agent="1" name="watch monitor" begin_frame="2053" end_frame="2056" />
+					<action agent="1" name="use keyboard" begin_frame="2057" end_frame="2057" />
+					<action agent="1" name="watch monitor" begin_frame="2058" end_frame="2058" />
+					<action agent="1" name="use keyboard" begin_frame="2059" end_frame="2059" />
+					<action agent="1" name="watch monitor" begin_frame="2060" end_frame="2060" />
+					<action agent="1" name="watch monitor" begin_frame="2062" end_frame="2065" />
+					<action agent="1" name="use keyboard" begin_frame="2066" end_frame="2066" />
+					<action agent="1" name="watch monitor" begin_frame="2067" end_frame="2073" />
+					<action agent="1" name="use keyboard" begin_frame="2074" end_frame="2074" />
+					<action agent="1" name="watch monitor" begin_frame="2075" end_frame="2084" />
+					<action agent="1" name="use keyboard" begin_frame="2085" end_frame="2085" />
+					<action agent="1" name="watch monitor" begin_frame="2086" end_frame="2088" />
+					<action agent="1" name="use keyboard" begin_frame="2089" end_frame="2089" />
+					<action agent="1" name="watch monitor" begin_frame="2090" end_frame="2149" />
+					<action agent="1" name="walk on floor" begin_frame="2150" end_frame="2150" />
+					<action agent="1" name="watch monitor" begin_frame="2151" end_frame="2176" />
+					<action agent="1" name="use mouse" begin_frame="2177" end_frame="2177" />
+					<action agent="1" name="watch monitor" begin_frame="2178" end_frame="2184" />
+					<action agent="1" name="drink with cup" begin_frame="2185" end_frame="2185" />
+					<action agent="1" name="call with phone" begin_frame="2186" end_frame="2188" />
+					<action agent="1" name="watch monitor" begin_frame="2189" end_frame="2189" />
+					<action agent="1" name="drink with cup" begin_frame="2190" end_frame="2190" />
+					<action agent="1" name="watch monitor" begin_frame="2191" end_frame="2211" />
+					<action agent="1" name="walk on floor" begin_frame="2212" end_frame="2214" />
+					<action agent="1" name="use dispenser" begin_frame="2215" end_frame="2215" />
+					<action agent="1" name="walk on floor" begin_frame="2216" end_frame="2237" />
+					<action agent="1" name="use keyboard" begin_frame="2238" end_frame="2238" />
+					<action agent="1" name="walk on floor" begin_frame="2239" end_frame="2241" />
+					<action agent="1" name="use dispenser" begin_frame="2242" end_frame="2243" />
+					<action agent="1" name="walk on floor" begin_frame="2244" end_frame="2244" />
+					<action agent="1" name="call with phone" begin_frame="2245" end_frame="2245" />
+					<action agent="1" name="walk on floor" begin_frame="2246" end_frame="2247" />
+					<action agent="1" name="drink with cup" begin_frame="2248" end_frame="2248" />
+					<action agent="1" name="use keyboard" begin_frame="2249" end_frame="2249" />
+					<action agent="1" name="walk on floor" begin_frame="2250" end_frame="2251" />
+					<action agent="1" name="drink with cup" begin_frame="2252" end_frame="2252" />
+					<action agent="1" name="watch monitor" begin_frame="2253" end_frame="2291" />
+					<action agent="1" name="watch monitor" begin_frame="2293" end_frame="2315" />
+					<action agent="1" name="use keyboard" begin_frame="2316" end_frame="2316" />
+					<action agent="1" name="use dispenser" begin_frame="2317" end_frame="2317" />
+					<action agent="1" name="use keyboard" begin_frame="2318" end_frame="2318" />
+					<action agent="1" name="watch monitor" begin_frame="2319" end_frame="2319" />
+					<action agent="1" name="use keyboard" begin_frame="2320" end_frame="2320" />
+					<action agent="1" name="watch monitor" begin_frame="2321" end_frame="2322" />
+					<action agent="1" name="use keyboard" begin_frame="2323" end_frame="2323" />
+					<action agent="1" name="watch monitor" begin_frame="2324" end_frame="2327" />
+					<action agent="1" name="walk on floor" begin_frame="2328" end_frame="2333" />
+					<action agent="1" name="watch monitor" begin_frame="2334" end_frame="2343" />
+					<action agent="1" name="walk on floor" begin_frame="2344" end_frame="2344" />
+					<action agent="1" name="watch monitor" begin_frame="2345" end_frame="2345" />
+					<action agent="1" name="walk on floor" begin_frame="2346" end_frame="2348" />
+					<action agent="1" name="watch monitor" begin_frame="2349" end_frame="2382" />
+					<action agent="1" name="walk on floor" begin_frame="2383" end_frame="2383" />
+					<action agent="1" name="watch monitor" begin_frame="2385" end_frame="2413" />
+					<action agent="1" name="watch monitor" begin_frame="2415" end_frame="2422" />
+					<action agent="1" name="drink with cup" begin_frame="2423" end_frame="2424" />
+					<action agent="1" name="watch monitor" begin_frame="2425" end_frame="2429" />
+					<action agent="1" name="call with phone" begin_frame="2430" end_frame="2430" />
+					<action agent="1" name="watch monitor" begin_frame="2431" end_frame="2438" />
+					<action agent="1" name="drink with cup" begin_frame="2439" end_frame="2439" />
+					<action agent="1" name="watch monitor" begin_frame="2440" end_frame="2443" />
+					<action agent="1" name="watch monitor" begin_frame="2445" end_frame="2447" />
+					<action agent="1" name="use dispenser" begin_frame="2448" end_frame="2449" />
+					<action agent="1" name="watch monitor" begin_frame="2450" end_frame="2455" />
+					<action agent="1" name="use dispenser" begin_frame="2456" end_frame="2456" />
+					<action agent="1" name="watch monitor" begin_frame="2457" end_frame="2458" />
+					<action agent="1" name="watch monitor" begin_frame="2460" end_frame="2467" />
+					<action agent="1" name="use dispenser" begin_frame="2468" end_frame="2468" />
+					<action agent="1" name="watch monitor" begin_frame="2469" end_frame="2473" />
+					<action agent="1" name="watch monitor" begin_frame="2475" end_frame="2481" />
+					<action agent="1" name="drink with cup" begin_frame="2482" end_frame="2482" />
+					<action agent="1" name="watch monitor" begin_frame="2483" end_frame="2485" />
+					<action agent="1" name="drink with cup" begin_frame="2486" end_frame="2486" />
+					<action agent="1" name="watch monitor" begin_frame="2487" end_frame="2488" />
+					<action agent="1" name="drink with cup" begin_frame="2489" end_frame="2489" />
+					<action agent="1" name="watch monitor" begin_frame="2490" end_frame="2492" />
+					<action agent="1" name="drink with cup" begin_frame="2493" end_frame="2493" />
+					<action agent="1" name="use dispenser" begin_frame="2494" end_frame="2495" />
+					<action agent="1" name="drink with cup" begin_frame="2496" end_frame="2496" />
+					<action agent="1" name="watch monitor" begin_frame="2497" end_frame="2511" />
+					<action agent="1" name="use keyboard" begin_frame="2512" end_frame="2512" />
+					<action agent="1" name="watch monitor" begin_frame="2513" end_frame="2518" />
+					<action agent="1" name="watch monitor" begin_frame="2520" end_frame="2555" />
+					<action agent="1" name="use keyboard" begin_frame="2556" end_frame="2557" />
+					<action agent="1" name="watch monitor" begin_frame="2558" end_frame="2560" />
+					<action agent="1" name="walk on floor" begin_frame="2561" end_frame="2566" />
+					<action agent="1" name="watch monitor" begin_frame="2567" end_frame="2590" />
+					<action agent="1" name="watch monitor" begin_frame="2592" end_frame="2593" />
+					<action agent="1" name="use keyboard" begin_frame="2594" end_frame="2594" />
+					<action agent="1" name="watch monitor" begin_frame="2595" end_frame="2606" />
+					<action agent="1" name="use mouse" begin_frame="2607" end_frame="2608" />
+					<action agent="1" name="watch monitor" begin_frame="2609" end_frame="2632" />
+					<action agent="1" name="use keyboard" begin_frame="2633" end_frame="2633" />
+					<action agent="1" name="watch monitor" begin_frame="2634" end_frame="2638" />
+					<action agent="1" name="use dispenser" begin_frame="2639" end_frame="2639" />
+					<action agent="1" name="walk on floor" begin_frame="2640" end_frame="2640" />
+					<action agent="1" name="watch monitor" begin_frame="2641" end_frame="2649" />
+					<action agent="1" name="use mouse" begin_frame="2650" end_frame="2650" />
+					<action agent="1" name="watch monitor" begin_frame="2652" end_frame="2681" />
+					<action agent="1" name="watch monitor" begin_frame="2683" end_frame="2687" />
+					<action agent="1" name="use keyboard" begin_frame="2688" end_frame="2693" />
+					<action agent="1" name="watch monitor" begin_frame="2694" end_frame="2705" />
+					<action agent="1" name="use keyboard" begin_frame="2706" end_frame="2719" />
+					<action agent="1" name="watch monitor" begin_frame="2720" end_frame="2721" />
+					<action agent="1" name="use keyboard" begin_frame="2722" end_frame="2724" />
+					<action agent="1" name="walk on floor" begin_frame="2725" end_frame="2736" />
+					<action agent="1" name="watch monitor" begin_frame="2737" end_frame="2740" />
+					<action agent="1" name="watch monitor" begin_frame="2742" end_frame="2770" />
+					<action agent="1" name="use dispenser" begin_frame="2771" end_frame="2771" />
+					<action agent="1" name="watch monitor" begin_frame="2772" end_frame="2775" />
+					<action agent="1" name="use dispenser" begin_frame="2776" end_frame="2776" />
+					<action agent="1" name="use keyboard" begin_frame="2777" end_frame="2777" />
+					<action agent="1" name="use dispenser" begin_frame="2778" end_frame="2778" />
+					<action agent="1" name="drink with cup" begin_frame="2779" end_frame="2779" />
+					<action agent="1" name="watch monitor" begin_frame="2780" end_frame="2780" />
+					<action agent="1" name="walk on floor" begin_frame="2781" end_frame="2781" />
+					<action agent="1" name="watch monitor" begin_frame="2782" end_frame="2785" />
+					<action agent="1" name="walk on floor" begin_frame="2786" end_frame="2786" />
+					<action agent="1" name="watch monitor" begin_frame="2787" end_frame="2791" />
+					<action agent="1" name="use dispenser" begin_frame="2792" end_frame="2792" />
+					<action agent="1" name="watch monitor" begin_frame="2793" end_frame="2801" />
+					<action agent="1" name="watch monitor" begin_frame="2803" end_frame="2828" />
+					<action agent="1" name="call with phone" begin_frame="2829" end_frame="2832" />
+					<action agent="1" name="watch monitor" begin_frame="2833" end_frame="2838" />
+					<action agent="1" name="watch monitor" begin_frame="2840" end_frame="2858" />
+					<action agent="1" name="call with phone" begin_frame="2859" end_frame="2872" />
+					<action agent="1" name="watch monitor" begin_frame="2873" end_frame="2877" />
+					<action agent="1" name="call with phone" begin_frame="2878" end_frame="2879" />
+					<action agent="1" name="watch monitor" begin_frame="2880" end_frame="2918" />
+					<action agent="1" name="call with phone" begin_frame="2919" end_frame="2920" />
+					<action agent="1" name="watch monitor" begin_frame="2921" end_frame="2926" />
+					<action agent="1" name="watch monitor" begin_frame="2928" end_frame="2941" />
+					<action agent="1" name="watch monitor" begin_frame="2943" end_frame="2968" />
+					<action agent="1" name="use keyboard" begin_frame="2969" end_frame="2970" />
+					<action agent="1" name="watch monitor" begin_frame="2971" end_frame="2974" />
+					<action agent="1" name="use mouse" begin_frame="2975" end_frame="2975" />
+					<action agent="1" name="watch monitor" begin_frame="2976" end_frame="2977" />
+					<action agent="1" name="use keyboard" begin_frame="2978" end_frame="2979" />
+					<action agent="1" name="watch monitor" begin_frame="2980" end_frame="2980" />
+					<action agent="1" name="use keyboard" begin_frame="2981" end_frame="2981" />
+					<action agent="1" name="watch monitor" begin_frame="2982" end_frame="2983" />
+					<action agent="1" name="use keyboard" begin_frame="2984" end_frame="2984" />
+					<action agent="1" name="watch monitor" begin_frame="2985" end_frame="2989" />
+					<action agent="1" name="use keyboard" begin_frame="2990" end_frame="2991" />
+					<action agent="1" name="watch monitor" begin_frame="2992" end_frame="2994" />
+					<action agent="1" name="use keyboard" begin_frame="2995" end_frame="2995" />
+					<action agent="1" name="watch monitor" begin_frame="2996" end_frame="2996" />
+					<action agent="1" name="use mouse" begin_frame="2997" end_frame="2997" />
+					<action agent="1" name="watch monitor" begin_frame="2998" end_frame="3002" />
+					<action agent="1" name="watch monitor" begin_frame="3004" end_frame="3009" />
+					<action agent="1" name="use mouse" begin_frame="3010" end_frame="3010" />
+					<action agent="1" name="watch monitor" begin_frame="3011" end_frame="3017" />
+					<action agent="1" name="watch monitor" begin_frame="3019" end_frame="3032" />
+					<action agent="1" name="watch monitor" begin_frame="3034" end_frame="3048" />
+					<action agent="1" name="watch monitor" begin_frame="3050" end_frame="3055" />
+					<action agent="1" name="walk on floor" begin_frame="3056" end_frame="3068" />
+					<action agent="1" name="watch monitor" begin_frame="3069" end_frame="3073" />
+					<action agent="1" name="walk on floor" begin_frame="3074" end_frame="3079" />
+					<action agent="1" name="watch monitor" begin_frame="3080" end_frame="3093" />
+					<action agent="1" name="use mouse" begin_frame="3094" end_frame="3094" />
+					<action agent="1" name="walk on floor" begin_frame="3095" end_frame="3097" />
+					<action agent="1" name="watch monitor" begin_frame="3098" end_frame="3099" />
+					<action agent="1" name="walk on floor" begin_frame="3100" end_frame="3102" />
+					<action agent="1" name="use dispenser" begin_frame="3103" end_frame="3103" />
+					<action agent="1" name="watch monitor" begin_frame="3104" end_frame="3105" />
+					<action agent="1" name="walk on floor" begin_frame="3106" end_frame="3108" />
+					<action agent="1" name="use dispenser" begin_frame="3109" end_frame="3109" />
+					<action agent="1" name="walk on floor" begin_frame="3110" end_frame="3110" />
+					<action agent="1" name="watch monitor" begin_frame="3111" end_frame="3112" />
+					<action agent="1" name="walk on floor" begin_frame="3113" end_frame="3115" />
+					<action agent="1" name="watch monitor" begin_frame="3116" end_frame="3116" />
+					<action agent="1" name="walk on floor" begin_frame="3117" end_frame="3118" />
+					<action agent="1" name="watch monitor" begin_frame="3119" end_frame="3120" />
+				</event>
+			</events>
+		</temporal>
+	</interpretation>
+</video>
