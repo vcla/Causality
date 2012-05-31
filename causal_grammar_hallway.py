@@ -14,24 +14,10 @@ abbreviated_hallway_grammar = [
 ]
 """
 
-# TODO: unsure of what to put in for probabilities -- using mostly False for now
+# NOTE: unsure of what to put in for probabilities -- using mostly False for now
 ### GRAMMAR FOR MINGTIAN'S HALLWAY -- NIPS 2012###
 abbreviated_hallway_grammar = [
-	# DOOR OPEN 
-	("root", "fluent", "DOOR_OPEN_on", False, False, [
-			# inertially ON
-			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "DOOR_OPEN_on", False, False, False),
-					("leaf", "nonevent", "@TODO@", False, 10, False), # TODO: non-action
-				]
-			),
-			# causally ON (open door inside)  # TODO
-		]
-	),
-	# DOOR CLOSED (DOOR OPEN OFF) # TODO
-	# ELEVATOR DOOR OPEN # TODO
-	# ELEVATOR DOOR CLOSED # TODO
-	# LIGHT ON 
+	# LIGHT ON
 	("root", "fluent", "[LIGHT_ON]_on", False, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
@@ -96,15 +82,15 @@ abbreviated_hallway_grammar = [
 		]
 	),
 	# TRASH MORE
-	("root", "fluent", "TRASH_MORE_on", False, False, [
+	("root", "fluent", "TRASH_MORE_on", .4, False, [
 			# ON CAUSALLY (NEVER ON INERTIALLY)
-			("and", False, False, .6, False, [
+			("and", False, False, False, False, [
 					("leaf", "prev_fluent", "TRASH_MORE_on", False, False, False),
 					("leaf", "event", "[DROP TRASH]_END", False, 1, False),
 				]
 			),
 			# ON CAUSALLY
-			("and", False, False, .4, False, [
+			("and", False, False, False, False, [
 					("leaf", "prev_fluent", "TRASH_MORE_off", False, False, False),
 					("leaf", "event", "[DROP TRASH]_END", False, 1, False)
 				]
@@ -112,27 +98,85 @@ abbreviated_hallway_grammar = [
 		]
 	),
 	# TRASH MORE OFF (STAYS)
-	("root", "fluent", "TRASH_MORE_off", False, False, [
+	("root", "fluent", "TRASH_MORE_off", .6, False, [
 			# OFF INERTIALLY
-			("and", False, False, .6, False, [
+			("and", False, False, False, False, [
 					("leaf", "prev_fluent", "TRASH_MORE_off", False, False, False),
 					("leaf", "nonevent", "[DROP TRASH]_END", False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
-			("and", False, False, .4, False, [
+			("and", False, False, False, False, [
 					("leaf", "prev_fluent", "TRASH_MORE_on", False, False, False),
 					("leaf", "nonevent", "[DROP TRASH]_END", False, 1, False),
 				]
 			)
 		]
 	),
-	# TRASH LESS # TODO: unsure of causal remove trash action
-	# TRASH LESS OFF 
-	# PHONE RINGING # TODO
-	# PHONE NOT RINGING (PHONE_RINGING_OFF)
-	# PHONE ACTIVE # TODO
+	# TRASH LESS # NOTE: event described here never happens in XML
+	("root", "fluent", "TRASH_LESS_on", .4, False, [
+			# ON CAUSALLY (NEVER ON INERTIALLY)
+			("and", False, False, False, False, [
+					("leaf", "prev_fluent", "TRASH_LESS_on", False, False, False),
+					("leaf", "event", "[PICKUP TRASH]_END", False, 1, False),
+				]
+			),
+			# ON CAUSALLY
+			("and", False, False, False, False, [
+					("leaf", "prev_fluent", "TRASH_LESS_off", False, False, False),
+					("leaf", "event", "[PICKUP TRASH]_END", False, 1, False)
+				]
+			)
+		]
+	),
+	# TRASH LESS OFF (STAYS)
+	("root", "fluent", "TRASH_LESS_off", .6, False, [
+			# OFF INERTIALLY
+			("and", False, False, False, False, [
+					("leaf", "prev_fluent", "TRASH_LESS_off", False, False, False),
+					("leaf", "nonevent", "[PICKUP TRASH]_END", False, 1, False),
+				]
+			),
+			# OFF CAUSALLY
+			("and", False, False, False, False, [
+					("leaf", "prev_fluent", "TRASH_LESS_on", False, False, False),
+					("leaf", "nonevent", "[PICKUP TRASH]_END", False, 1, False),
+				]
+			)
+		]
+	),
+	# PHONE ACTIVE
+	("root", "fluent", "PHONE_ACTIVE_on", .4, False, [
+			# ON INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "PHONE_ACTIVE_on", False, False, False),
+					("leaf", "nonevent", "[USE CELLPHONE]_END", False, 1, False),
+				]
+			),
+			# ON CAUSALLY
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "PHONE_ACTIVE_off", False, False, False),
+					("leaf", "event", "[USE CELLPHONE]_START", False, 1, False),
+				]
+			)
+		]
+	),
 	# PHONE STANDBY (PHONE_ACTIVE_OFF)
+	("root", "fluent", "PHONE_ACTIVE_off", .6, False, [
+			# OFF INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "PHONE_ACTIVE_off", False, False, False),
+					("leaf", "nonevent", "[USE CELLPHONE]_START", False, 1, False),
+				]
+			),
+			# OFF CAUSALLY
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "PHONE_ACTIVE_on", False, False, False),
+					("leaf", "event", "[USE CELLPHONE]_END", False, 1, False)
+				]
+			)
+		]
+	),
 	# AGENT THIRSTY
 	("root", "fluent", "AGENT_THIRST_on", False, False, [
 			# ON INERTIALLY
@@ -165,9 +209,58 @@ abbreviated_hallway_grammar = [
 			)
 		]
 	),
-	# AGENT HAS TRASH # TODO
+	# AGENT HAS TRASH # NOTE: EVENT [REMOVE TRASH] NEVER REALIZED!
+	("root", "fluent", "AGENT_HAS_TRASH_on", False, False, [
+			# ON INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "AGENT_HAS_TRASH_on", False, False, False),
+					("leaf", "nonevent", "[USE TRASH CAN]_END", False, 1, False),
+				]
+			),
+			# ON CAUSALLY
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "AGENT_HAS_TRASH_off", False, False, False),
+					("leaf", "event", "[REMOVE TRASH]_START", False, 1, False),
+				]
+			)
+		]
+	),
 	# AGENT DOESN"T HAVE TRASH (AGENT_TRASH_OFF)
+	("root", "fluent", "AGENT_HAS_TRASH_off", False, False, [
+			# OFF INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "AGENT_HAS_TRASH_off", False, False, False),
+					("leaf", "nonevent", "[REMOVE TRASH]_START", False, 1, False),
+				]
+			),
+			# OFF CAUSALLY
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "AGENT_HAS_TRASH_on", False, False, False),
+					("leaf", "event", "[USE TRASH CAN]_END", False, 1, False)
+				]
+			)
+		]
+	),
 ]
+"""
+	### NOT INCLUDED ###
+	# DOOR OPEN
+	("root", "fluent", "DOOR_OPEN_on", False, False, [
+			# inertially ON
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "DOOR_OPEN_on", False, False, False),
+					("leaf", "nonevent", "@TODO@", False, 10, False), # TODO: non-action
+				]
+			),
+			# causally ON (open door inside)  # TODO
+		]
+	),
+	# DOOR CLOSED (DOOR OPEN OFF) # TODO
+	# ELEVATOR DOOR OPEN # TODO
+	# ELEVATOR DOOR CLOSED # TODO
+	# PHONE RINGING #
+	# PHONE NOT RINGING (PHONE_RINGING_OFF)
+"""
 
 import causal_grammar
 causal_forest = causal_grammar.generate_causal_forest_from_abbreviated_forest(abbreviated_hallway_grammar)

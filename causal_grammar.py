@@ -316,7 +316,7 @@ def clear_outdated_events(event_hash, event_timeouts, frame):
 			event_hash[event]["energy"] = kUnlikelyEnergy
 			event_hash[event]["agent"] = False
 
-def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions):
+def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions, source):
 	# we have a winner! let's show them what they've won, bob!
 	energy = calculate_energy(active_parse_tree, fluent_hash, event_hash)
 	fluent = active_parse_tree["symbol"]
@@ -337,7 +337,7 @@ def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, compl
 		if frame not in completion:
 			completion[frame] = []
 		completion_frame = completion[frame]
-		completion_frame.append({"frame": frame, "fluent": fluent, "energy": energy, "parse": active_parse_tree, "agents": agents_responsible, "status": fluent_hash[active_parse_tree['symbol']]['energy']})
+		completion_frame.append({"frame": frame, "fluent": fluent, "energy": energy, "parse": active_parse_tree, "agents": agents_responsible, "status": fluent_hash[active_parse_tree['symbol']]['energy'], 'source': source})
 	# print("{}".format("\t".join([str(fluent),str(frame),"{:g}".format(energy),str(make_tree_like_lisp(active_parse_tree)),str(agents_responsible)])))
 	# print("{} PARSE TREE {} COMPLETED at {}: energy({})\n{}\n***{}***".format(fluent,active_parse_tree['id'],frame,energy,make_tree_like_lisp(active_parse_tree),active_parse_tree))
 	# print("Agents responsible: {}".format(agents_responsible))
@@ -350,8 +350,12 @@ def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, compl
 def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy, completions):
 	# we're planning to remove things from active_parses while we loop through, so....
 	active_parses_copy = active_parses.copy()
+	parse_ids_completed = []
+	parse_symbols_completed = []
+	effective_frames = {}
 	for parse_id in active_parses_copy:
 		active_parse = parse_array[parse_id]
+		symbol = active_parse['symbol']
 		# get max event timeout relevant to given active_parse
 		keys = get_fluent_and_event_keys_we_care_about((active_parse,))
 		events = keys["events"]
@@ -365,23 +369,28 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 			# print("REMOVING {}".format(parse_id))
 			active_parses.pop(parse_id)
 			effective_frame = active_parse['frame'] + max_event_timeout
-			complete_parse_tree(active_parse, fluent_hash, event_hash, effective_frame, completions)
-			possible_trees = fluent_hash[active_parse['symbol']]['trees']
-			parses_completed = [parse_id,]
-			for possible_tree in possible_trees:
-				# if this tree is a "primary" for this symbol
-				if possible_tree['symbol'] == active_parse['symbol']:
-					other_parses = possible_tree['parses']
-					for other_parse in other_parses:
-						if other_parse['id'] not in parses_completed:
-							# TODO: dealing with a bug somewhere that's adding duplicate
-							# copies of (some?) parses into fluent_hash[symbol][trees][parses]
-							# maybe the trees themselves are referenced multiple times and so
-							# added to? anyway, we can work around that by not doing the same
-							# id multiple times here
-							# raise Exception("TODO, EH??")
-							parses_completed.append(other_parse['id'])
-							complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frame, completions)
+			parse_ids_completed.append(parse_id,)
+			parse_symbols_completed.append(symbol,)
+			effective_frames[symbol] = effective_frame
+			complete_parse_tree(active_parse, fluent_hash, event_hash, effective_frame, completions, 'timeout')
+	for symbol in parse_symbols_completed:
+		anti_symbol = invert_name(symbol)
+		possible_trees = fluent_hash[symbol]['trees']
+		unpossible_trees = fluent_hash[anti_symbol]['trees']
+		for possible_tree in possible_trees: # + unpossible_trees:
+			# if this tree is a "primary" for this symbol
+			if possible_tree['symbol'] in (symbol,anti_symbol):
+				other_parses = possible_tree['parses']
+				for other_parse in other_parses:
+					if other_parse['id'] not in parse_ids_completed:
+						# TODO: dealing with a bug somewhere that's adding duplicate
+						# copies of (some?) parses into fluent_hash[symbol][trees][parses]
+						# maybe the trees themselves are referenced multiple times and so
+						# added to? anyway, we can work around that by not doing the same
+						# id multiple times here
+						# raise Exception("TODO, EH??")
+						parse_ids_completed.append(other_parse['id'])
+						complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frames[symbol], completions, 'timeout alt')
 
 def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy):
 	fluent_parse_index = 0
@@ -463,6 +472,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 	# in both at the same time, they will be handled sequentially, the fluent first
 	active_parse_trees = {}
 	completions = {}
+	for parse in parse_array:
+		complete_parse_tree(parse, fluent_hash, event_hash, 0, completions, 'initial')
 	while fluent_parse_index < len(fluent_parses) or temporal_parse_index < len(temporal_parses):
 		fluents_complete = fluent_parse_index >= len(fluent_parses)
 		temporal_complete = temporal_parse_index >= len(temporal_parses)
@@ -508,19 +519,20 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 				fluent_hash[fluent_off_string]["energy"] = fluent_off_energy
 				# fluent_on and fluent_off _should_ never both change to on, so we consider this safe
 				if fluent_changed:
+					# go through all parses that this fluent touches, or its inverse
 					fluents_actually_changed.append(fluent_changed,)
-					for parse_id in parse_id_hash_by_fluent[fluent_changed]:
+					for parse_id in parse_id_hash_by_fluent[fluent_changed] + parse_id_hash_by_fluent[invert_name(fluent_changed)]:
 						if parse_id not in active_parse_trees:
 							# create this parse if it's not in our list of active parses
 							active_parse_trees[parse_id] = parse_array[parse_id]
 						active_parse_trees[parse_id]["frame"] = frame
-			# complete any active parse trees that had their "primary" fluent change
+			# complete any active parse trees that had their "primary" fluent change (or its inverse)
 			for fluent in fluents_actually_changed:
 				for key in active_parse_trees.keys():
 					active_parse_tree = active_parse_trees[key]
-					if active_parse_tree["symbol"] == fluent:
+					if active_parse_tree["symbol"] in (fluent, invert_name(fluent)):
 						active_parse_trees.pop(key)
-						complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions)
+						complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions, 'fluent_changed')
 					elif kFilterNonEventTriggeredParseTimeouts:
 						# TODO: this is a bug!  this will kill all but the first type of fluent
 						# if we want to remove the case of parses timing out when they never
@@ -592,14 +604,19 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 							children.append(chain)
 				parent_chains = children
 			for completion_data in completion_data_sorted:
-				print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(completion_data['status']), "{:>6.3f}".format(completion_data['energy']), "{:d}".format(completion_data['parse']['id']), str(make_tree_like_lisp(completion_data['parse'])), str(completion_data['agents'])])))
+				print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(completion_data['status']), "{:>6.3f}".format(completion_data['energy']), completion_data['source'], "{:d}".format(completion_data['parse']['id']), str(make_tree_like_lisp(completion_data['parse'])), str(completion_data['agents'])])))
+		chain_results = []
 		for chain in parent_chains:
 			items = []
 			energy = 0
 			for item in chain:
 				items.append((item['frame'],item['parse']['id']))
 				energy += item['energy']
-			print([items,energy])
+			#print([items,energy])
+			chain_results.append([items,energy])
+		# print('\n'.join(['\t'.join(l) for l in chain_results]))
+		chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
+		print('\n'.join(map(str,chain_results)))
 		hr()
 
 if __name__ == '__main__':
