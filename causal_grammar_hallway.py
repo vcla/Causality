@@ -18,7 +18,7 @@ abbreviated_hallway_grammar = [
 ### GRAMMAR FOR MINGTIAN'S HALLWAY -- NIPS 2012###
 abbreviated_hallway_grammar = [
 	# LIGHT ON
-	("root", "fluent", "[LIGHT_ON]_on", False, False, [
+	("root", "fluent", "[LIGHT_ON]_on", .6, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
@@ -34,7 +34,7 @@ abbreviated_hallway_grammar = [
 		]
 	),
 	# LIGHT OFF	(LIGHT_ON_OFF)
-	("root", "fluent", "[LIGHT_ON]_off", False, False, [
+	("root", "fluent", "[LIGHT_ON]_off", .4, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
@@ -50,7 +50,7 @@ abbreviated_hallway_grammar = [
 		]
 	),
 	# WATER STREAM ON
-	("root", "fluent", "WATER_STREAM_on", False, False, [
+	("root", "fluent", "WATER_STREAM_on", .4, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "WATER_STREAM_on", False, False, False),
@@ -66,7 +66,7 @@ abbreviated_hallway_grammar = [
 		]
 	),
 	# WATER STREAM OFF (WATERSTREAM_ON_OFF)
-	("root", "fluent", "WATER_STREAM_off", False, False, [
+	("root", "fluent", "WATER_STREAM_off", .6, False, [
 			# OFF INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "WATER_STREAM_off", False, False, False),
@@ -178,7 +178,7 @@ abbreviated_hallway_grammar = [
 		]
 	),
 	# AGENT THIRSTY
-	("root", "fluent", "AGENT_THIRST_on", False, False, [
+	("root", "fluent", "AGENT_THIRST_on", .4, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "AGENT_THIRST_on", False, False, False),
@@ -188,13 +188,14 @@ abbreviated_hallway_grammar = [
 			# ON CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "AGENT_THIRST_off", False, False, False),
+					("leaf", "event", "[USE FOUNTAIN]_START", False, 1, False), # added to force the issue
 					# TODO: this is the timer one...  unsure of how to put it...  (not an action, but...)
 				]
 			)
 		]
 	),
 	# AGENT SATIATED (AGENT_THIRSTY_OFF)
-	("root", "fluent", "AGENT_THIRST_off", False, False, [
+	("root", "fluent", "AGENT_THIRST_off", .6, False, [
 			# OFF INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "AGENT_THIRST_off", False, False, False),
@@ -210,15 +211,16 @@ abbreviated_hallway_grammar = [
 		]
 	),
 	# AGENT HAS TRASH # NOTE: EVENT [REMOVE TRASH] NEVER REALIZED!
+	# TODO: This is one of the ones that needs the "reset agent" feature
 	("root", "fluent", "AGENT_HAS_TRASH_on", False, False, [
 			# ON INERTIALLY
-			("and", False, False, .6, False, [
+			("and", False, False, .5, False, [
 					("leaf", "prev_fluent", "AGENT_HAS_TRASH_on", False, False, False),
 					("leaf", "nonevent", "[USE TRASH CAN]_END", False, 1, False),
 				]
 			),
 			# ON CAUSALLY
-			("and", False, False, .4, False, [
+			("and", False, False, .5, False, [
 					("leaf", "prev_fluent", "AGENT_HAS_TRASH_off", False, False, False),
 					("leaf", "event", "[REMOVE TRASH]_START", False, 1, False),
 				]
@@ -228,13 +230,13 @@ abbreviated_hallway_grammar = [
 	# AGENT DOESN"T HAVE TRASH (AGENT_TRASH_OFF)
 	("root", "fluent", "AGENT_HAS_TRASH_off", False, False, [
 			# OFF INERTIALLY
-			("and", False, False, .6, False, [
+			("and", False, False, .5, False, [
 					("leaf", "prev_fluent", "AGENT_HAS_TRASH_off", False, False, False),
 					("leaf", "nonevent", "[REMOVE TRASH]_START", False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
-			("and", False, False, .4, False, [
+			("and", False, False, .5, False, [
 					("leaf", "prev_fluent", "AGENT_HAS_TRASH_on", False, False, False),
 					("leaf", "event", "[USE TRASH CAN]_END", False, 1, False)
 				]
@@ -260,6 +262,7 @@ abbreviated_hallway_grammar = [
 	# ELEVATOR DOOR CLOSED # TODO
 	# PHONE RINGING #
 	# PHONE NOT RINGING (PHONE_RINGING_OFF)
+	# AGENT HAS PHONE/NOT
 """
 
 import causal_grammar

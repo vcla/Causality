@@ -3,7 +3,7 @@
 abbreviated_office_grammar = [
 	# actions: "walk on floor" "press switch" "drink with cup" "use dispenser" "watch monitor" "use keyboard" "use mouse" "call with phone"
 	# LIGHT ON
-	("root", "fluent", "[LIGHT_ON]_on", False, False, [
+	("root", "fluent", "[LIGHT_ON]_on", .6, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
@@ -19,7 +19,7 @@ abbreviated_office_grammar = [
 		]
 	),
 	# LIGHT OFF	(LIGHT_ON_OFF)
-	("root", "fluent", "[LIGHT_ON]_off", False, False, [
+	("root", "fluent", "[LIGHT_ON]_off", .4, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
@@ -34,9 +34,6 @@ abbreviated_office_grammar = [
 			)
 		]
 	),
-	# MONITOR DISPLAY ON TODO
-	# MONITOR DISPLAY OFF TODO
-	# MONITOR POWER ON TODO
 	# CUP MORE -- NOTE if implementation fails for some reason, i moved probabilities around on this one
 	("root", "fluent", "[cup_MORE]_on", .4, False, [
 			# ON CAUSALLY (NEVER ON INERTIALLY)
@@ -102,7 +99,7 @@ abbreviated_office_grammar = [
 		]
 	),
 	# WATER STREAM ON 
-	("root", "fluent", "WATER_STREAM_on", False, False, [
+	("root", "fluent", "WATER_STREAM_on", .4, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "WATER_STREAM_on", False, False, False),
@@ -118,7 +115,7 @@ abbreviated_office_grammar = [
 		]
 	),
 	# WATER STREAM OFF (WATERSTREAM_ON_OFF)
-	("root", "fluent", "WATER_STREAM_off", False, False, [
+	("root", "fluent", "WATER_STREAM_off", .6, False, [
 			# OFF INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "WATER_STREAM_off", False, False, False),
@@ -134,7 +131,7 @@ abbreviated_office_grammar = [
 		]
 	),
 	# AGENT THIRSTY
-	("root", "fluent", "AGENT_THIRST_on", False, False, [
+	("root", "fluent", "AGENT_THIRST_on", .4, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "AGENT_THIRST_on", False, False, False),
@@ -144,16 +141,18 @@ abbreviated_office_grammar = [
 			# ON CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "AGENT_THIRST_off", False, False, False),
+					("leaf", "event", "drink with cup_START", False, 1, False),
 					# TODO: this is the timer one...  unsure of how to put it...  (not an action, but...)
 				]
 			)
 		]
 	),
 	# AGENT SATIATED (AGENT_THIRSTY_OFF)
-	("root", "fluent", "AGENT_THIRST_off", False, False, [
+	("root", "fluent", "AGENT_THIRST_off", .6, False, [
 			# OFF INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "AGENT_THIRST_off", False, False, False),
+					("leaf", "nonevent", "drink with cup_START", False, 1, False),
 					# TODO: Timer for on causally
 				]
 			),
@@ -199,6 +198,9 @@ abbreviated_office_grammar = [
 	),
 ]
 """
+
+
+
 	### IGNORING ONES BELOW HERE ###
 	# TRASH MORE # NOT INCLUDED
 	# TRASH LESS # NOT INCLUDED
@@ -206,6 +208,55 @@ abbreviated_office_grammar = [
 	# AGENT DOESN"T HAVE TRASH (AGENT_TRASH_OFF) # NOT INCLUDED
 	# PHONE RINGING # NOT INCLUDED
 	# PHONE RINGING OFF # NOT INCLUDED
+
+
+TODO: BROKEN!!!!
+	# MONITOR DISPLAY ON TODO
+	("root", "fluent", "[monitor_display]_on", .5, False, [
+			# ON INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "[monitor_display]_on", False, False, False),
+					#("leaf", "nonevent", "use keyboard_END",  False, 10, False),
+				]
+			),
+			# ON CAUSALLY - KEYBOARD
+			("and", False, False, .4, False, [
+					#("leaf", "prev_fluent", "[monitor_display]_off", False, False, False),
+					("leaf", "event", "use keyboard_START",  False, 1, False),
+				]
+			),
+			# ON CAUSALLY - MOUSE
+			("and", False, False, .4, False, [
+					#("leaf", "prev_fluent", "[monitor_display]_off", False, False, False),
+					("leaf", "event", "use mouse_START",  False, 1, False),
+				]
+			)
+		]
+	),
+	# MONITOR DISPLAY OFF TODO
+	("root", "fluent", "[monitor_display]_off", .5, False, [
+			# OFF INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "[monitor_display]_off", False, False, False),
+					#("leaf", "nonevent", "use keyboard_END",  False, 10, False),
+				]
+			),
+			# OFF CAUSALLY - KEYBOARD
+			("and", False, False, .4, False, [
+					#("leaf", "prev_fluent", "[monitor_display]_on", False, False, False),
+					("leaf", "nonevent", "use keyboard_START",  False, 1, False),
+				]
+			),
+			# ON CAUSALLY - MOUSE
+			("and", False, False, .4, False, [
+					#("leaf", "prev_fluent", "[monitor_display]_on", False, False, False),
+					("leaf", "nonevent", "use mouse_START",  False, 1, False),
+				]
+			)
+		]
+	),
+	# MONITOR POWER ON TODO
+
 """
 """	("root", "fluent", "[LIGHT_ON]_on", False, False, [
 			# ON INERTIALLY
