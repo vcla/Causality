@@ -39,6 +39,16 @@ def generate_causal_forest_from_abbreviated_forest(abbreviated_forest):
 		forest.append(tree)
 	return forest
 
+def import_summerdata(exampleName):
+	import parsingSummerActionAndFluentOutput
+	fluent_parses = parsingSummerActionAndFluentOutput.readFluentResults(exampleName)
+	#temporal_parses = parsingSummerActionAndFluentOutput.readTemporalResults(exampleName)
+	import pprint
+	pp = pprint.PrettyPrinter(depth=6)
+	pp.pprint(fluent_parses)
+	raise("NOT DONE. TEMPORAL PARSES NOT IMPLEMENTED")
+	return [fluent_parses, temporal_parses]
+
 def import_xml(filename):
 	fluent_parses = {"initial":{}}
 	temporal_parses = {}
@@ -393,6 +403,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 						complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frames[symbol], completions, 'timeout alt')
 
 def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy):
+	results_for_xml_output = []
 	fluent_parse_index = 0
 	temporal_parse_index = 0
 	initial_conditions = False
@@ -616,8 +627,62 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 			chain_results.append([items,energy])
 		# print('\n'.join(['\t'.join(l) for l in chain_results]))
 		chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
+		results_for_xml_output.append(chain_results[:1])
 		print('\n'.join(map(str,chain_results)))
 		hr()
+	print_xml_output_for_chain_for_fluent(results_for_xml_output,parse_array) # for lowest energy chain
+
+from xml.dom.minidom import Document
+
+def print_xml_output_for_chain_for_fluent(all_chains,parse_array):
+	doc = Document()
+	temporal_stuff = doc.createElement("temporal")
+	doc.appendChild(temporal_stuff)
+	fluent_changes = doc.createElement("fluent_changes")
+	temporal_stuff.appendChild(fluent_changes)
+	for chain in all_chains:
+		chain = chain[0][0]
+		for instance in chain:
+			frame_number = instance[0]
+			parse_id = instance[1]
+			parse = parse_array[parse_id]
+			# get fluents where there's a prev-fluent and fluent.  or just stick with top level?
+			#print("{}".format(frame_number))
+			#print("{}".format(parse['symbol']))
+			#print("{}".format(parse))
+			fluent_parse = doc.createElement("fluent_change")
+			fluent, fluent_value = parse['symbol'].rsplit("_",1)
+			fluent_parse.setAttribute("fluent",fluent)
+			fluent_parse.setAttribute("new_value",fluent_value)
+			prev_value = get_prev_fluent_value_from_parse(parse,fluent)
+			if len(prev_value) != 1:
+				print("{}".format(len(prev_value)))
+				print("Parse: {}".format(parse))
+				raise Exception("The tree does not have a previous fluent")
+			#print("{}".format(prev_value))
+			fluent_parse.setAttribute("old_value",prev_value[0])
+			fluent_parse.setAttribute("frame",str(frame_number))
+			fluent_changes.appendChild(fluent_parse)
+			#TODO: missing attributes id, object, time in fluent_change
+	print doc.toprettyxml(indent="\t")
+
+# TODO: this assumes we're only going to find one previous fluent value for the given fluent
+def get_prev_fluent_value_from_parse(parse,fluent):
+	prev_fluents = []
+	# get prev fluent
+	if "symbol_type" in parse:
+		if parse["symbol_type"] == "prev_fluent":
+			tmp_fluent, tmp_fluent_value = parse["symbol"].rsplit("_",1)
+			#print("11111")
+			if tmp_fluent == fluent:
+				#print("2221222")
+				prev_fluents.append(tmp_fluent_value)
+				#print("{}".format(prev_fluents))
+	if "children" in parse:
+		for child in parse["children"]:
+			child_prev_fluents = get_prev_fluent_value_from_parse(child,fluent)
+			prev_fluents += child_prev_fluents
+	return prev_fluents
 
 if __name__ == '__main__':
 	# WHOO!

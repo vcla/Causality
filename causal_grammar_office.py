@@ -1,4 +1,6 @@
 ### GRAMMAR FOR ZHU OFFICE -- NIPS 2012 ###
+# TODO: in the DB, the ones that are missing are MONITOR DISPLAY, MONITOR POWER, COMPUTER AWAKE -- python definitely running, but getting nowhere...  maybe there are too many action changes for it to keep track
+# TODO: also not in the db: TRASHCAN MORE/LESS, AGENT TRASH -- but this is likely because that action wasn't included
 #("node_type", "symbol_type", "symbol", probability, timeout, [children])
 abbreviated_office_grammar = [
 	# actions: "walk on floor" "press switch" "drink with cup" "use dispenser" "watch monitor" "use keyboard" "use mouse" "call with phone"

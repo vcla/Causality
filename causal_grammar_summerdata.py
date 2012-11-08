@@ -1,7 +1,7 @@
-### HALLWAY GRAMMAR ###
+### SUMMERDATA GRAMMAR ###
 #("node_type", "symbol_type", "symbol", probability, timeout, [children])
 """
-abbreviated_hallway_grammar = [
+abbreviated_xxx_grammar = [
 	("root", "fluent", "dooropen_on", .5, False, [
 			("leaf", "prev_fluent", "dooropen_on", .3, False, False),
 			("and", False, False, .7, False, [
@@ -13,102 +13,199 @@ abbreviated_hallway_grammar = [
 	),
 ]
 """
-# TODO: door and elevator weren't included in the experiments...  can pull that data in
+
 # NOTE: unsure of what to put in for probabilities -- using mostly False for now
-### GRAMMAR FOR MINGTIAN'S HALLWAY -- NIPS 2012###
-abbreviated_hallway_grammar = [
-	# LIGHT ON
-	("root", "fluent", "[LIGHT_ON]_on", .6, False, [
+### GRAMMAR FOR SUMMER DATA -- CVPR 2012 ###
+abbreviated_summerdata_grammar = [
+	# AGENT THIRSTY
+	("root", "fluent", "thirst_on", .4, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
-					("leaf", "nonevent", "TOUCH_SWITCH_START",  False, 10, False),
+					("leaf", "prev_fluent", "thirst_on", False, False, False),
+					("leaf", "nonevent", "act_drink_END", False, 1, False),
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
-					("leaf", "event", "TOUCH_SWITCH_START",  False, 10, False),
+					("leaf", "prev_fluent", "thirst_off", False, False, False),
+					("leaf", "event", "act_drink_START", False, 1, False),
+					# TODO: this is the timer one...  unsure of how to put it...  (not an action, but...)
 				]
 			)
 		]
 	),
-	# LIGHT OFF	(LIGHT_ON_OFF)
-	("root", "fluent", "[LIGHT_ON]_off", .4, False, [
-			# ON INERTIALLY
+	# AGENT SATIATED (AGENT_THIRSTY_OFF)
+	("root", "fluent", "thirst_off", .6, False, [
+			# OFF INERTIALLY
 			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "[LIGHT_ON]_off", False, False, False),
-					("leaf", "nonevent", "TOUCH_SWITCH_START",  False, 10, False),
+					("leaf", "prev_fluent", "thirst_off", False, False, False),
+					# TODO: Timer for on causally
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "[LIGHT_ON]_on", False, False, False),
-					("leaf", "event", "TOUCH_SWITCH_START",  False, 10, False),
+					("leaf", "prev_fluent", "thirst_on", False, False, False),
+					("leaf", "event", "act_drink_END", False, 1, False)
+				]
+			)
+		]
+	),
+	# cup MORE
+	("root", "fluent", "cup_MORE_on", .4, False, [
+			# ON CAUSALLY (NEVER ON INERTIALLY)
+			("and", False, False, False, False, [
+					("leaf", "prev_fluent", "cup_MORE_on", False, False, False),
+					("leaf", "event", "act_dispensed_END", False, 1, False),
+				]
+			),
+			# ON CAUSALLY
+			("and", False, False, False, False, [
+					("leaf", "prev_fluent", "cup_MORE_off", False, False, False),
+					("leaf", "event", "act_dispensed_END", False, 1, False)
+				]
+			)
+		]
+	),
+	# cup MORE OFF (STAYS)
+	("root", "fluent", "cup_MORE_off", .6, False, [
+			# OFF INERTIALLY
+			("and", False, False, False, False, [
+					("leaf", "prev_fluent", "cup_MORE_off", False, False, False),
+					("leaf", "nonevent", "act_dispensed_END", False, 1, False),
+				]
+			),
+			# OFF CAUSALLY
+			("and", False, False, False, False, [
+					("leaf", "prev_fluent", "cup_MORE_on", False, False, False),
+					("leaf", "nonevent", "act_dispensed_END", False, 1, False),
+				]
+			)
+		]
+	),
+	# cup LESS # NOTE: event described here never happens in XML
+	("root", "fluent", "cup_LESS_on", .4, False, [
+			# ON CAUSALLY (NEVER ON INERTIALLY)
+			("and", False, False, False, False, [
+					("leaf", "prev_fluent", "cup_LESS_on", False, False, False),
+					("leaf", "event", "act_drink_END", False, 1, False),
+				]
+			),
+			# ON CAUSALLY
+			("and", False, False, False, False, [
+					("leaf", "prev_fluent", "cup_LESS_off", False, False, False),
+					("leaf", "event", "act_drink_END", False, 1, False)
+				]
+			)
+		]
+	),
+	# cup LESS OFF (STAYS)
+	("root", "fluent", "cup_LESS_off", .6, False, [
+			# OFF INERTIALLY
+			("and", False, False, False, False, [
+					("leaf", "prev_fluent", "cup_LESS_off", False, False, False),
+					("leaf", "nonevent", "act_drink_END", False, 1, False),
+				]
+			),
+			# OFF CAUSALLY
+			("and", False, False, False, False, [
+					("leaf", "prev_fluent", "cup_LESS_on", False, False, False),
+					("leaf", "nonevent", "act_drink_END", False, 1, False),
 				]
 			)
 		]
 	),
 	# WATER STREAM ON
-	("root", "fluent", "WATER_STREAM_on", .4, False, [
+	("root", "fluent", "waterstream_on", .4, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "WATER_STREAM_on", False, False, False),
-					("leaf", "nonevent", "[USE FOUNTAIN]_END", False, 1, False),
+					("leaf", "prev_fluent", "waterstream_on", False, False, False),
+					("leaf", "nonevent", "benddown_END", False, 1, False),
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "WATER_STREAM_off", False, False, False),
-					("leaf", "event", "[USE FOUNTAIN]_START", False, 1, False),
+					("leaf", "prev_fluent", "waterstream_off", False, False, False),
+					("leaf", "event", "benddown_START", False, 1, False),
 				]
 			)
 		]
 	),
 	# WATER STREAM OFF (WATERSTREAM_ON_OFF)
-	("root", "fluent", "WATER_STREAM_off", .6, False, [
+	("root", "fluent", "waterstream_off", .6, False, [
 			# OFF INERTIALLY
 			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "WATER_STREAM_off", False, False, False),
-					("leaf", "nonevent", "[USE FOUNTAIN]_START", False, 1, False),
+					("leaf", "prev_fluent", "waterstream_off", False, False, False),
+					("leaf", "nonevent", "benddown_START", False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "WATER_STREAM_on", False, False, False),
-					("leaf", "event", "[USE FOUNTAIN]_END", False, 1, False)
+					("leaf", "prev_fluent", "waterstream_on", False, False, False),
+					("leaf", "event", "benddown_END", False, 1, False)
+				]
+			)
+		]
+	),
+	# LIGHT ON
+	("root", "fluent", "light_on", .6, False, [
+			# ON INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "light_on", False, False, False),
+					("leaf", "nonevent", "pushbutton_START",  False, 10, False),
+				]
+			),
+			# ON CAUSALLY
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "light_off", False, False, False),
+					("leaf", "event", "pushbutton_START",  False, 10, False),
+				]
+			)
+		]
+	),
+	# LIGHT OFF	(LIGHT_ON_OFF)
+	("root", "fluent", "light_off", .4, False, [
+			# ON INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "light_off", False, False, False),
+					("leaf", "nonevent", "pushbutton_START",  False, 10, False),
+				]
+			),
+			# OFF CAUSALLY
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "light_on", False, False, False),
+					("leaf", "event", "pushbutton_START",  False, 10, False),
 				]
 			)
 		]
 	),
 	# TRASH MORE
-	("root", "fluent", "TRASH_MORE_on", .4, False, [
+	("root", "fluent", "trash_MORE_on", .4, False, [
 			# ON CAUSALLY (NEVER ON INERTIALLY)
 			("and", False, False, False, False, [
-					("leaf", "prev_fluent", "TRASH_MORE_on", False, False, False),
-					("leaf", "event", "[DROP TRASH]_END", False, 1, False),
+					("leaf", "prev_fluent", "trash_MORE_on", False, False, False),
+					("leaf", "event", "throwtrash_END", False, 1, False),
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, False, False, [
-					("leaf", "prev_fluent", "TRASH_MORE_off", False, False, False),
-					("leaf", "event", "[DROP TRASH]_END", False, 1, False)
+					("leaf", "prev_fluent", "trash_MORE_off", False, False, False),
+					("leaf", "event", "throwtrash_END", False, 1, False)
 				]
 			)
 		]
 	),
 	# TRASH MORE OFF (STAYS)
-	("root", "fluent", "TRASH_MORE_off", .6, False, [
+	("root", "fluent", "trash_MORE_off", .6, False, [
 			# OFF INERTIALLY
 			("and", False, False, False, False, [
-					("leaf", "prev_fluent", "TRASH_MORE_off", False, False, False),
-					("leaf", "nonevent", "[DROP TRASH]_END", False, 1, False),
+					("leaf", "prev_fluent", "trash_MORE_off", False, False, False),
+					("leaf", "nonevent", "throwtrash_END", False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, False, False, [
-					("leaf", "prev_fluent", "TRASH_MORE_on", False, False, False),
-					("leaf", "nonevent", "[DROP TRASH]_END", False, 1, False),
+					("leaf", "prev_fluent", "trash_MORE_on", False, False, False),
+					("leaf", "nonevent", "throwtrash_END", False, 1, False),
 				]
 			)
 		]
@@ -145,7 +242,7 @@ abbreviated_hallway_grammar = [
 			)
 		]
 	),
-	# PHONE ACTIVE -- THIS IS NULL IN DB -- WHY? TODO -- maybe bad detections? -- probably ambiguity over whether or not the agent has a phone because i wasn't tracking agents
+	# PHONE ACTIVE
 	("root", "fluent", "PHONE_ACTIVE_on", .4, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
@@ -173,39 +270,6 @@ abbreviated_hallway_grammar = [
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "PHONE_ACTIVE_on", False, False, False),
 					("leaf", "event", "[USE CELLPHONE]_END", False, 1, False)
-				]
-			)
-		]
-	),
-	# AGENT THIRSTY
-	("root", "fluent", "AGENT_THIRST_on", .4, False, [
-			# ON INERTIALLY
-			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "AGENT_THIRST_on", False, False, False),
-					("leaf", "nonevent", "[USE FOUNTAIN]_END", False, 1, False),
-				]
-			),
-			# ON CAUSALLY
-			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "AGENT_THIRST_off", False, False, False),
-					("leaf", "event", "[USE FOUNTAIN]_START", False, 1, False), # added to force the issue
-					# TODO: this is the timer one...  unsure of how to put it...  (not an action, but...)
-				]
-			)
-		]
-	),
-	# AGENT SATIATED (AGENT_THIRSTY_OFF)
-	("root", "fluent", "AGENT_THIRST_off", .6, False, [
-			# OFF INERTIALLY
-			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "AGENT_THIRST_off", False, False, False),
-					# TODO: Timer for on causally
-				]
-			),
-			# OFF CAUSALLY
-			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "AGENT_THIRST_on", False, False, False),
-					("leaf", "event", "[USE FOUNTAIN]_END", False, 1, False)
 				]
 			)
 		]
