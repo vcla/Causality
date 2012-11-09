@@ -592,6 +592,64 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 	# hr()
 	# report all ... stuff ... at ... end
 	# print("DONE")
+	from itertools import izip
+	for fluent in completions.keys():
+		prev_chains = []
+		prev_chain_energies = []
+		print fluent
+		hr()
+		for frame in sorted(completions[fluent].iterkeys()):
+			#print frame
+			completion_data_sorted = sorted(completions[fluent][frame], key=lambda (k): k['energy'])
+			next_chains = []
+			next_chain_energies = []
+			for node in completion_data_sorted:
+				# go through each chain and find the lowest energy + transition energy for this node
+				best_energy = -1 # not a possible energy
+				best_chain = None
+				for prev_chain, prev_chain_energy in izip(prev_chains, prev_chain_energies):
+					prev_node = prev_chain[-1]
+					prev_symbol = prev_node['parse']['symbol'] # TRASH_MORE_on, for example
+					# if this pairing is possible, see if it's the best pairing so far
+					# TODO: this function will be changed to get an energy-of-transition
+					# which will no longer be "binary"
+					if parse_is_consistent_with_requirement(node['parse'],prev_symbol):
+						if best_energy == -1 or best_energy > prev_chain_energy:
+							best_energy = prev_chain_energy
+							best_chain = prev_chain
+				# now we take our best chain for this node, and dump it and its energy in our new list
+				if best_chain:
+					#chain = best_chain.copy()
+					chain = best_chain[:]
+					chain.append(node)
+					next_chains.append(chain)
+					next_chain_energies.append(best_energy + node['energy'])
+				else:
+					if prev_chains:
+						print "NOTHING FOUND DESPITE CHAINS EXISTING"
+						print prev_chains
+						assert(0)
+					# hopefully this is only happening at the very beginning
+					next_chains.append([node,])
+					next_chain_energies.append(node['energy'])
+			prev_chains = next_chains
+			prev_chain_energies = next_chain_energies
+		# and now we just wrap up our results... and print them out
+		# TODO: sort by energy... but first let's just see that we're completing ;)
+		chain_results = []
+		for chain, energy in izip(prev_chains, prev_chain_energies):
+			items = []
+			for item in chain:
+				items.append((item['frame'],item['parse']['id']))
+			#print([items,energy])
+			chain_results.append([items,energy])
+		# print('\n'.join(['\t'.join(l) for l in chain_results]))
+		chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
+		results_for_xml_output.append(chain_results[:1])
+		print('\n'.join(map(str,chain_results)))
+		hr()
+	print_xml_output_for_chain_for_fluent(results_for_xml_output,parse_array) # for lowest energy chain
+"""
 	for fluent in completions.keys():
 		parent_chains = []
 		print fluent
@@ -631,10 +689,10 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 		print('\n'.join(map(str,chain_results)))
 		hr()
 	print_xml_output_for_chain_for_fluent(results_for_xml_output,parse_array) # for lowest energy chain
-
-from xml.dom.minidom import Document
+"""
 
 def print_xml_output_for_chain_for_fluent(all_chains,parse_array):
+	from xml.dom.minidom import Document
 	doc = Document()
 	temporal_stuff = doc.createElement("temporal")
 	doc.appendChild(temporal_stuff)

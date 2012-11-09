@@ -29,7 +29,7 @@ abbreviated_summerdata_grammar = [
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "thirst_off", False, False, False),
 					("leaf", "event", "act_drink_START", False, 1, False),
-					# TODO: this is the timer one...  unsure of how to put it...  (not an action, but...)
+					# TODO: this is the timer one...  
 				]
 			)
 		]
@@ -82,7 +82,7 @@ abbreviated_summerdata_grammar = [
 			)
 		]
 	),
-	# cup LESS # NOTE: event described here never happens in XML
+	# cup LESS 
 	("root", "fluent", "cup_LESS_on", .4, False, [
 			# ON CAUSALLY (NEVER ON INERTIALLY)
 			("and", False, False, False, False, [
@@ -146,6 +146,72 @@ abbreviated_summerdata_grammar = [
 			)
 		]
 	),
+	# DOOR OPEN
+	("root", "fluent", "door_open_on", .4, False, [
+			# inertially ON
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "door_open_on", False, False, False),
+					("leaf", "nonevent", "@TODO@", False, 10, False), # TODO: non-action
+				]
+			),
+			# causally ON (open door inside)  # TODO
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "door_open_off", False, False, False),
+					("leaf", "event", "standing_ONGOING", False, 10, False), # TODO: make ONGOING option 
+				]
+			),
+		]
+	),
+	# DOOR CLOSED (DOOR OPEN OFF) 
+	("root", "fluent", "door_open_on", .4, False, [
+			# inertially OFF
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "door_open_ooff", False, False, False),
+					("leaf", "nonevent", "standing_ONGOING", False, 10, False), # TODO: non-action
+				]
+			),
+			# causally ON (open door inside)  # TODO
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "door_open_off", False, False, False),
+					("leaf", "event", "standing_ONGOING", False, 10, False), # TODO: make ONGOING option 
+				]
+			),
+		]
+	),
+	# TODO: DOORLOCK -- might be possible if standing is good enough
+	# PHONE ACTIVE
+	("root", "fluent", "PHONE_ACTIVE_on", .4, False, [
+			# ON INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "PHONE_ACTIVE_on", False, False, False),
+					("leaf", "nonevent", "[USE CELLPHONE]_END", False, 1, False),
+				]
+			),
+			# ON CAUSALLY
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "PHONE_ACTIVE_off", False, False, False),
+					("leaf", "event", "[USE CELLPHONE]_START", False, 1, False),
+				]
+			)
+		]
+	),
+	# PHONE STANDBY (PHONE_ACTIVE_OFF)
+	("root", "fluent", "PHONE_ACTIVE_off", .6, False, [
+			# OFF INERTIALLY
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "PHONE_ACTIVE_off", False, False, False),
+					("leaf", "nonevent", "[USE CELLPHONE]_START", False, 1, False),
+				]
+			),
+			# OFF CAUSALLY
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "PHONE_ACTIVE_on", False, False, False),
+					("leaf", "event", "[USE CELLPHONE]_END", False, 1, False)
+				]
+			)
+		]
+	),
+	# TODO
 	# LIGHT ON
 	("root", "fluent", "light_on", .6, False, [
 			# ON INERTIALLY
@@ -242,38 +308,6 @@ abbreviated_summerdata_grammar = [
 			)
 		]
 	),
-	# PHONE ACTIVE
-	("root", "fluent", "PHONE_ACTIVE_on", .4, False, [
-			# ON INERTIALLY
-			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "PHONE_ACTIVE_on", False, False, False),
-					("leaf", "nonevent", "[USE CELLPHONE]_END", False, 1, False),
-				]
-			),
-			# ON CAUSALLY
-			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "PHONE_ACTIVE_off", False, False, False),
-					("leaf", "event", "[USE CELLPHONE]_START", False, 1, False),
-				]
-			)
-		]
-	),
-	# PHONE STANDBY (PHONE_ACTIVE_OFF)
-	("root", "fluent", "PHONE_ACTIVE_off", .6, False, [
-			# OFF INERTIALLY
-			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "PHONE_ACTIVE_off", False, False, False),
-					("leaf", "nonevent", "[USE CELLPHONE]_START", False, 1, False),
-				]
-			),
-			# OFF CAUSALLY
-			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "PHONE_ACTIVE_on", False, False, False),
-					("leaf", "event", "[USE CELLPHONE]_END", False, 1, False)
-				]
-			)
-		]
-	),
 	# AGENT HAS TRASH # NOTE: EVENT [REMOVE TRASH] NEVER REALIZED!
 	# TODO: This is one of the ones that needs the "reset agent" feature
 	("root", "fluent", "AGENT_HAS_TRASH_on", False, False, [
@@ -310,18 +344,6 @@ abbreviated_summerdata_grammar = [
 ]
 """
 	### NOT INCLUDED ###
-	# DOOR OPEN
-	("root", "fluent", "DOOR_OPEN_on", False, False, [
-			# inertially ON
-			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "DOOR_OPEN_on", False, False, False),
-					("leaf", "nonevent", "@TODO@", False, 10, False), # TODO: non-action
-				]
-			),
-			# causally ON (open door inside)  # TODO
-		]
-	),
-	# DOOR CLOSED (DOOR OPEN OFF) # TODO
 	# ELEVATOR DOOR OPEN # TODO
 	# ELEVATOR DOOR CLOSED # TODO
 	# PHONE RINGING #
