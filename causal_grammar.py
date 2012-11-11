@@ -39,27 +39,26 @@ def generate_causal_forest_from_abbreviated_forest(abbreviated_forest):
 		forest.append(tree)
 	return forest
 
-def import_summerdata(exampleName):
+def import_summerdata(exampleName,actionDirectory):
 	import parsingSummerActionAndFluentOutput
 	fluent_parses = parsingSummerActionAndFluentOutput.readFluentResults(exampleName)
-	#temporal_parses = parsingSummerActionAndFluentOutput.readTemporalResults(exampleName)
-	import pprint
-	pp = pprint.PrettyPrinter(depth=6)
-	pp.pprint(fluent_parses)
-	raise("NOT DONE. TEMPORAL PARSES NOT IMPLEMENTED")
-	return [fluent_parses, temporal_parses]
+	action_parses = parsingSummerActionAndFluentOutput.readActionResults("{}.{}".format(actionDirectory,exampleName))
+	#import pprint
+	#pp = pprint.PrettyPrinter(depth=6)
+	#pp.pprint(action_parses)
+	return [fluent_parses, action_parses]
 
 def import_xml(filename):
 	fluent_parses = {"initial":{}}
-	temporal_parses = {}
+	action_parses = {}
 	from xml.dom.minidom import parse
 	document = parse(filename)
 	interpretation_chunk = document.getElementsByTagName('interpretation')[0]
 	interpretation_probability = float(interpretation_chunk.attributes['probability'].nodeValue)
 	interpretation_energy = probability_to_energy(interpretation_probability)
-	temporal_chunk = document.getElementsByTagName('temporal')[0]
+	action_chunk = document.getElementsByTagName('temporal')[0]
 	initial_fluents = fluent_parses["initial"];
-	for fluent_change in temporal_chunk.getElementsByTagName('fluent_change'):
+	for fluent_change in action_chunk.getElementsByTagName('fluent_change'):
 		fluent_attributes = fluent_change.attributes;
 		frame_number = int(fluent_attributes['frame'].nodeValue)
 		fluent = fluent_attributes['fluent'].nodeValue
@@ -88,7 +87,7 @@ def import_xml(filename):
 			events[frame] = {}
 		frame = events[frame]
 		frame[name] = {'energy': energy, 'agent': agent}
-	for event in temporal_chunk.getElementsByTagName('event'):
+	for event in action_chunk.getElementsByTagName('event'):
 		# all 'action' agents are pulled in as the event agents; actions have one and only one agent
 		# events (and actions) are now split into _START and _END
 		actions = event.getElementsByTagName('action')
@@ -104,16 +103,16 @@ def import_xml(filename):
 			action_name = action_attributes['name'].nodeValue
 			action_agent = [action_attributes['agent'].nodeValue]
 			event_agents.append(action_agent[0])
-			add_event(temporal_parses,action_agent,action_start_frame,"{}_START".format(action_name),interpretation_energy)
-			add_event(temporal_parses,action_agent,action_end_frame,"{}_END".format(action_name),interpretation_energy)
-		add_event(temporal_parses,event_agents,event_start_frame,"{}_START".format(event_name),interpretation_energy)
-		add_event(temporal_parses,event_agents,event_end_frame,"{}_END".format(event_name),interpretation_energy)
-	return [fluent_parses,temporal_parses]
+			add_event(action_parses,action_agent,action_start_frame,"{}_START".format(action_name),interpretation_energy)
+			add_event(action_parses,action_agent,action_end_frame,"{}_END".format(action_name),interpretation_energy)
+		add_event(action_parses,event_agents,event_start_frame,"{}_START".format(event_name),interpretation_energy)
+		add_event(action_parses,event_agents,event_end_frame,"{}_END".format(event_name),interpretation_energy)
+	return [fluent_parses,action_parses]
 
 def import_csv(filename, fluents, events):
 	raise Exception("THIS IS OUT OF DATE: IT HAS NOT BEEN UPDATED TO HAVE _START AND _END AT THE VERY LEAST")
 	fluent_parses = {}
-	temporal_parses = {}
+	action_parses = {}
 	with open(filename,'r') as file:
 		# read the first line as keys
 		csv_keys = map(lambda k: k.strip(), file.readline().strip().split(","))
@@ -144,10 +143,10 @@ def import_csv(filename, fluents, events):
 				trigger = float(csv_row[events[event]['column']])
 				if trigger == 1:
 					to = events[event]['to']
-					if frame not in temporal_parses:
-						temporal_parses[frame] = {}
-					temporal_parses[frame][to] = {"energy": 0.0, "agent": frame_agent}
-	return [fluent_parses,temporal_parses]
+					if frame not in action_parses:
+						action_parses[frame] = {}
+					action_parses[frame][to] = {"energy": 0.0, "agent": frame_agent}
+	return [fluent_parses,action_parses]
 
 def hr():
 	print("---------------------------------")
@@ -402,18 +401,18 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 						parse_ids_completed.append(other_parse['id'])
 						complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frames[symbol], completions, 'timeout alt')
 
-def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy):
+def process_events_and_fluents(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy):
 	results_for_xml_output = []
 	fluent_parse_index = 0
-	temporal_parse_index = 0
+	action_parse_index = 0
 	initial_conditions = False
 	if "initial" in fluent_parses:
 		initial_conditions = fluent_parses["initial"]
 		del fluent_parses["initial"]
 	fluent_parse_frames = sorted(fluent_parses, key=fluent_parses.get)
 	fluent_parse_frames.sort()
-	temporal_parse_frames = sorted(temporal_parses, key=temporal_parses.get)
-	temporal_parse_frames.sort()
+	action_parse_frames = sorted(action_parses, key=action_parses.get)
+	action_parse_frames.sort()
 	fluent_and_event_keys_we_care_about = get_fluent_and_event_keys_we_care_about(causal_forest)
 	# kind of a hack to attach fluent and event keys to each causal tree, lots of maps to make looking things up quick and easy
 	event_hash = {}
@@ -485,10 +484,10 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 	completions = {}
 	for parse in parse_array:
 		complete_parse_tree(parse, fluent_hash, event_hash, 0, completions, 'initial')
-	while fluent_parse_index < len(fluent_parses) or temporal_parse_index < len(temporal_parses):
+	while fluent_parse_index < len(fluent_parses) or action_parse_index < len(action_parses):
 		fluents_complete = fluent_parse_index >= len(fluent_parses)
-		temporal_complete = temporal_parse_index >= len(temporal_parses)
-		if not fluents_complete and (temporal_complete or fluent_parse_frames[fluent_parse_index] <= temporal_parse_frames[temporal_parse_index]):
+		action_complete = action_parse_index >= len(action_parses)
+		if not fluents_complete and (action_complete or fluent_parse_frames[fluent_parse_index] <= action_parse_frames[action_parse_index]):
 			frame = fluent_parse_frames[fluent_parse_index]
 			complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy, completions)
 			clear_outdated_events(event_hash, event_timeouts, frame)
@@ -551,12 +550,12 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 						raise Exception("@TODO: this is a bug! WUT!?")
 						active_parse_trees.pop(key)
 		else:
-			frame = temporal_parse_frames[temporal_parse_index]
+			frame = action_parse_frames[action_parse_index]
 			complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy, completions)
 			clear_outdated_events(event_hash, event_timeouts, frame)
-			changes = temporal_parses[frame]
+			changes = action_parses[frame]
 			filter_changes(changes, fluent_and_event_keys_we_care_about['events'])
-			temporal_parse_index += 1
+			action_parse_index += 1
 			for event in changes:
 				# for more complex situations, we need to think this through further; for instane, 
 				# with the elevator: if agent 1 pushes the button; and then agent 2 pushes the button...
@@ -694,10 +693,10 @@ def process_events_and_fluents(causal_forest, fluent_parses, temporal_parses, fl
 def print_xml_output_for_chain_for_fluent(all_chains,parse_array):
 	from xml.dom.minidom import Document
 	doc = Document()
-	temporal_stuff = doc.createElement("temporal")
-	doc.appendChild(temporal_stuff)
+	action_stuff = doc.createElement("temporal")
+	doc.appendChild(action_stuff)
 	fluent_changes = doc.createElement("fluent_changes")
-	temporal_stuff.appendChild(fluent_changes)
+	action_stuff.appendChild(fluent_changes)
 	for chain in all_chains:
 		chain = chain[0][0]
 		for instance in chain:

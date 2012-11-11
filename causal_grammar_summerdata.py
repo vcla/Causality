@@ -352,4 +352,4 @@ abbreviated_summerdata_grammar = [
 """
 
 import causal_grammar
-causal_forest = causal_grammar.generate_causal_forest_from_abbreviated_forest(abbreviated_hallway_grammar)
+causal_forest = causal_grammar.generate_causal_forest_from_abbreviated_forest(abbreviated_summerdata_grammar)

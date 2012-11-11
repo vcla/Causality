@@ -3,7 +3,7 @@
 
 import causal_grammar
 
-fluent_parses, temporal_parses = causal_grammar.import_summerdata('door_10_phone_14_light_1_screen_29_9406')
+fluent_parses, temporal_parses = causal_grammar.import_summerdata('door_13_light_3_9406','CVPR2012_slidingwindow_action_detection')
 import causal_grammar_summerdata # sets up causal_forest
 """
 for tree in causal_grammar_hallway.causal_forest:
@@ -17,4 +17,4 @@ causal_grammar.hr()
 pp.pprint(causal_grammar_hallway.causal_forest)
 causal_grammar.hr()
 """
-causal_grammar.process_events_and_fluents(causal_grammar_hallway.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy)
+causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy)

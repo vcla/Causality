@@ -4,6 +4,7 @@ objectInitials = ["d", "l", "t", "s", "w", "p", "e"]
 
 import math
 
+# takes Bruce's detections
 def readFluentResults(exampleName):
 	fluent_parses = {"initial":{}}
 	initial_fluents = fluent_parses['initial']
@@ -81,11 +82,13 @@ def convertActionNumberToText(actionNumber):
 	pass
 
 
+# BELOW WAS FOR MING TIEN'S CODE
 # dict keys are frame numbers
 # frames are only reported when an event begins
 # events have energy and agents
 # it is assumed that the same event /can/ happen multiple times at the same time (multiple people talking on different cell phones, for example)
-def readAndParseActions(exampleName, action_dir, resultNumber):
+"""
+def readActionResults(exampleName, action_dir, resultNumber):
 	# resultNumber is 1 to ?.  represents the nth highest probability result
 	temporal_parses = {}
 	#TODO: issue...  what about activities that are "on going" like using the computer?  maybe this was why i removed the computer from nips experiments?
@@ -126,6 +129,11 @@ def readAndParseActions(exampleName, action_dir, resultNumber):
 	pp = pprint.PrettyPrinter(depth=6)
 	pp.pprint(temporal_parses)
 	return temporal_parses
+"""
+
+def readActionResults(module):
+	module = __import__(module,fromlist=['temporal_parses'])
+	return module.temporal_parses[0]
 
 ##########################
 
@@ -133,5 +141,6 @@ def readAndParseActions(exampleName, action_dir, resultNumber):
 if __name__ == '__main__':
 	#print returnExampleNames()
 	readFluentResults('door_10_phone_14_light_1_screen_29_9406')
-	readAndParseActions('door_11_9406', 'CVPR2012_smoothed_action_detections', 10)
-	readAndParseActions('door_11_9406', 'CVPR2012_smoothed_action_detections', 12)
+	#readActionResults('door_11_9406', 'CVPR2012_smoothed_action_detections', 10)
+	#readActionResults('door_11_9406', 'CVPR2012_smoothed_action_detections', 12)
+	readActionResults('CVPR2012_slidingwindow_action_detection.door_11_9406')
