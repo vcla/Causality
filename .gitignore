@@ -1,3 +1,14 @@
 *.pyc
 ActionSequenceSmoother
 *.sw?
+*.m~
+*.asv
+CVPR2012_computer_test_action_detection/
+CVPR2012_computer_test_action_detection_monday/
+CVPR2012_fluent_result/
+CVPR2012_slidingwindow_action_detection/
+CVPR2012_smoothed_action_detections/
+CVPR2012_smoothed_action_detections_monday/
+CVPR2012_smoothed_action_detections_monday_1000/
+cvpr_db_results/
+results/
