@@ -647,7 +647,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		results_for_xml_output.append(chain_results[:1])
 		print('\n'.join(map(str,chain_results)))
 		hr()
-	print_xml_output_for_chain_for_fluent(results_for_xml_output,parse_array) # for lowest energy chain
+		hr()
+	print_xml_output_for_chain(results_for_xml_output,parse_array) # for lowest energy chain
 """
 	for fluent in completions.keys():
 		parent_chains = []
@@ -690,14 +691,17 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	print_xml_output_for_chain_for_fluent(results_for_xml_output,parse_array) # for lowest energy chain
 """
 
-def print_xml_output_for_chain_for_fluent(all_chains,parse_array):
+def print_xml_output_for_chain(all_chains,parse_array):
 	from xml.dom.minidom import Document
 	doc = Document()
-	action_stuff = doc.createElement("temporal")
-	doc.appendChild(action_stuff)
+	temporal_stuff = doc.createElement("temporal")
+	doc.appendChild(temporal_stuff)
 	fluent_changes = doc.createElement("fluent_changes")
-	action_stuff.appendChild(fluent_changes)
+	temporal_stuff.appendChild(fluent_changes)
+	actions_el = doc.createElement("actions")
+	temporal_stuff.appendChild(actions_el)
 	for chain in all_chains:
+		energy = chain[0][1]
 		chain = chain[0][0]
 		for instance in chain:
 			frame_number = instance[0]
@@ -706,7 +710,7 @@ def print_xml_output_for_chain_for_fluent(all_chains,parse_array):
 			# get fluents where there's a prev-fluent and fluent.  or just stick with top level?
 			#print("{}".format(frame_number))
 			#print("{}".format(parse['symbol']))
-			#print("{}".format(parse))
+			print("{}".format(parse))
 			fluent_parse = doc.createElement("fluent_change")
 			fluent, fluent_value = parse['symbol'].rsplit("_",1)
 			fluent_parse.setAttribute("fluent",fluent)
@@ -719,8 +723,18 @@ def print_xml_output_for_chain_for_fluent(all_chains,parse_array):
 			#print("{}".format(prev_value))
 			fluent_parse.setAttribute("old_value",prev_value[0])
 			fluent_parse.setAttribute("frame",str(frame_number))
+			fluent_parse.setAttribute("energy",str(energy))
 			fluent_changes.appendChild(fluent_parse)
 			#TODO: missing attributes id, object, time in fluent_change
+			# now let's see if there's an action associated with this fluent change and pop that in our bag
+			actions = get_actions_from_parse(parse)
+			if actions:
+				action_el = doc.createElement("event")
+				for action in actions:
+					action_el.setAttribute("frame",str(frame_number))
+					action_el.setAttribute("energy",str(energy))
+					action_el.setAttribute("action",str(action))
+					actions_el.appendChild(action_el)
 	print doc.toprettyxml(indent="\t")
 
 # TODO: this assumes we're only going to find one previous fluent value for the given fluent
@@ -740,6 +754,20 @@ def get_prev_fluent_value_from_parse(parse,fluent):
 			child_prev_fluents = get_prev_fluent_value_from_parse(child,fluent)
 			prev_fluents += child_prev_fluents
 	return prev_fluents
+
+def get_actions_from_parse(parse):
+	actions = []
+	# get action
+	#{'probability': 0.6, 'symbol': 'waterstream_off', 'children': ({'node_type': 'and', 'children': ({'symbol_type': 'prev_fluent', 'node_type': 'leaf', 'symbol': 'waterstream_off'}, {'symbol_type': 'nonevent', 'node_type': 'leaf', 'symbol': 'benddown_START', 'timeout': 1}), 'probability': 0.6},), 'node_type': 'root', 'frame': 356, 'symbol_type': 'fluent', 'id': 14}
+	if "symbol_type" in parse:
+		if parse["symbol_type"] == "event":
+			#tmp_event, tmp_event_value = parse["symbol"].rsplit("_",1)
+			actions.append(parse["symbol"])
+	if "children" in parse:
+		for child in parse["children"]:
+			child_actions = get_actions_from_parse(child)
+			actions += child_actions
+	return actions
 
 if __name__ == '__main__':
 	# WHOO!
