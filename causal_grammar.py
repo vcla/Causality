@@ -9,6 +9,7 @@ import math # for log, etc
 kUnknownEnergy = 0.7 # TODO: may want to tune
 kUnlikelyEnergy = 10.0 # TODO: may want to tune
 kZeroProbabilityEnergy = 10.0 # TODO: may want to tune: 10.0 = very low
+# these are used to keep something that's flipping "around" 50% to not keep triggering fluent changes
 kFluentThresholdOnEnergy = 0.36 # TODO: may want to tune: 0.36 = 0.7 probability
 kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
 kReportingThresholdEnergy = 0.5 # TODO: may want to tune
@@ -25,17 +26,20 @@ def generate_causal_forest_from_abbreviated_forest(abbreviated_forest):
 	for child in abbreviated_forest:
 		tree = {}
 		if child[0]:
-			tree["node_type"] = child[0]
+			tree['node_type'] = child[0]
 		if child[1]:
-			tree["symbol_type"] = child[1]
+			tree['symbol_type'] = child[1]
+			if tree['symbol_type'] in ('jump','timer',):
+				tree['alternate'] = child[6]
 		if child[2]:
-			tree["symbol"] = child[2]
+			tree['symbol'] = child[2]
 		if child[3]:
-			tree["probability"] = child[3]
+			tree['probability'] = child[3]
 		if child[4]:
-			tree["timeout"] = child[4]
+			tree['timeout'] = child[4]
 		if child[5]:
-			tree["children"] = generate_causal_forest_from_abbreviated_forest(child[5])
+			tree['children'] = generate_causal_forest_from_abbreviated_forest(child[5])
+			
 		forest.append(tree)
 	return forest
 
@@ -49,7 +53,7 @@ def import_summerdata(exampleName,actionDirectory):
 	return [fluent_parses, action_parses]
 
 def import_xml(filename):
-	fluent_parses = {"initial":{}}
+	fluent_parses = {'initial':{}}
 	action_parses = {}
 	from xml.dom.minidom import parse
 	document = parse(filename)
@@ -57,7 +61,7 @@ def import_xml(filename):
 	interpretation_probability = float(interpretation_chunk.attributes['probability'].nodeValue)
 	interpretation_energy = probability_to_energy(interpretation_probability)
 	action_chunk = document.getElementsByTagName('temporal')[0]
-	initial_fluents = fluent_parses["initial"];
+	initial_fluents = fluent_parses['initial'];
 	for fluent_change in action_chunk.getElementsByTagName('fluent_change'):
 		fluent_attributes = fluent_change.attributes;
 		frame_number = int(fluent_attributes['frame'].nodeValue)
@@ -230,6 +234,9 @@ def energy_to_probability(energy):
 	return math.exp(-energy)
 
 def probability_to_energy(probability):
+	if not type(probability) is int and not type(probability) is float:
+		# TODO: what we've got here is a lambda, and if we're asking this, we're asking wrong
+		return kZeroProbabilityEnergy
 	if probability == 0:
 		return kZeroProbabilityEnergy
 	else:
@@ -266,6 +273,11 @@ def calculate_energy(node, fluent_hash, event_hash):
 		elif node["symbol_type"] in ("nonevent",):
 			tmp_energy = event_hash[node["symbol"]]["energy"]
 			node_energy += probability_to_energy(1-energy_to_probability(tmp_energy))
+		elif node["symbol_type"] in ("timer","jump",):
+			# these are zero-probability events at this stage of evaluation
+			#tmp_energy = event_hash[node["symbol"]]["energy"]
+			#node_energy += probability_to_energy(1-energy_to_probability(tmp_energy))
+			pass # TODO should this be dealt with in some other way?
 		else:
 			raise Exception("unhandled symbol_type '{}'".format(node['symbol_type']))
 	if "children" in node:
@@ -273,6 +285,26 @@ def calculate_energy(node, fluent_hash, event_hash):
 			child_energy = calculate_energy(child, fluent_hash, event_hash)
 			node_energy += child_energy
 	return node_energy
+
+# TODO: this makes some very naiive assumptions about jumping--that the "paired" fluent(s) will all be met, and (others?)
+def parse_can_jump_from(parse,prev_parse):
+	# "timer" -> "jump"
+	timer = get_symbol_matches_from_parse("timer",prev_parse)
+	jump = get_symbol_matches_from_parse("jump",prev_parse)
+	if timer and jump and timer["alternate"] == parse["symbol"] and timer["symbol"] == jump["symbol"]:
+		return True
+	return False
+
+def get_symbol_matches_from_parse(symbol,parse):
+	matches = []
+	if "symbol_type" in parse:
+		if parse["symbol_type"] == symbol:
+			matches.append(parse)
+	if "children" in parse:
+		for child in parse["children"]:
+			child_matches = get_symbol_matches_from_parse(symbol,child)
+			matches += child_matches
+	return matches
 
 def parse_is_consistent_with_requirement(parse,requirement):
 	if 'symbol_type' in parse:
@@ -402,6 +434,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 						complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frames[symbol], completions, 'timeout alt')
 
 def process_events_and_fluents(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy):
+	clever = False # clever (modified viterbi algorithm) or brute force (all possible parses)
 	results_for_xml_output = []
 	fluent_parse_index = 0
 	action_parse_index = 0
@@ -489,6 +522,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		action_complete = action_parse_index >= len(action_parses)
 		if not fluents_complete and (action_complete or fluent_parse_frames[fluent_parse_index] <= action_parse_frames[action_parse_index]):
 			frame = fluent_parse_frames[fluent_parse_index]
+			# print("CHECKING FLUENT FRAME: {}".format(frame))
 			complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy, completions)
 			clear_outdated_events(event_hash, event_timeouts, frame)
 			changes = fluent_parses[frame]
@@ -500,6 +534,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				fluent_on_energy = changes[fluent]
 				fluent_on_probability = math.exp(-fluent_on_energy)
 				fluent_off_probability = 1 - fluent_on_probability
+				# print ("Fluent: {}; on probability: {}; off probability: {}".format(fluent,fluent_on_probability,fluent_off_probability))
 				if 0 == fluent_off_probability:  
 					# TODO: might also need to catch this for fluent_on_probability 
 					fluent_off_energy = kZeroProbabilityEnergy
@@ -509,26 +544,21 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				fluent_off_string = "{}_off".format(fluent)
 				fluent_on_status = fluent_hash[fluent_on_string]["status"]
 				fluent_off_status = fluent_hash[fluent_off_string]["status"]
+				#print ("Fluent: {}; on probability: {}; off probability: {}".format(fluent,fluent_on_probability,fluent_off_probability))
+				#print ("on status: {}; off status: {}".format(fluent_on_status,fluent_off_status))
+				#print ("on energy: {}; off energy: {}".format(fluent_on_energy,fluent_off_energy))
+				#print ("thresh on energy: {}; thresh off energy: {}".format(fluent_threshold_on_energy,fluent_threshold_off_energy))
 				# check to see if these fluents changed enough to consider starting a parse
-				# note: we only care about fluents "going to true"
-				if fluent_on_status in (kFluentStatusUnknown, kFluentStatusOff):
-					if fluent_on_energy < fluent_threshold_on_energy:
-						fluent_changed = fluent_on_string
-						fluent_hash[fluent_on_string]["status"] = kFluentStatusOn
-				elif fluent_on_energy > fluent_threshold_off_energy:
-					fluent_hash[fluent_on_string]["status"] = kFluentStatusOff
-				if fluent_off_status in (kFluentStatusUnknown, kFluentStatusOff):
-					if fluent_off_energy < fluent_threshold_on_energy:
-						fluent_changed = fluent_off_string
-						fluent_hash[fluent_off_string]["status"] = kFluentStatusOn
-				elif fluent_off_energy > fluent_threshold_off_energy:
-					fluent_hash[fluent_off_string]["status"] = kFluentStatusOff
-				fluent_hash[fluent_on_string]["prev_energy"] = fluent_hash[fluent_on_string]["energy"]
-				fluent_hash[fluent_off_string]["prev_energy"] = fluent_hash[fluent_off_string]["energy"]
-				fluent_hash[fluent_on_string]["energy"] = fluent_on_energy
-				fluent_hash[fluent_off_string]["energy"] = fluent_off_energy
+				# note: we only care about fluents "going to true" (either "door_on" goes to true, or "door_off" does, for instance)
+				if fluent_on_energy < fluent_threshold_on_energy:
+					fluent_changed = fluent_on_string
+					fluent_hash[fluent_on_string]["status"] = kFluentStatusOn
+				if fluent_off_energy < fluent_threshold_on_energy:
+					fluent_changed = fluent_off_string
+					fluent_hash[fluent_off_string]["status"] = kFluentStatusOn
 				# fluent_on and fluent_off _should_ never both change to on, so we consider this safe
 				if fluent_changed:
+					#print "fluent changed: {}".format(fluent_changed)
 					# go through all parses that this fluent touches, or its inverse
 					fluents_actually_changed.append(fluent_changed,)
 					for parse_id in parse_id_hash_by_fluent[fluent_changed] + parse_id_hash_by_fluent[invert_name(fluent_changed)]:
@@ -588,108 +618,115 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	# clean up
 	complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame+999999, reporting_threshold_energy, completions)
 	clear_outdated_events(event_hash, event_timeouts, frame+999999)
-	# hr()
-	# report all ... stuff ... at ... end
-	# print("DONE")
-	from itertools import izip
-	for fluent in completions.keys():
-		prev_chains = []
-		prev_chain_energies = []
-		print fluent
-		hr()
-		for frame in sorted(completions[fluent].iterkeys()):
-			#print frame
-			completion_data_sorted = sorted(completions[fluent][frame], key=lambda (k): k['energy'])
-			next_chains = []
-			next_chain_energies = []
-			for node in completion_data_sorted:
-				# go through each chain and find the lowest energy + transition energy for this node
-				best_energy = -1 # not a possible energy
-				best_chain = None
-				for prev_chain, prev_chain_energy in izip(prev_chains, prev_chain_energies):
-					prev_node = prev_chain[-1]
-					prev_symbol = prev_node['parse']['symbol'] # TRASH_MORE_on, for example
-					# if this pairing is possible, see if it's the best pairing so far
-					# TODO: this function will be changed to get an energy-of-transition
-					# which will no longer be "binary"
-					if parse_is_consistent_with_requirement(node['parse'],prev_symbol):
-						if best_energy == -1 or best_energy > prev_chain_energy:
-							best_energy = prev_chain_energy
-							best_chain = prev_chain
-				# now we take our best chain for this node, and dump it and its energy in our new list
-				if best_chain:
-					#chain = best_chain.copy()
-					chain = best_chain[:]
-					chain.append(node)
-					next_chains.append(chain)
-					next_chain_energies.append(best_energy + node['energy'])
-				else:
-					if prev_chains:
-						print "NOTHING FOUND DESPITE CHAINS EXISTING"
-						print prev_chains
-						assert(0)
-					# hopefully this is only happening at the very beginning
-					next_chains.append([node,])
-					next_chain_energies.append(node['energy'])
-			prev_chains = next_chains
-			prev_chain_energies = next_chain_energies
-		# and now we just wrap up our results... and print them out
-		# TODO: sort by energy... but first let's just see that we're completing ;)
-		chain_results = []
-		for chain, energy in izip(prev_chains, prev_chain_energies):
-			items = []
-			for item in chain:
-				items.append((item['frame'],item['parse']['id']))
-			#print([items,energy])
-			chain_results.append([items,energy])
-		# print('\n'.join(['\t'.join(l) for l in chain_results]))
-		chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
-		results_for_xml_output.append(chain_results[:1])
-		print('\n'.join(map(str,chain_results)))
-		hr()
-		hr()
-	print_xml_output_for_chain(results_for_xml_output,parse_array) # for lowest energy chain
-"""
-	for fluent in completions.keys():
-		parent_chains = []
-		print fluent
-		hr()
-		for frame in sorted(completions[fluent].iterkeys()):
-			completion_data_sorted = sorted(completions[fluent][frame], key=lambda (k): k['energy'])
-			if not parent_chains:
-				for child in completion_data_sorted:
-					parent_chains.append((child,))
-			else:
-				children = []	
-				for parent_chain in parent_chains:
-					last_parent_node = parent_chain[-1]
-					last_parent_symbol = last_parent_node['parse']['symbol'] # TRASH_MORE_on, for example
+	if clever:
+		from itertools import izip
+		for fluent in completions.keys():
+			prev_chains = []
+			prev_chain_energies = []
+			print("{}".format(fluent))
+			hr()
+			#import pprint
+			#pp = pprint.PrettyPrinter(depth=6)
+			#pp.pprint(completions[fluent])
+			#print("{}".format(completions[fluent]))
+			for frame in sorted(completions[fluent].iterkeys()):
+				#print("\t***** frame {}".format(frame))
+				completion_data_sorted = sorted(completions[fluent][frame], key=lambda (k): k['energy'])
+				next_chains = []
+				next_chain_energies = []
+				for node in completion_data_sorted:
+					print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(node['status']), "{:>6.3f}".format(node['energy']), node['source'], "{:d}".format(node['parse']['id']), str(make_tree_like_lisp(node['parse'])), str(node['agents'])])))
+					# go through each chain and find the lowest energy + transition energy for this node
+					best_energy = -1 # not a possible energy
+					best_chain = None
+					for prev_chain, prev_chain_energy in izip(prev_chains, prev_chain_energies):
+						prev_node = prev_chain[-1]
+						prev_symbol = prev_node['parse']['symbol'] # TRASH_MORE_on, for example
+						# if this pairing is possible, see if it's the best pairing so far
+						# TODO: this function will be changed to get an energy-of-transition
+						# which will no longer be "binary"
+						if parse_is_consistent_with_requirement(node['parse'],prev_symbol):
+							if best_energy == -1 or best_energy > prev_chain_energy:
+								best_energy = prev_chain_energy
+								best_chain = prev_chain
+						elif parse_can_jump_from(prev_node['parse'],node['parse']):
+							# look for timer-based jumps ... so if this node['parse'] has a possible timer jump, let's see it
+							print("{}".format(prev_node['parse']))
+							print("{}".format(node['parse']))
+							raise("HELL...O")
+					# now we take our best chain for this node, and dump it and its energy in our new list
+					if best_chain:
+						#chain = best_chain.copy()
+						chain = best_chain[:]
+						chain.append(node)
+						next_chains.append(chain)
+						next_chain_energies.append(best_energy + node['energy'])
+					else:
+						if prev_chains:
+							print "NOTHING FOUND DESPITE CHAINS EXISTING"
+							print prev_chains
+							assert(0)
+						# hopefully this is only happening at the very beginning
+						next_chains.append([node,])
+						next_chain_energies.append(node['energy'])
+				prev_chains = next_chains
+				prev_chain_energies = next_chain_energies
+			# and now we just wrap up our results... and print them out
+			# TODO: sort by energy... but first let's just see that we're completing ;)
+			chain_results = []
+			for chain, energy in izip(prev_chains, prev_chain_energies):
+				items = []
+				for item in chain:
+					items.append((item['frame'],item['parse']['id']))
+				#print([items,energy])
+				chain_results.append([items,energy])
+			# print('\n'.join(['\t'.join(l) for l in chain_results]))
+			chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
+			results_for_xml_output.append(chain_results[:1])
+			print('\n'.join(map(str,chain_results)))
+			hr()
+			hr()
+	else: # not clever i.e. brute force
+		for fluent in completions.keys():
+			parent_chains = []
+			print fluent
+			hr()
+			for frame in sorted(completions[fluent].iterkeys()):
+				completion_data_sorted = sorted(completions[fluent][frame], key=lambda (k): k['energy'])
+				if not parent_chains:
 					for child in completion_data_sorted:
-						# if this pairing is possible, cross it on down
-						# pairing is considered "possible" if the parent's primary fluent status agrees with all relevant child fluent pre-requisites
-						if parse_is_consistent_with_requirement(child['parse'],last_parent_symbol):
-							chain = list(parent_chain)
-							chain.append(child)
-							children.append(chain)
-				parent_chains = children
-			for completion_data in completion_data_sorted:
-				print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(completion_data['status']), "{:>6.3f}".format(completion_data['energy']), completion_data['source'], "{:d}".format(completion_data['parse']['id']), str(make_tree_like_lisp(completion_data['parse'])), str(completion_data['agents'])])))
-		chain_results = []
-		for chain in parent_chains:
-			items = []
-			energy = 0
-			for item in chain:
-				items.append((item['frame'],item['parse']['id']))
-				energy += item['energy']
-			#print([items,energy])
-			chain_results.append([items,energy])
-		# print('\n'.join(['\t'.join(l) for l in chain_results]))
-		chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
-		results_for_xml_output.append(chain_results[:1])
-		print('\n'.join(map(str,chain_results)))
-		hr()
-	print_xml_output_for_chain_for_fluent(results_for_xml_output,parse_array) # for lowest energy chain
-"""
+						parent_chains.append((child,))
+				else:
+					children = []	
+					for parent_chain in parent_chains:
+						last_parent_node = parent_chain[-1]
+						last_parent_symbol = last_parent_node['parse']['symbol'] # TRASH_MORE_on, for example
+						for child in completion_data_sorted:
+							# if this pairing is possible, cross it on down
+							# pairing is considered "possible" if the parent's primary fluent status agrees with all relevant child fluent pre-requisites
+							if parse_is_consistent_with_requirement(child['parse'],last_parent_symbol):
+								chain = list(parent_chain)
+								chain.append(child)
+								children.append(chain)
+					parent_chains = children
+				for completion_data in completion_data_sorted:
+					print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(completion_data['status']), "{:>6.3f}".format(completion_data['energy']), completion_data['source'], "{:d}".format(completion_data['parse']['id']), str(make_tree_like_lisp(completion_data['parse'])), str(completion_data['agents'])])))
+			chain_results = []
+			for chain in parent_chains:
+				items = []
+				energy = 0
+				for item in chain:
+					items.append((item['frame'],item['parse']['id']))
+					energy += item['energy']
+				#print([items,energy])
+				chain_results.append([items,energy])
+			# print('\n'.join(['\t'.join(l) for l in chain_results]))
+			chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
+			results_for_xml_output.append(chain_results[:1])
+			print('\n'.join(map(str,chain_results)))
+			hr()
+			hr()
+	print_xml_output_for_chain(results_for_xml_output,parse_array) # for lowest energy chain
 
 def print_xml_output_for_chain(all_chains,parse_array):
 	from xml.dom.minidom import Document
@@ -700,6 +737,7 @@ def print_xml_output_for_chain(all_chains,parse_array):
 	temporal_stuff.appendChild(fluent_changes)
 	actions_el = doc.createElement("actions")
 	temporal_stuff.appendChild(actions_el)
+	seen = [] # keeping track of whether we've seen a fluent and thus have included its initial state
 	for chain in all_chains:
 		energy = chain[0][1]
 		chain = chain[0][0]
@@ -721,10 +759,14 @@ def print_xml_output_for_chain(all_chains,parse_array):
 				print("Parse: {}".format(parse))
 				raise Exception("The tree does not have a previous fluent")
 			#print("{}".format(prev_value))
-			fluent_parse.setAttribute("old_value",prev_value[0])
-			fluent_parse.setAttribute("frame",str(frame_number))
-			fluent_parse.setAttribute("energy",str(energy))
-			fluent_changes.appendChild(fluent_parse)
+			if prev_value[0] != fluent_value or not fluent in seen:
+				if not fluent in seen:
+					seen.append(fluent,)
+				else:
+					fluent_parse.setAttribute("old_value",prev_value[0])
+				fluent_parse.setAttribute("frame",str(frame_number))
+				fluent_parse.setAttribute("energy",str(energy))
+				fluent_changes.appendChild(fluent_parse)
 			#TODO: missing attributes id, object, time in fluent_change
 			# now let's see if there's an action associated with this fluent change and pop that in our bag
 			actions = get_actions_from_parse(parse)
@@ -757,8 +799,6 @@ def get_prev_fluent_value_from_parse(parse,fluent):
 
 def get_actions_from_parse(parse):
 	actions = []
-	# get action
-	#{'probability': 0.6, 'symbol': 'waterstream_off', 'children': ({'node_type': 'and', 'children': ({'symbol_type': 'prev_fluent', 'node_type': 'leaf', 'symbol': 'waterstream_off'}, {'symbol_type': 'nonevent', 'node_type': 'leaf', 'symbol': 'benddown_START', 'timeout': 1}), 'probability': 0.6},), 'node_type': 'root', 'frame': 356, 'symbol_type': 'fluent', 'id': 14}
 	if "symbol_type" in parse:
 		if parse["symbol_type"] == "event":
 			#tmp_event, tmp_event_value = parse["symbol"].rsplit("_",1)

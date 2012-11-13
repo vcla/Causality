@@ -1,3 +1,4 @@
+# This Python file uses the following encoding: utf-8
 ### SUMMERDATA GRAMMAR ###
 #("node_type", "symbol_type", "symbol", probability, timeout, [children])
 """
@@ -16,52 +17,64 @@ abbreviated_xxx_grammar = [
 
 # NOTE: unsure of what to put in for probabilities -- using mostly False for now
 ### GRAMMAR FOR SUMMER DATA -- CVPR 2012 ###
+from math import exp, pow
+
+def weibull(t1, t2, lam, k):
+	return 1 - exp(pow(t1 / lam,k) - pow(t2 / lam, k))
+
 abbreviated_summerdata_grammar = [
 	# AGENT THIRSTY
-	("root", "fluent", "thirst_on", .4, False, [
-			# ON INERTIALLY
-			("and", False, False, .6, False, [
+	("root", "fluent", "thirst_on", .4, False, [ # TODO (amy): adjust probabilities to get good results
+			# ON INERTIALLY -- stay thirsty and don't complete drinking
+			("and", False, False, .5, False, [
 					("leaf", "prev_fluent", "thirst_on", False, False, False),
-					("leaf", "nonevent", "act_drink_END", False, 1, False),
+					("leaf", "nonevent", "drink_END", False, 1, False),
 				]
 			),
-			# ON CAUSALLY
+			# STAY ON SIGNALED - drinking signals that the person was thristy 
+			("and", False, False, .1, False, [
+					("leaf", "prev_fluent", "thirst_on", False, False, False),
+					("leaf", "event", "drink_START", False, 1, False),
+				]
+			),
+			# ON SPONTANEOUSLY - fluent staying off timed out
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "thirst_off", False, False, False),
-					("leaf", "event", "act_drink_START", False, 1, False),
-					# TODO: this is the timer one...  
+					# node_type, symbol_type, symbol, probability, timeout, children
+					("leaf", "jump", "become_thirsty", lambda t1, t2: weibull(t1,t2,600,1.5), False, False, "thirst_off"), # TODO: add "jump" for node type -- must be paired with "timer" node on other side
 				]
-			)
-		]
+			),
+		],
 	),
 	# AGENT SATIATED (AGENT_THIRSTY_OFF)
 	("root", "fluent", "thirst_off", .6, False, [
 			# OFF INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "thirst_off", False, False, False),
-					# TODO: Timer for on causally
+					("leaf", "timer", "become_thirsty", lambda t1, t2: weibull(t1,t2,600,1.5), False, False, "thirst_on"), # TODO: does this need a new node symbol?
+					# TODO: add "timer" for node type.  where do i put the probability on the duration? put it in hte probability slot? also: how to handle unknown time when the scene starts this way?
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "thirst_on", False, False, False),
-					("leaf", "event", "act_drink_END", False, 1, False)
+					("leaf", "event", "drink_END", False, 1, False)
 				]
 			)
 		]
 	),
-	# cup MORE
+	# cup MORE # TODO on updating db -- merge cup_MORE with cup_LESS for answering queries
 	("root", "fluent", "cup_MORE_on", .4, False, [
 			# ON CAUSALLY (NEVER ON INERTIALLY)
 			("and", False, False, False, False, [
 					("leaf", "prev_fluent", "cup_MORE_on", False, False, False),
-					("leaf", "event", "act_dispensed_END", False, 1, False),
+					("leaf", "event", "benddown_END", False, 1, False), # TODO (amy): maybe ONGOING?
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, False, False, [
 					("leaf", "prev_fluent", "cup_MORE_off", False, False, False),
-					("leaf", "event", "act_dispensed_END", False, 1, False)
+					("leaf", "event", "benddown_END", False, 1, False) # TODO (amy): maybe ONGOING?
 				]
 			)
 		]
@@ -71,13 +84,13 @@ abbreviated_summerdata_grammar = [
 			# OFF INERTIALLY
 			("and", False, False, False, False, [
 					("leaf", "prev_fluent", "cup_MORE_off", False, False, False),
-					("leaf", "nonevent", "act_dispensed_END", False, 1, False),
+					("leaf", "nonevent", "benddown_END", False, 1, False), # TODO (amy): maybe ONGOING?
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, False, False, [
 					("leaf", "prev_fluent", "cup_MORE_on", False, False, False),
-					("leaf", "nonevent", "act_dispensed_END", False, 1, False),
+					("leaf", "nonevent", "benddown_END", False, 1, False), # TODO (amy): maybe ONGOING?
 				]
 			)
 		]
@@ -87,13 +100,13 @@ abbreviated_summerdata_grammar = [
 			# ON CAUSALLY (NEVER ON INERTIALLY)
 			("and", False, False, False, False, [
 					("leaf", "prev_fluent", "cup_LESS_on", False, False, False),
-					("leaf", "event", "act_drink_END", False, 1, False),
+					("leaf", "event", "drink_END", False, 1, False), # TODO (amy): maybe ONGOING?
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, False, False, [
 					("leaf", "prev_fluent", "cup_LESS_off", False, False, False),
-					("leaf", "event", "act_drink_END", False, 1, False)
+					("leaf", "event", "drink_END", False, 1, False) # TODO (amy): maybe ONGOING?
 				]
 			)
 		]
@@ -103,94 +116,94 @@ abbreviated_summerdata_grammar = [
 			# OFF INERTIALLY
 			("and", False, False, False, False, [
 					("leaf", "prev_fluent", "cup_LESS_off", False, False, False),
-					("leaf", "nonevent", "act_drink_END", False, 1, False),
+					("leaf", "nonevent", "drink_END", False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, False, False, [
 					("leaf", "prev_fluent", "cup_LESS_on", False, False, False),
-					("leaf", "nonevent", "act_drink_END", False, 1, False),
+					("leaf", "nonevent", "drink_END", False, 1, False),
 				]
 			)
 		]
 	),
 	# WATER STREAM ON
-	("root", "fluent", "waterstream_on", .4, False, [
+	("root", "fluent", "water_on", .4, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "waterstream_on", False, False, False),
-					("leaf", "nonevent", "benddown_END", False, 1, False),
+					("leaf", "prev_fluent", "water_on", False, False, False),
+					("leaf", "nonevent", "benddown_END", False, 1, False), # or ONGOING? TODO -- or is this how we signal "ongoing"?
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "waterstream_off", False, False, False),
+					("leaf", "prev_fluent", "water_off", False, False, False),
 					("leaf", "event", "benddown_START", False, 1, False),
 				]
 			)
 		]
 	),
-	# WATER STREAM OFF (WATERSTREAM_ON_OFF)
-	("root", "fluent", "waterstream_off", .6, False, [
+	# WATER STREAM OFF (water_on_OFF)
+	("root", "fluent", "water_off", .6, False, [
 			# OFF INERTIALLY
 			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "waterstream_off", False, False, False),
+					("leaf", "prev_fluent", "water_off", False, False, False),
 					("leaf", "nonevent", "benddown_START", False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "waterstream_on", False, False, False),
+					("leaf", "prev_fluent", "water_on", False, False, False),
 					("leaf", "event", "benddown_END", False, 1, False)
 				]
 			)
 		]
 	),
 	# DOOR OPEN
-	("root", "fluent", "door_open_on", .4, False, [
+	("root", "fluent", "door_on", .4, False, [
 			# inertially ON
-			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "door_open_on", False, False, False),
-					("leaf", "nonevent", "@TODO@", False, 10, False), # TODO: non-action
+			("and", False, False, .2, False, [
+					("leaf", "prev_fluent", "door_on", False, False, False),
+					("leaf", "nonevent", "standing_END", False, 10, False),
 				]
 			),
-			# causally ON (open door inside)  # TODO
-			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "door_open_off", False, False, False),
-					("leaf", "event", "standing_ONGOING", False, 10, False), # TODO: make ONGOING option 
+			# causally ON
+			("and", False, False, .8, False, [
+					("leaf", "prev_fluent", "door_off", False, False, False),
+					("leaf", "event", "standing_START", False, 50, False), # TODO: make ONGOING option 
+					("leaf", "nonevent", "standing_END", False, 1, False), # TODO: make ONGOING option 
 				]
 			),
 		]
 	),
 	# DOOR CLOSED (DOOR OPEN OFF) 
-	("root", "fluent", "door_open_on", .4, False, [
+	("root", "fluent", "door_off", .6, False, [
 			# inertially OFF
 			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "door_open_ooff", False, False, False),
-					("leaf", "nonevent", "standing_ONGOING", False, 10, False), # TODO: non-action
+					("leaf", "prev_fluent", "door_off", False, False, False),
+					("leaf", "nonevent", "standing_START", False, 10, False), # TODO: make ONGOING nonaction
 				]
 			),
-			# causally ON (open door inside)  # TODO
-			("and", False, False, .4, False, [
-					("leaf", "prev_fluent", "door_open_off", False, False, False),
-					("leaf", "event", "standing_ONGOING", False, 10, False), # TODO: make ONGOING option 
+			# causally OFF
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "door_on", False, False, False),
+					("leaf", "event", "standing_END", False, 1, False),
 				]
 			),
 		]
 	),
-	# TODO: DOORLOCK -- might be possible if standing is good enough
 	# PHONE ACTIVE
 	("root", "fluent", "PHONE_ACTIVE_on", .4, False, [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "PHONE_ACTIVE_on", False, False, False),
-					("leaf", "nonevent", "[USE CELLPHONE]_END", False, 1, False),
+					("leaf", "nonevent", "makecall_END", False, 1, False),
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "PHONE_ACTIVE_off", False, False, False),
-					("leaf", "event", "[USE CELLPHONE]_START", False, 1, False),
+					("leaf", "event", "makecall_START", False, 1, False),
 				]
 			)
 		]
@@ -200,18 +213,17 @@ abbreviated_summerdata_grammar = [
 			# OFF INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "PHONE_ACTIVE_off", False, False, False),
-					("leaf", "nonevent", "[USE CELLPHONE]_START", False, 1, False),
+					("leaf", "nonevent", "makecall_START", False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "PHONE_ACTIVE_on", False, False, False),
-					("leaf", "event", "[USE CELLPHONE]_END", False, 1, False)
+					("leaf", "event", "makecall_END", False, 1, False)
 				]
 			)
 		]
 	),
-	# TODO
 	# LIGHT ON
 	("root", "fluent", "light_on", .6, False, [
 			# ON INERTIALLY
@@ -308,44 +320,59 @@ abbreviated_summerdata_grammar = [
 			)
 		]
 	),
-	# AGENT HAS TRASH # NOTE: EVENT [REMOVE TRASH] NEVER REALIZED!
-	# TODO: This is one of the ones that needs the "reset agent" feature
-	("root", "fluent", "AGENT_HAS_TRASH_on", False, False, [
-			# ON INERTIALLY
+	# SCREEN ON
+	("root", "fluent", "screen_on", .4, False, [
+			# ON INERTIALLY -- stay screen
 			("and", False, False, .5, False, [
-					("leaf", "prev_fluent", "AGENT_HAS_TRASH_on", False, False, False),
-					("leaf", "nonevent", "[USE TRASH CAN]_END", False, 1, False),
+					("leaf", "prev_fluent", "screen_on", False, False, False),
+					("leaf", "nonevent", "usecomputer_END", False, 1, False),
+				]
+			),
+			# ON INERTIALLY -- on timer -- STAY ON SIGNALED
+			("and", False, False, .6, False, [
+					("leaf", "prev_fluent", "screen_on", False, False, False),
+					("leaf", "timer", "become_screensaver", lambda t1, t2: weibull(t1,t2,600,1.5), False, False, "screen_off"), # TODO: put in different probability
 				]
 			),
 			# ON CAUSALLY
-			("and", False, False, .5, False, [
-					("leaf", "prev_fluent", "AGENT_HAS_TRASH_off", False, False, False),
-					("leaf", "event", "[REMOVE TRASH]_START", False, 1, False),
-				]
-			)
-		]
-	),
-	# AGENT DOESN"T HAVE TRASH (AGENT_TRASH_OFF)
-	("root", "fluent", "AGENT_HAS_TRASH_off", False, False, [
-			# OFF INERTIALLY
-			("and", False, False, .5, False, [
-					("leaf", "prev_fluent", "AGENT_HAS_TRASH_off", False, False, False),
-					("leaf", "nonevent", "[REMOVE TRASH]_START", False, 1, False),
+			("and", False, False, .1, False, [
+					("leaf", "prev_fluent", "screen_off", False, False, False),
+					("leaf", "event", "usecomputer_START", False, 1, False),
 				]
 			),
+			# ON SPONTANEOUSLY - TODO
+		]
+	),
+	# SCREEN OFF
+	("root", "fluent", "screen_off", .6, False, [
 			# OFF CAUSALLY
-			("and", False, False, .5, False, [
-					("leaf", "prev_fluent", "AGENT_HAS_TRASH_on", False, False, False),
-					("leaf", "event", "[USE TRASH CAN]_END", False, 1, False)
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "screen_on", False, False, False),
+					("leaf", "event", "usecomputer_END", False, 1, False)
+				]
+			),
+			# OFF SPONTANEOUSLY - fluent staying on timed out (SCREENSAVER ACTIVATED)
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "screen_on", False, False, False),
+					("leaf", "jump", "become_screensaver", lambda t1, t2: weibull(t1,t2,600,1.5), False, False, "screen_on"), # TODO: put in different probability
+				]
+			),
+			# OFF INERTIALLY
+			("and", False, False, .4, False, [
+					("leaf", "prev_fluent", "screen_off", False, False, False),
+					("leaf", "nonevent", "usecomputer_START", False, 1, False)
 				]
 			)
 		]
 	),
+	# TODO: DOORLOCK -- might be possible if standing is good enough
 ]
 """
 	### NOT INCLUDED ###
-	# ELEVATOR DOOR OPEN # TODO
-	# ELEVATOR DOOR CLOSED # TODO
+	# SKIPPED: ELEVATOR (because this set didn't have elevators)
+	# ELEVATOR DOOR OPEN 
+	# ELEVATOR DOOR CLOSED 
+	# SKIPPED: add "ringing"...  don't have enough action information for this
 	# PHONE RINGING #
 	# PHONE NOT RINGING (PHONE_RINGING_OFF)
 	# AGENT HAS PHONE/NOT

@@ -6,11 +6,13 @@ import math
 
 # takes Bruce's detections
 def readFluentResults(exampleName):
-	fluent_parses = {"initial":{}}
-	initial_fluents = fluent_parses['initial']
+	#fluent_parses = {"initial":{}}
+	#initial_fluents = fluent_parses['initial']
+	fluent_parses = {}
 	for fluent_type in fluent_types:
 		[fluent, old_value, new_value] = fluent_type.split("_")
 		fluent_file = fluent_dir + fluent_type + "_fluent_results.txt"
+		#print("READING {}".format(fluent_file))
 		#print("opening {}".format(fluent_file))
 		#print("looking for {}".format(exampleName))
 		thefile = open(fluent_file, 'r')
@@ -29,7 +31,7 @@ def readFluentResults(exampleName):
 					end_frame = int(end_frame)
 					probability = float(probability)
 					# TODO: we were dealing with "instantaneous" changes before.  which frame do i take?  or average????
-					frame_number = int(round((start_frame + end_frame)/2)) # TODO: maybe???!?!? and put buffer around it on the other side???
+					frame_number = min(start_frame + 4, int(round((start_frame + end_frame)/2))) # TODO: maybe???!?!? and put buffer around it on the other side???
 					if frame_number not in fluent_parses:
 						fluent_parses[frame_number] = {}
 					frame = fluent_parses[frame_number]
@@ -38,22 +40,29 @@ def readFluentResults(exampleName):
 						fluent_value = -math.log(probability)
 					elif new_value in ["closed", "off"]:
 						fluent_value = -math.log(1-probability)
-					frame[fluent] = fluent_value
-					if fluent not in initial_fluents:
-						if new_value in ["open", "on"]:
-							prev_value = -math.log(1-probability)
-						elif new_value in ["closed", "off"]:
-							prev_value = -math.log(probability)
-						initial_fluents[fluent] = prev_value
+					if fluent in frame:
+						# if we've already got a value, let's see which one is "more" likely (further from .5)
+						old_value = frame[fluent]
+						old_diff = abs(.5 - math.exp(-old_value))
+						new_diff = abs(.5 - math.exp(-fluent_value))
+						if new_diff > old_diff:
+							frame[fluent] = fluent_value
+					else:
+						frame[fluent] = fluent_value
+					#if fluent not in initial_fluents:
+					#	if new_value in ["open", "on"]:
+					#		prev_value = -math.log(1-probability)
+					#	elif new_value in ["closed", "off"]:
+					#		prev_value = -math.log(probability)
+					#	initial_fluents[fluent] = prev_value
+					#	print("{}: {} -> {}".format(frame_number,prev_value,fluent_value))
+					# initial_fluents[fluent] = .001 # 500 # .301 # let's try probability 1/5 for this for now
 				break
 			else:
 				i += skip + 2
 		if i == resultsN:
 			print "BUMMER; not found. Try more dinosaur."
 		thefile.close()
-	#import pprint
-	#pp = pprint.PrettyPrinter(depth=6)
-	#pp.pprint(fluent_parses)
 	return fluent_parses
 
 # dict keys are frame numbers
@@ -82,7 +91,7 @@ def convertActionNumberToText(actionNumber):
 	pass
 
 
-# BELOW WAS FOR MING TIEN'S CODE
+# BELOW WAS FOR MINGTIAN'S CODE FOR SMOOTHING PING'S RESULTS WITH THE POTTS MODEL
 # dict keys are frame numbers
 # frames are only reported when an event begins
 # events have energy and agents
@@ -133,7 +142,12 @@ def readActionResults(exampleName, action_dir, resultNumber):
 
 def readActionResults(module):
 	module = __import__(module,fromlist=['temporal_parses'])
-	return module.temporal_parses[0]
+	action_parses = module.temporal_parses[0]
+	# we don't trust the action parses as much as they want us to
+	for frame in action_parses:
+		for action in action_parses[frame]:
+			action_parses[frame][action]['energy'] = action_parses[frame][action]['energy'] # + 0.69 # + 0.69314718056;
+	return action_parses
 
 ##########################
 
