@@ -227,13 +227,13 @@ abbreviated_summerdata_grammar = [
 	# LIGHT ON
 	("root", "fluent", "light_on", .6, False, [
 			# ON INERTIALLY
-			("and", False, False, .6, False, [
+			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "light_on", False, False, False),
 					("leaf", "nonevent", "pushbutton_START",  False, 10, False),
 				]
 			),
 			# ON CAUSALLY
-			("and", False, False, .4, False, [
+			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "light_off", False, False, False),
 					("leaf", "event", "pushbutton_START",  False, 10, False),
 				]
@@ -243,13 +243,13 @@ abbreviated_summerdata_grammar = [
 	# LIGHT OFF	(LIGHT_ON_OFF)
 	("root", "fluent", "light_off", .4, False, [
 			# ON INERTIALLY
-			("and", False, False, .6, False, [
+			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "light_off", False, False, False),
 					("leaf", "nonevent", "pushbutton_START",  False, 10, False),
 				]
 			),
 			# OFF CAUSALLY
-			("and", False, False, .4, False, [
+			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "light_on", False, False, False),
 					("leaf", "event", "pushbutton_START",  False, 10, False),
 				]
@@ -321,44 +321,51 @@ abbreviated_summerdata_grammar = [
 		]
 	),
 	# SCREEN ON
-	("root", "fluent", "screen_on", .4, False, [
+	("root", "fluent", "screen_on", .6, False, [
 			# ON INERTIALLY -- stay screen
-			("and", False, False, .5, False, [
+			("and", False, False, .3, False, [
 					("leaf", "prev_fluent", "screen_on", False, False, False),
 					("leaf", "nonevent", "usecomputer_END", False, 1, False),
 				]
 			),
 			# ON INERTIALLY -- on timer -- STAY ON SIGNALED
-			("and", False, False, .6, False, [
-					("leaf", "prev_fluent", "screen_on", False, False, False),
-					("leaf", "timer", "become_screensaver", lambda t1, t2: weibull(t1,t2,600,1.5), False, False, "screen_off"), # TODO: put in different probability
-				]
-			),
+			#("and", False, False, .6, False, [
+			#		("leaf", "prev_fluent", "screen_on", False, False, False),
+			#		("leaf", "timer", "become_screensaver", lambda t1, t2: weibull(t1,t2,600,1.5), False, False, "screen_off"), # TODO: put in different probability
+			#	]
+			#),
 			# ON CAUSALLY
-			("and", False, False, .1, False, [
+			("and", False, False, .7, False, [
 					("leaf", "prev_fluent", "screen_off", False, False, False),
-					("leaf", "event", "usecomputer_START", False, 1, False),
+					("leaf", "event", "usecomputer_START", False, 20, False),
 				]
 			),
 			# ON SPONTANEOUSLY - TODO
 		]
 	),
 	# SCREEN OFF
-	("root", "fluent", "screen_off", .6, False, [
+	("root", "fluent", "screen_off", .4, False, [
 			# OFF CAUSALLY
-			("and", False, False, .4, False, [
+			("and", False, False, .3, False, [
 					("leaf", "prev_fluent", "screen_on", False, False, False),
-					("leaf", "event", "usecomputer_END", False, 1, False)
+					("leaf", "event", "usecomputer_END", False, 20, False)
 				]
 			),
 			# OFF SPONTANEOUSLY - fluent staying on timed out (SCREENSAVER ACTIVATED)
-			("and", False, False, .4, False, [
+			#("and", False, False, .4, False, [
+			#		("leaf", "prev_fluent", "screen_on", False, False, False),
+			#		#("leaf", "jump", "become_screensaver", lambda t1, t2: weibull(t1,t2,600,1.5), False, False, "screen_on"), # TODO: put in different probability
+			#	]
+			#),
+			# OFF INERTIALLY
+			("and", False, False, .05, False, [
 					("leaf", "prev_fluent", "screen_on", False, False, False),
-					("leaf", "jump", "become_screensaver", lambda t1, t2: weibull(t1,t2,600,1.5), False, False, "screen_on"), # TODO: put in different probability
+					("leaf", "nonevent", "usecomputer_START", False, 100, False),
+					("leaf", "nonevent", "usecomputer_END", False, 100, False)
 				]
 			),
 			# OFF INERTIALLY
-			("and", False, False, .4, False, [
+			("and", False, False, .65, False, [
 					("leaf", "prev_fluent", "screen_off", False, False, False),
 					("leaf", "nonevent", "usecomputer_START", False, 1, False)
 				]
