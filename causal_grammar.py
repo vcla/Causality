@@ -433,7 +433,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 						parse_ids_completed.append(other_parse['id'])
 						complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frames[symbol], completions, 'timeout alt')
 
-def process_events_and_fluents(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy):
+def process_events_and_fluents(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy, suppress_output = False):
 	clever = False # clever (modified viterbi algorithm) or brute force (all possible parses)
 	results_for_xml_output = []
 	fluent_parse_index = 0
@@ -623,8 +623,9 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		for fluent in completions.keys():
 			prev_chains = []
 			prev_chain_energies = []
-			print("{}".format(fluent))
-			hr()
+			if not suppress_output:
+				print("{}".format(fluent))
+				hr()
 			#import pprint
 			#pp = pprint.PrettyPrinter(depth=6)
 			#pp.pprint(completions[fluent])
@@ -635,7 +636,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				next_chains = []
 				next_chain_energies = []
 				for node in completion_data_sorted:
-					print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(node['status']), "{:>6.3f}".format(node['energy']), node['source'], "{:d}".format(node['parse']['id']), str(make_tree_like_lisp(node['parse'])), str(node['agents'])])))
+					if not suppress_output:
+						print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(node['status']), "{:>6.3f}".format(node['energy']), node['source'], "{:d}".format(node['parse']['id']), str(make_tree_like_lisp(node['parse'])), str(node['agents'])])))
 					# go through each chain and find the lowest energy + transition energy for this node
 					best_energy = -1 # not a possible energy
 					best_chain = None
@@ -683,14 +685,16 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 			# print('\n'.join(['\t'.join(l) for l in chain_results]))
 			chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
 			results_for_xml_output.append(chain_results[:1])
-			print('\n'.join(map(str,chain_results)))
-			hr()
-			hr()
+			if not suppress_output:
+				print('\n'.join(map(str,chain_results)))
+				hr()
+				hr()
 	else: # not clever i.e. brute force
 		for fluent in completions.keys():
 			parent_chains = []
-			print fluent
-			hr()
+			if not suppress_output:
+				print fluent
+				hr()
 			for frame in sorted(completions[fluent].iterkeys()):
 				completion_data_sorted = sorted(completions[fluent][frame], key=lambda (k): k['energy'])
 				if not parent_chains:
@@ -710,7 +714,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 								children.append(chain)
 					parent_chains = children
 				for completion_data in completion_data_sorted:
-					print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(completion_data['status']), "{:>6.3f}".format(completion_data['energy']), completion_data['source'], "{:d}".format(completion_data['parse']['id']), str(make_tree_like_lisp(completion_data['parse'])), str(completion_data['agents'])])))
+					if not suppress_output:
+						print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(completion_data['status']), "{:>6.3f}".format(completion_data['energy']), completion_data['source'], "{:d}".format(completion_data['parse']['id']), str(make_tree_like_lisp(completion_data['parse'])), str(completion_data['agents'])])))
 			chain_results = []
 			for chain in parent_chains:
 				items = []
@@ -723,12 +728,16 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 			# print('\n'.join(['\t'.join(l) for l in chain_results]))
 			chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
 			results_for_xml_output.append(chain_results[:1])
-			print('\n'.join(map(str,chain_results)))
-			hr()
-			hr()
-	print_xml_output_for_chain(results_for_xml_output,parse_array) # for lowest energy chain
+			if not suppress_output:
+				print('\n'.join(map(str,chain_results)))
+				hr()
+				hr()
+	doc = build_xml_output_for_chain(results_for_xml_output,parse_array,suppress_output) # for lowest energy chain
+	if not suppress_output:
+		print("{}".format(doc.toprettyxml(indent="\t")))
+	return doc
 
-def print_xml_output_for_chain(all_chains,parse_array):
+def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 	from xml.dom.minidom import Document
 	doc = Document()
 	temporal_stuff = doc.createElement("temporal")
@@ -746,9 +755,10 @@ def print_xml_output_for_chain(all_chains,parse_array):
 			parse_id = instance[1]
 			parse = parse_array[parse_id]
 			# get fluents where there's a prev-fluent and fluent.  or just stick with top level?
-			#print("{}".format(frame_number))
-			#print("{}".format(parse['symbol']))
-			print("{}".format(parse))
+			if not suppress_output:
+				#print("{}".format(frame_number))
+				#print("{}".format(parse['symbol']))
+				print("{}".format(parse))
 			fluent_parse = doc.createElement("fluent_change")
 			fluent, fluent_value = parse['symbol'].rsplit("_",1)
 			fluent_parse.setAttribute("fluent",fluent)
@@ -777,7 +787,7 @@ def print_xml_output_for_chain(all_chains,parse_array):
 					action_el.setAttribute("energy",str(energy))
 					action_el.setAttribute("action",str(action))
 					actions_el.appendChild(action_el)
-	print doc.toprettyxml(indent="\t")
+	return doc
 
 # TODO: this assumes we're only going to find one previous fluent value for the given fluent
 def get_prev_fluent_value_from_parse(parse,fluent):
