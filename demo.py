@@ -101,7 +101,7 @@ causal_forest = [
 if False:
 	fluent_maps = {"Light_Status": "light", "Door_Status": "dooropen"}
 	event_maps = {"Touch_Switch":"E1", "Close_Door_Inside": "door_close_inside", "Close_Door_Outside": "door_close_outside", "Open_Door_Inside":"door_open_inside", "Open_Door_Outside":"door_open_outside"}
-	fluent_parses, temporal_parses = causal_grammar.import_csv("Exp2_output_data.txt",fluent_maps,event_maps)
+	fluent_parses, temporal_parses = causal_grammar.import_csv("results/Exp2_output_data.txt",fluent_maps,event_maps)
 
 print "--PREPPING DEMO--"
 import pprint

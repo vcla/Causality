@@ -10,5 +10,10 @@ CVPR2012_slidingwindow_action_detection/
 CVPR2012_smoothed_action_detections/
 CVPR2012_smoothed_action_detections_monday/
 CVPR2012_smoothed_action_detections_monday_1000/
+CVPR2012_reverse_slidingwindow_action_detection/
+CVPR2012_reverse_slidingwindow_action_detection_logspace/
 cvpr_db_results/
 results/
+analyze_results
+testingCutPoints.txt
+.DS_Store

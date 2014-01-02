@@ -3,6 +3,7 @@
 
 import causal_grammar
 
+### TODO: deal with trash_6_phone_11_screen_22 because it has timer/jump 
 #fluent_parses, temporal_parses = causal_grammar.import_summerdata('door_13_light_3_9406','CVPR2012_reverse_slidingwindow_action_detection')
 fluent_parses, temporal_parses = causal_grammar.import_summerdata('door_1_8145','CVPR2012_reverse_slidingwindow_action_detection')
 #import causal_grammar_summerdata_justdoor as causal_grammar_summerdata # sets up causal_forest
