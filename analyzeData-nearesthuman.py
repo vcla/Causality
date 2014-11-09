@@ -2,6 +2,7 @@
 #QUESTION: how should these costs aggregate across video clips?
 
 import os
+import hashlib
 kCSVDir = 'cvpr_db_results' # from the 'export' option in dealWithDBResults.py
 kComputerTypes = ['causalgrammar', 'origdata']
 
@@ -13,7 +14,7 @@ def findDistanceBetweenTwoVectors(A, B):
 
 
 ## for each file in our csvs directory, find the smallest "human" distance for each "computer" vector
-print("FILENAME\tORIGDATA\tCAUSALGRAMMAR\tORIGHUMANS\tCAUSALHUMANS")
+print("FILENAME\tHASH\tORIGDATA\tCAUSALGRAMMAR\tORIGHUMANS\tCAUSALHUMANS")
 exceptions = []
 total_origdata_score = 0
 total_causalgrammar_score = 0
@@ -48,7 +49,7 @@ for filename in os.listdir (kCSVDir):
 					besthumans[computerType] = []
 					for human in humans:
 						currentscore = findDistanceBetweenTwoVectors(computers[computerType],humans[human])
-						if not besthumans[computerType] or currentscore > bestscores[computerType]:
+						if not besthumans[computerType] or currentscore < bestscores[computerType]:
 							besthumans[computerType] = [human]
 							bestscores[computerType] = currentscore
 						elif bestscores[computerType] == currentscore:
@@ -56,7 +57,9 @@ for filename in os.listdir (kCSVDir):
 				#print bestscores
 				#print besthumans
 				## FILE, ORIGDATA SCORE, CAUSALGRAMMAR SCORE, ORIGDATA HUMANS, CAUSALGRAMMAR HUMANS
-				print("{}\t{}\t{}\t{}\t{}".format(filename,bestscores['origdata'], bestscores['causalgrammar'], besthumans['origdata'],besthumans['causalgrammar']))
+				exampleName, room = filename.rsplit('.',1)
+				exampleNameForDB = exampleName.replace("_","")
+				print("{}\t{}\t{}\t{}\t{}\t{}".format(filename,hashlib.md5(exampleNameForDB).hexdigest(),bestscores['origdata'], bestscores['causalgrammar'], besthumans['origdata'],besthumans['causalgrammar']))
 				N += 1
 				total_origdata_score += bestscores['origdata']
 				total_causalgrammar_score += bestscores['causalgrammar']
