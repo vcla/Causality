@@ -164,7 +164,7 @@ def get_event_timeouts(forest):
 			for key in child_timeouts:
 				events[key] = int(child_timeouts[key])
 		if "symbol_type" in tree:
-			if "event" == tree["symbol_type"]:
+			if tree["symbol_type"] in ("event","nonevent",):
 				if "timeout" in tree:
 					events[tree["symbol"]] = int(tree["timeout"])
 				else:
