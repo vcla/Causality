@@ -2,9 +2,9 @@ import csv
 import hashlib
 import MySQLdb
 DBNAME = "amy_cvpr2012"
-DBUSER = "amy"
-DBHOST = "alethe.net"
-DBPASS = "bB3s5tT"
+DBUSER = "amycvpr2012"
+DBHOST = "127.0.0.1" # forwarding 3306
+DBPASS = "rC2xfLQFDMUZqJxf"
 
 # managing human responses for comparison - note upload versus download
 
@@ -162,7 +162,7 @@ def queryXMLForActionBetweenFrames(xml,action,frame1,frame2):
 				return {"frame":frame, "energy": float(event.attributes['energy'].nodeValue)}
 	return None
 
-# NOTE: this assumes there is at most one fluent change between frame1 and frame2
+# NOTE: this doesn't care how many fluent changes there are, only where things start and where they end up
 # THERE IS A DISTINCT LACK OF CHECKING THINGS TO BE SURE HERE
 def queryXMLForFluentBetweenFrames(xml,fluent,frame1,frame2):
 	fluent_changes = xml.getElementsByTagName('fluent_change')
@@ -183,30 +183,33 @@ def queryXMLForFluentBetweenFrames(xml,fluent,frame1,frame2):
 			#print("{}\t{}\t{}\t{}".format(frame,prev_value,start_value,end_value))
 			if not found_start:
 				if frame > frame1:
+					#print("FOUND FIRST FRAME: {}".format(frame))
 					if prev_value:
-						#print("assigning prev -> start")
 						start_value = prev_value
 						start_energy = prev_energy
+						#print("assigning prev ({})-> start".format(start_value))
 					elif 'prev_value' in fluent_change.attributes.keys():
-						#print("assigning now[prev] -> start")
 						start_value = str(fluent_change.attributes['prev_value'].nodeValue)
 						start_energy = float(fluent_change.attributes['energy'].nodeValue)
+						#print("assigning now[prev] ({}) -> start".format(start_value))
 					else:
 						# for lack of anything better, we'll assume we've always been like this
 						start_value = str(fluent_change.attributes['new_value'].nodeValue)
 						start_energy = float(fluent_change.attributes['energy'].nodeValue)
-					#print("assigning now[new] -> end")
+						#print("assigning now ({}) -> start".format(start_value))
 					if frame < frame2:
 						end_value = str(fluent_change.attributes['new_value'].nodeValue)
 						end_energy = float(fluent_change.attributes['energy'].nodeValue)
+						#print("assigning now[new] ({}) -> end".format(end_value))
 					else:
 						end_value = start_value
 						end_value = end_value
+						#print("assigning start value ({}) -> end".format(end_value))
 					found_start = True
 					continue
 				#print("assigning now[new] -> prev")
-				prev_value =  str(fluent_change.attributes['new_value'].nodeValue)
-				prev_energy = float(fluent_change.attributes['energy'].nodeValue)
+				#prev_value =  str(fluent_change.attributes['new_value'].nodeValue)
+				#prev_energy = float(fluent_change.attributes['energy'].nodeValue)
 			else:
 				if frame >= frame2:
 					#print("breaking")
@@ -251,11 +254,11 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2):
 	retval = {}
 	onsoffs = { "door": ["open","closed"], "light": ["on","off"], "screen": ["on","off"] }
 	if not oject in onsoffs.keys():
-		raise "Unknown oject type in queryXMLForAnswersBetweenFrames: {}".format(oject)
+		raise "Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject)
 	#fluents
 	onsoffs = onsoffs[oject]
 	fluent_change = queryXMLForFluentBetweenFrames(xml,oject,frame1,frame2)
-	result = buildDictForFluentChangePossibilities(oject,frame2,onsoffs[0],onsoffs[1],fluent_change['start']['value'],fluent_change['end']['value'])
+	result = buildDictForFluentChangePossibilities(oject,frame1,onsoffs[0],onsoffs[1],fluent_change['start']['value'],fluent_change['end']['value'])
 	retval.update(result)
 	if oject == "door":
 		#actions
@@ -279,13 +282,13 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2):
 	elif oject == "screen":
 		result = {"act_mousekeyboard":0, "act_no_mousekeyboard":0}
 		# don't need to worry about end
-		if queryXMLForActionBetweenFrames(xml,"pressbutton_START",frame1,frame2):
+		if queryXMLForActionBetweenFrames(xml,"usecomputer_START",frame1,frame2):
 			result['act_mousekeyboard'] = 100
 		else:
 			result['act_no_mousekeyboard'] = 100
 	else:
-		raise("unknown oject type in queryXMLForAnswersBetweenFrames: {}".format(oject))
-	result = buildDictForActionPossibilities(oject,frame2,result)
+		raise("unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
+	result = buildDictForActionPossibilities(oject,frame1,result)
 	retval.update(result)
 	return retval
 
@@ -323,21 +326,22 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 				frame = tmp
 			ojects.append(oject,)
 			cutpoints.append(int(frame))
+	cutpoints.append(1000000000000000) # close enough to infinity, anyway; working on an off-by-one issue
 	ojects = list(set(ojects))
 	cutpoints = sorted(list(set(cutpoints)))
-	# let's make sure we know how to work on all of these ojects
+	# let's make sure we know how to work on all of these objects
 	known_ojects = ["screen","door","light"]
 	if not all(map(lambda x: x in known_ojects,ojects)):
-		print("skipping {} due to an un unknown oject (one of {})".format(example,ojects))
+		print("skipping {} due to an un unknown object (one of {})".format(example,ojects))
 		return
 	# for each of our objects, figure out what we think went on at each cutpoint
-	print("objects: {}".format(ojects))
-	print("frames: {}".format(cutpoints))
+	#print("objects: {}".format(ojects))
+	#print("frames: {}".format(cutpoints))
 	insertion_object = {"name": source, "hash": "1234567890"}
 	print fluent_and_action_xml.toprettyxml(indent="\t")
 	for oject in ojects:
-		prev_frame = 0
-		for frame in cutpoints:
+		prev_frame = cutpoints[0]
+		for frame in cutpoints[1:]:
 			#print("{} - {}".format(oject, frame))
 			insertion_object.update(queryXMLForAnswersBetweenFrames(fluent_and_action_xml,oject,prev_frame,frame))
 			prev_frame = frame
@@ -365,6 +369,7 @@ if __name__ == '__main__':
 	else:
 		mode = "download"
 	examples = ['door_11_9406', 'door_12_light_2_9406', 'door_13_light_3_9406', 'door_15_9406', 'door_1_8145', 'door_2_8145', 'door_4_trash_1_8145', 'door_5_8145', 'door_6_8145', 'door_7_8145', 'door_8_doorlock_3_8145', 'door_9_8145', 'doorlock_1_door_3_8145', 'doorlock_2_8145', 'light_10_9404', 'light_5_9406', 'light_6_9404', 'light_7_9404', 'light_8_screen_50_9404', 'light_9_screen_57_9404', 'phone_13_screen_27_lounge', 'phone_16_9406', 'phone_1_8145', 'phone_20_screen_53_9404', 'phone_24_screen_65_9404', 'phone_25_screen_67_9404', 'phone_2_8145', 'phone_3_8145', 'phone_4_8145', 'screen_10_lounge', 'screen_12_lounge', 'screen_13_lounge', 'screen_14_phone_8_lounge', 'screen_15_lounge', 'screen_16_phone_9_lounge', 'screen_17_trash_5_lounge', 'screen_18_lounge', 'screen_19_lounge', 'screen_1_lounge', 'screen_21_phone_10_lounge', 'screen_23_lounge', 'screen_24_lounge', 'screen_25_lounge', 'screen_26_phone_12_lounge', 'screen_2_lounge', 'screen_30_9406', 'screen_31_9406', 'screen_32_9406', 'screen_35_9406', 'screen_36_9406', 'screen_37_door_14_light_4_9406', 'screen_38_9406', 'screen_39_9406', 'screen_3_phone_5_lounge', 'screen_40_9406', 'screen_41_9406', 'screen_42_9404', 'screen_44_9404', 'screen_45_trash_8_9404', 'screen_46_9404', 'screen_47_water_8_phone_18_9404', 'screen_49_9404', 'screen_4_phone_6_lounge', 'screen_51_9404', 'screen_58_9404', 'screen_5_lounge', 'screen_61_9404', 'screen_63_9404', 'screen_6_lounge', 'screen_7_lounge', 'screen_8_lounge', 'screen_9_phone_7_lounge', 'trash_10_phone_19_9404', 'trash_11_screen_56_9404', 'trash_2_8145', 'trash_3_lounge', 'trash_4_screen_11_lounge', 'trash_7_9406', 'water_10_screen_52_9404', 'water_11_screen_54_9404', 'water_12_phone_21_screen_59_9404', 'water_15_screen_64_9404', 'water_16_screen_66_9404', 'water_17_9404', 'water_18_screen_68_9404', 'water_19_screen_69_9404', 'water_1_8145', 'water_2_8145', 'water_4_8145', 'water_6_waterstream_5_8145', 'water_9_screen_48_trash_9_9404', 'waterstream_11_9404', 'waterstream_1_8145', 'waterstream_2_water_3_8145', 'waterstream_3_water_5_8145', 'waterstream_4_8145', 'waterstream_7_9404', 'waterstream_8_screen_55_9404',]
+	#examples = ['light_5_9406',]
 	conn = MySQLdb.connect (host = DBHOST, user = DBUSER, passwd = DBPASS, db = DBNAME)
 	if mode == "upload":
 		completed = []
@@ -383,16 +388,17 @@ if __name__ == '__main__':
 		#raise("MAYBE DELETE 'computer' FROM RESULTS BEFORE RERUNNING")
 		for example in examples:
 			try:
-				fluent_parses, action_parses = causal_grammar.import_summerdata(example,'CVPR2012_reverse_slidingwindow_action_detection_logspace')
+				fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,'CVPR2012_reverse_slidingwindow_action_detection_logspace')
 				import pprint
 				pp = pprint.PrettyPrinter(indent=1)
 				pp.pprint(fluent_parses)
-				pp.pprint(action_parses)
-			except ImportError:
+				pp.pprint(temporal_parses)
+			except ImportError as ie:
+				print("IMPORT FAILED: {}".format(ie))
 				import_failed.append(example)
 				continue
-			orig_xml = munge_parses_to_xml(fluent_parses,action_parses)
-			fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, action_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, True) # last true: suppress the xml output
+			orig_xml = munge_parses_to_xml(fluent_parses,temporal_parses)
+			fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, True) # last true: suppress the xml output
 			print orig_xml.toprettyxml(indent="\t")
 			print fluent_and_action_xml.toprettyxml(indent="\t")
 			#print fluent_and_action_xml.toprettyxml(indent="\t")
@@ -406,8 +412,8 @@ if __name__ == '__main__':
 				oject_failed.append(example)
 		print("COMPLETED: {}".format(completed))
 		print("ALSO COMPLETED: {}".format(also_completed))
-		print("SKIPPED DUE TO OJECT: {}".format(oject_failed))
-		print("ALSO SKIPPED DUE TO OJECT: {}".format(also_oject_failed))
+		print("SKIPPED DUE TO OBJECT: {}".format(oject_failed))
+		print("ALSO SKIPPED DUE TO OBJECT: {}".format(also_oject_failed))
 		print("SKIPPED DUE TO IMPORT: {}".format(import_failed))
 	elif mode == "download":
 		for example in examples:
