@@ -281,9 +281,17 @@ def calculate_energy(node, fluent_hash, event_hash):
 		else:
 			raise Exception("unhandled symbol_type '{}'".format(node['symbol_type']))
 	if "children" in node:
-		for child in node["children"]:
-			child_energy = calculate_energy(child, fluent_hash, event_hash)
-			node_energy += child_energy
+		if node["node_type"] in ("or","root",):
+			# "multiplies" child probabilities on "or" nodes (root nodes are always or nodes)
+			for child in node["children"]:
+				child_energy = calculate_energy(child, fluent_hash, event_hash)
+				node_energy += child_energy
+		else:
+			# "averages" over the "and" nodes
+			child_energy = 0
+			for child in node["children"]:
+				child_energy += calculate_energy(child, fluent_hash, event_hash)
+			node_energy += child_energy / len(node["children"])
 	return node_energy
 
 # TODO: this makes some very naiive assumptions about jumping--that the "paired" fluent(s) will all be met, and (others?)
