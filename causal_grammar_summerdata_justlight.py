@@ -17,10 +17,6 @@ abbreviated_xxx_grammar = [
 
 # NOTE: unsure of what to put in for probabilities -- using mostly False for now
 ### GRAMMAR FOR SUMMER DATA -- CVPR 2012 ###
-from math import exp, pow
-
-def weibull(t1, t2, lam, k):
-	return 1 - exp(pow(t1 / lam,k) - pow(t2 / lam, k))
 
 abbreviated_summerdata_grammar = [
 	# LIGHT ON
@@ -28,13 +24,13 @@ abbreviated_summerdata_grammar = [
 			# ON INERTIALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "light_on", False, False, False),
-					("leaf", "nonevent", "pushbutton_START",  False, 10, False),
+					("leaf", "nonevent", "pressbutton_START",  False, 10, False),
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "light_off", False, False, False),
-					("leaf", "event", "pushbutton_START",  False, 10, False),
+					("leaf", "event", "pressbutton_START",  False, 10, False),
 				]
 			)
 		]
@@ -44,13 +40,13 @@ abbreviated_summerdata_grammar = [
 			# ON INERTIALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "light_off", False, False, False),
-					("leaf", "nonevent", "pushbutton_START",  False, 10, False),
+					("leaf", "nonevent", "pressbutton_START",  False, 10, False),
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "light_on", False, False, False),
-					("leaf", "event", "pushbutton_START",  False, 10, False),
+					("leaf", "event", "pressbutton_START",  False, 10, False),
 				]
 			)
 		]
