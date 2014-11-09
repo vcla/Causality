@@ -24,13 +24,13 @@ abbreviated_summerdata_grammar = [
 			# ON INERTIALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "light_on", False, False, False),
-					("leaf", "nonevent", "pressbutton_START",  False, 10, False),
+					("leaf", "nonevent", "pressbutton_START",  False, 50, False),
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "light_off", False, False, False),
-					("leaf", "event", "pressbutton_START",  False, 10, False),
+					("leaf", "event", "pressbutton_START",  False, 50, False),
 				]
 			)
 		]
@@ -40,13 +40,13 @@ abbreviated_summerdata_grammar = [
 			# ON INERTIALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "light_off", False, False, False),
-					("leaf", "nonevent", "pressbutton_START",  False, 10, False),
+					("leaf", "nonevent", "pressbutton_START",  False, 50, False),
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "light_on", False, False, False),
-					("leaf", "event", "pressbutton_START",  False, 10, False),
+					("leaf", "event", "pressbutton_START",  False, 50, False),
 				]
 			)
 		]
