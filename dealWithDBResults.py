@@ -368,7 +368,7 @@ if __name__ == '__main__':
 	import argparse
 	kSummerDataPythonDir="CVPR2012_reverse_slidingwindow_action_detection_logspace";
 	parser = argparse.ArgumentParser()
-	parser.add_argument("mode", choices=["upload","download","upanddown"])
+	parser.add_argument("mode", choices=["upload","download","upanddown","list"])
 	group = parser.add_mutually_exclusive_group()
 	group.add_argument('-o','--only', action='append', dest='examples_only', required=False, help='specific examples to run, versus all found examples')
 	group.add_argument('-s','--skip', action='append', dest='examples_skip', required=False, help='specific examples to skip, out of all found examples', default=[])
@@ -384,6 +384,11 @@ if __name__ == '__main__':
 				if example not in args.examples_skip:
 					examples.append(filename[:-3])
 	conn = MySQLdb.connect (host = DBHOST, user = DBUSER, passwd = DBPASS, db = DBNAME)
+	if args.mode in ("list",):
+		for filename in os.listdir (kSummerDataPythonDir):
+			if filename.endswith(".py") and filename != "__init__.py":
+				example = filename[:-3]
+				print example
 	if args.mode in ("upload","upanddown",):
 		print("===========")
 		print("UPLOADING")
