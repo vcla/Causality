@@ -1,6 +1,7 @@
 import csv
 import hashlib
 import MySQLdb
+import os
 DBNAME = "amy_cvpr2012"
 DBUSER = "amycvpr2012"
 DBHOST = "127.0.0.1" # forwarding 3306
@@ -364,14 +365,29 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 
 
 if __name__ == '__main__':
-	if False:
-		mode = "upload"
+	import argparse
+	kSummerDataPythonDir="CVPR2012_reverse_slidingwindow_action_detection_logspace";
+	parser = argparse.ArgumentParser()
+	parser.add_argument("mode", choices=["upload","download","upanddown"])
+	group = parser.add_mutually_exclusive_group()
+	group.add_argument('-o','--only', action='append', dest='examples_only', required=False, help='specific examples to run, versus all found examples')
+	group.add_argument('-s','--skip', action='append', dest='examples_skip', required=False, help='specific examples to skip, out of all found examples', default=[])
+	# parser.add_argument("--dry-run",required=False,action="store_true") #TODO: would be nie
+	args = parser.parse_args()
+	examples = []
+	if args.examples_only:
+		examples = args.examples_only
 	else:
-		mode = "download"
-	examples = ['door_11_9406', 'door_12_light_2_9406', 'door_13_light_3_9406', 'door_15_9406', 'door_1_8145', 'door_2_8145', 'door_4_trash_1_8145', 'door_5_8145', 'door_6_8145', 'door_7_8145', 'door_8_doorlock_3_8145', 'door_9_8145', 'doorlock_1_door_3_8145', 'doorlock_2_8145', 'light_10_9404', 'light_5_9406', 'light_6_9404', 'light_7_9404', 'light_8_screen_50_9404', 'light_9_screen_57_9404', 'phone_13_screen_27_lounge', 'phone_16_9406', 'phone_1_8145', 'phone_20_screen_53_9404', 'phone_24_screen_65_9404', 'phone_25_screen_67_9404', 'phone_2_8145', 'phone_3_8145', 'phone_4_8145', 'screen_10_lounge', 'screen_12_lounge', 'screen_13_lounge', 'screen_14_phone_8_lounge', 'screen_15_lounge', 'screen_16_phone_9_lounge', 'screen_17_trash_5_lounge', 'screen_18_lounge', 'screen_19_lounge', 'screen_1_lounge', 'screen_21_phone_10_lounge', 'screen_23_lounge', 'screen_24_lounge', 'screen_25_lounge', 'screen_26_phone_12_lounge', 'screen_2_lounge', 'screen_30_9406', 'screen_31_9406', 'screen_32_9406', 'screen_35_9406', 'screen_36_9406', 'screen_37_door_14_light_4_9406', 'screen_38_9406', 'screen_39_9406', 'screen_3_phone_5_lounge', 'screen_40_9406', 'screen_41_9406', 'screen_42_9404', 'screen_44_9404', 'screen_45_trash_8_9404', 'screen_46_9404', 'screen_47_water_8_phone_18_9404', 'screen_49_9404', 'screen_4_phone_6_lounge', 'screen_51_9404', 'screen_58_9404', 'screen_5_lounge', 'screen_61_9404', 'screen_63_9404', 'screen_6_lounge', 'screen_7_lounge', 'screen_8_lounge', 'screen_9_phone_7_lounge', 'trash_10_phone_19_9404', 'trash_11_screen_56_9404', 'trash_2_8145', 'trash_3_lounge', 'trash_4_screen_11_lounge', 'trash_7_9406', 'water_10_screen_52_9404', 'water_11_screen_54_9404', 'water_12_phone_21_screen_59_9404', 'water_15_screen_64_9404', 'water_16_screen_66_9404', 'water_17_9404', 'water_18_screen_68_9404', 'water_19_screen_69_9404', 'water_1_8145', 'water_2_8145', 'water_4_8145', 'water_6_waterstream_5_8145', 'water_9_screen_48_trash_9_9404', 'waterstream_11_9404', 'waterstream_1_8145', 'waterstream_2_water_3_8145', 'waterstream_3_water_5_8145', 'waterstream_4_8145', 'waterstream_7_9404', 'waterstream_8_screen_55_9404',]
-	#examples = ['light_5_9406',]
+		for filename in os.listdir (kSummerDataPythonDir):
+			if filename.endswith(".py") and filename != "__init__.py":
+				example = filename[:-3]
+				if example not in args.examples_skip:
+					examples.append(filename[:-3])
 	conn = MySQLdb.connect (host = DBHOST, user = DBUSER, passwd = DBPASS, db = DBNAME)
-	if mode == "upload":
+	if args.mode in ("upload","upanddown",):
+		print("===========")
+		print("UPLOADING")
+		print("===========")
 		completed = []
 		also_completed = []
 		oject_failed = []
@@ -383,12 +399,11 @@ if __name__ == '__main__':
 		# flipping "did transition closed to on" and "didn't transition closed to on"
 		causal_grammar.kFluentThresholdOnEnergy = 0.6892
 		causal_grammar.kFluentThresholdOffEnergy = 0.6972
-		#examples = [ "door_1_8145", ]
-		#examples = [ "door_2_8145", "door_5_8145", "door_6_8145", "door_7_8145", "door_9_8145", ]
 		#raise("MAYBE DELETE 'computer' FROM RESULTS BEFORE RERUNNING")
 		for example in examples:
+			print("---------\nEXAMPLE: {}\n-------".format(example))
 			try:
-				fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,'CVPR2012_reverse_slidingwindow_action_detection_logspace')
+				fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,kSummerDataPythonDir)
 				import pprint
 				pp = pprint.PrettyPrinter(indent=1)
 				pp.pprint(fluent_parses)
@@ -415,8 +430,14 @@ if __name__ == '__main__':
 		print("SKIPPED DUE TO OBJECT: {}".format(oject_failed))
 		print("ALSO SKIPPED DUE TO OBJECT: {}".format(also_oject_failed))
 		print("SKIPPED DUE TO IMPORT: {}".format(import_failed))
-	elif mode == "download":
+		print("....................")
+		print("....................")
+	if args.mode in ("download","upanddown"):
+		print("===========")
+		print("DOWNLOADING")
+		print("===========")
 		for example in examples:
+			print("---------\nEXAMPLE: {}\n-------".format(example))
 			example, room = example.rsplit('_',1)
 			getExampleFromDB(example, conn)
 	conn.close()
