@@ -24,7 +24,7 @@ def weibull(t1, t2, lam, k):
 
 abbreviated_summerdata_grammar = [
 	# SCREEN ON
-	("root", "fluent", "screen_on", .6, False, [
+	("root", "fluent", "screen_on", .5, False, [
 			# ON INERTIALLY -- stay screen
 			("and", False, False, .3, False, [
 					("leaf", "prev_fluent", "screen_on", False, False, False),
@@ -47,7 +47,7 @@ abbreviated_summerdata_grammar = [
 		]
 	),
 	# SCREEN OFF
-	("root", "fluent", "screen_off", .4, False, [
+	("root", "fluent", "screen_off", .5, False, [
 			# OFF CAUSALLY
 			#("and", False, False, .3, False, [
 			#		("leaf", "prev_fluent", "screen_on", False, False, False),
@@ -64,7 +64,7 @@ abbreviated_summerdata_grammar = [
 			("and", False, False, .5, False, [
 					("leaf", "prev_fluent", "screen_on", False, False, False),
 					("leaf", "nonevent", "usecomputer_START", False, 100, False),
-					#("leaf", "nonevent", "usecomputer_END", False, 100, False)
+					("leaf", "nonevent", "usecomputer_END", False, 100, False)
 				]
 			),
 			# OFF INERTIALLY - no change because didn't start using the computer
