@@ -170,7 +170,7 @@ abbreviated_summerdata_grammar = [
 			# causally ON
 			("and", False, False, .5, False, [
 					("leaf", "prev_fluent", "door_off", False, False, False),
-					("leaf", "event", "standing_START", False, 50, False), # TODO: make ONGOING option 
+					("leaf", "event", "standing_START", False, 10, False), # TODO: make ONGOING option 
 					("leaf", "nonevent", "standing_END", False, 1, False), # TODO: make ONGOING option 
 				]
 			),
@@ -229,13 +229,13 @@ abbreviated_summerdata_grammar = [
 			# ON INERTIALLY
 			("and", False, False, .5, False, [
 					("leaf", "prev_fluent", "light_on", False, False, False),
-					("leaf", "nonevent", "pressbutton_START",  False, 50, False),
+					("leaf", "nonevent", "pressbutton_START",  False, 10, False),
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, .5, False, [
 					("leaf", "prev_fluent", "light_off", False, False, False),
-					("leaf", "event", "pressbutton_START",  False, 50, False),
+					("leaf", "event", "pressbutton_START",  False, 10, False),
 				]
 			)
 		]
@@ -245,13 +245,13 @@ abbreviated_summerdata_grammar = [
 			# ON INERTIALLY
 			("and", False, False, .5, False, [
 					("leaf", "prev_fluent", "light_off", False, False, False),
-					("leaf", "nonevent", "pressbutton_START",  False, 50, False),
+					("leaf", "nonevent", "pressbutton_START",  False, 10, False),
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, .5, False, [
 					("leaf", "prev_fluent", "light_on", False, False, False),
-					("leaf", "event", "pressbutton_START",  False, 50, False),
+					("leaf", "event", "pressbutton_START",  False, 10, False),
 				]
 			)
 		]
