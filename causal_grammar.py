@@ -382,13 +382,51 @@ def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, compl
 			completion[frame] = []
 		completion_frame = completion[frame]
 		completion_frame.append({"frame": frame, "fluent": fluent, "energy": energy, "parse": active_parse_tree, "agents": agents_responsible, "status": fluent_hash[active_parse_tree['symbol']]['energy'], 'source': source})
-	# print("{}".format("\t".join([str(fluent),str(frame),"{:g}".format(energy),str(make_tree_like_lisp(active_parse_tree)),str(agents_responsible)])))
-	# print("{} PARSE TREE {} COMPLETED at {}: energy({})\n{}\n***{}***".format(fluent,active_parse_tree['id'],frame,energy,make_tree_like_lisp(active_parse_tree),active_parse_tree))
-	# print("Agents responsible: {}".format(agents_responsible))
+	#print("{}".format("\t".join([str(fluent),str(frame),"{:g}".format(energy),str(make_tree_like_lisp(active_parse_tree)),str(agents_responsible)])))
+	#print("{} PARSE TREE {} COMPLETED at {}: energy({}) BY {}\n{}\n***{}***".format(fluent,active_parse_tree['id'],frame,energy,source,make_tree_like_lisp(active_parse_tree),active_parse_tree))
+	#print("Agents responsible: {}".format(agents_responsible))
 	if kDebugEnergies:
 		print_current_energies(fluent_hash, event_hash)
 		print_previous_energies(fluent_hash)
 		hr()
+
+def add_missing_parses(fluent, fluent_hash, event_hash, frame, completions):
+	## here we're just getting the completions for one specific frame
+	## we want to go through all the possible parses for that fluent
+	## and make sure they're spoken for in completions
+	#print "ADDING MISSING PARSES"
+	for symbol in (completions[0]['parse']['symbol'],):
+		parse_ids_completed = []
+		for completion in completions:
+			parse_ids_completed.append(completion['parse']['id'])
+		#print("IDS: {}".format(parse_ids_completed))
+		anti_symbol = invert_name(symbol)
+		possible_trees = fluent_hash[symbol]['trees']
+		unpossible_trees = fluent_hash[anti_symbol]['trees']
+		for possible_tree in possible_trees + unpossible_trees:
+			# if this tree is a "primary" for this symbol
+			if possible_tree['symbol'] in (symbol,anti_symbol):
+				other_parses = possible_tree['parses']
+				for other_parse in other_parses:
+					if other_parse['id'] not in parse_ids_completed:
+						parse_ids_completed.append(other_parse['id'])
+						#print("ADDING ID: {}".format(other_parse['id']))
+						#complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frames[symbol], completions, 'missing') ### what is this 'effective frames' thing?
+						#complete_parse_tree(other_parse, fluent_hash, event_hash, frame, completions, 'missing')
+						# we have a winner! let's show them what they've won, bob!
+						energy = calculate_energy(other_parse, fluent_hash, event_hash)
+						agents_responsible = []
+						source = 'missing'
+						completions.append({"frame": frame, "fluent": fluent, "energy": energy, "parse": other_parse, "agents": agents_responsible, "status": fluent_hash[other_parse['symbol']]['energy'], 'source': source})
+						#print("{}".format("\t".join([str(fluent),str(frame),"{:g}".format(energy),str(make_tree_like_lisp(other_parse)),str(agents_responsible)])))
+						#print("{} PARSE TREE {} COMPLETED at {}: energy({}) BY {}\n{}\n***{}***".format(fluent,other_parse['id'],frame,energy,source,make_tree_like_lisp(other_parse),other_parse))
+						#print("Agents responsible: {}".format(agents_responsible))
+						if kDebugEnergies:
+							print_current_energies(fluent_hash, event_hash)
+							print_previous_energies(fluent_hash)
+							hr()
+	#print "---"
+	return completions
 
 # clears out any parses that have not been touched within N frames, printing out any over reporting_threshold_energy
 def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy, completions):
@@ -437,7 +475,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 						complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frames[symbol], completions, 'timeout alt')
 
 def process_events_and_fluents(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy, suppress_output = False):
-	clever = False # clever (modified viterbi algorithm) or brute force (all possible parses)
+	clever = True # clever (modified viterbi algorithm) or brute force (all possible parses)
 	results_for_xml_output = []
 	fluent_parse_index = 0
 	action_parse_index = 0
@@ -621,6 +659,12 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	# clean up
 	complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame+999999, reporting_threshold_energy, completions)
 	clear_outdated_events(event_hash, event_timeouts, frame+999999)
+	if False:
+		import pprint
+		pp = pprint.PrettyPrinter(depth=6)
+		print "=-==-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--="
+		pp.pprint(completions)
+		print "=-==-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--="
 	if clever:
 		from itertools import izip
 		for fluent in completions.keys():
@@ -629,18 +673,18 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 			if not suppress_output:
 				print("{}".format(fluent))
 				hr()
-			#import pprint
-			#pp = pprint.PrettyPrinter(depth=6)
-			#pp.pprint(completions[fluent])
-			#print("{}".format(completions[fluent]))
 			for frame in sorted(completions[fluent].iterkeys()):
-				#print("\t***** frame {}".format(frame))
-				completion_data_sorted = sorted(completions[fluent][frame], key=lambda (k): k['energy'])
+				if not suppress_output:
+					print("\t***** frame {}".format(frame))
+				completion_data = completions[fluent][frame]
+				#completion_data = add_missing_parses(fluent, fluent_hash, event_hash, frame, completion_data)
+				completion_data_sorted = sorted(completion_data, key=lambda (k): k['energy'])
+				
 				next_chains = []
 				next_chain_energies = []
 				for node in completion_data_sorted:
 					if not suppress_output:
-						print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(node['status']), "{:>6.3f}".format(node['energy']), node['source'], "{:d}".format(node['parse']['id']), str(make_tree_like_lisp(node['parse'])), str(node['agents'])])))
+						print("TESTING {}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(node['status']), "{:>6.3f}".format(node['energy']), node['source'], "{:d}".format(node['parse']['id']), str(make_tree_like_lisp(node['parse'])), str(node['agents'])])))
 					# go through each chain and find the lowest energy + transition energy for this node
 					best_energy = -1 # not a possible energy
 					best_chain = None
@@ -650,30 +694,46 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 						# if this pairing is possible, see if it's the best pairing so far
 						# TODO: this function will be changed to get an energy-of-transition
 						# which will no longer be "binary"
+						matches = False
 						if parse_is_consistent_with_requirement(node['parse'],prev_symbol):
+							matches = True
 							if best_energy == -1 or best_energy > prev_chain_energy:
 								best_energy = prev_chain_energy
 								best_chain = prev_chain
+								#print("PREV: {}".format(prev_node['parse']))
+								#print("CONX: {}".format(node['parse']))
 						elif parse_can_jump_from(prev_node['parse'],node['parse']):
 							# look for timer-based jumps ... so if this node['parse'] has a possible timer jump, let's see it
 							print("{}".format(prev_node['parse']))
 							print("{}".format(node['parse']))
 							raise("HELL...O")
+						else:
+							pass
+							#print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(node['status']), "{:>6.3f}".format(node['energy']), node['source'], "{:d}".format(node['parse']['id']), str(make_tree_like_lisp(node['parse'])), str(node['agents'])])))
 					# now we take our best chain for this node, and dump it and its energy in our new list
+						if not suppress_output:
+							print("{}   {}".format("+match" if matches else "-wrong","\t".join(["{:>6.3f}".format(prev_chain_energy), "{:>6.3f}".format(prev_node['status']), "{:>6.3f}".format(prev_node['energy']), prev_node['source'], "{:d}".format(prev_node['parse']['id']), str(make_tree_like_lisp(prev_node['parse'])), str(prev_node['agents'])])))
 					if best_chain:
 						#chain = best_chain.copy()
 						chain = best_chain[:]
 						chain.append(node)
 						next_chains.append(chain)
 						next_chain_energies.append(best_energy + node['energy'])
+						print(">best<   {}".format("\t".join(["{:>6.3f}".format(best_energy), "{:>6.3f}".format(best_chain[-1]['status']), "{:>6.3f}".format(best_chain[-1]['energy']), best_chain[-1]['source'], "{:d}".format(best_chain[-1]['parse']['id']), str(make_tree_like_lisp(best_chain[-1]['parse'])), str(best_chain[-1]['agents'])])))
 					else:
 						if prev_chains:
-							print "NOTHING FOUND DESPITE CHAINS EXISTING"
-							print prev_chains
-							assert(0)
-						# hopefully this is only happening at the very beginning
-						next_chains.append([node,])
-						next_chain_energies.append(node['energy'])
+							import pprint
+							pp = pprint.PrettyPrinter(depth=6)
+							print "*** NOTHING FOUND DESPITE {} CHAIN(S) EXISTING".format(len(prev_chains))
+							#for chain in prev_chains:
+							#	print chain
+							#print "*** WILL NOT LINK TO"
+							#pp.pprint(node['parse'])
+							#assert(0)
+						else:
+							# hopefully this is only happening at the very beginning
+							next_chains.append([node,])
+							next_chain_energies.append(node['energy'])
 				prev_chains = next_chains
 				prev_chain_energies = next_chain_energies
 			# and now we just wrap up our results... and print them out
@@ -694,33 +754,34 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				hr()
 	else: # not clever i.e. brute force
 		for fluent in completions.keys():
-			parent_chains = []
+			prev_chains = []
 			if not suppress_output:
 				print fluent
 				hr()
 			for frame in sorted(completions[fluent].iterkeys()):
+				#print("\t***** frame {}".format(frame))
 				completion_data_sorted = sorted(completions[fluent][frame], key=lambda (k): k['energy'])
-				if not parent_chains:
+				if not prev_chains:
 					for child in completion_data_sorted:
-						parent_chains.append((child,))
+						prev_chains.append((child,))
 				else:
 					children = []	
-					for parent_chain in parent_chains:
-						last_parent_node = parent_chain[-1]
+					for prev_chain in prev_chains:
+						last_parent_node = prev_chain[-1]
 						last_parent_symbol = last_parent_node['parse']['symbol'] # TRASH_MORE_on, for example
 						for child in completion_data_sorted:
 							# if this pairing is possible, cross it on down
 							# pairing is considered "possible" if the parent's primary fluent status agrees with all relevant child fluent pre-requisites
 							if parse_is_consistent_with_requirement(child['parse'],last_parent_symbol):
-								chain = list(parent_chain)
+								chain = list(prev_chain)
 								chain.append(child)
 								children.append(chain)
-					parent_chains = children
+					prev_chains = children
 				for completion_data in completion_data_sorted:
 					if not suppress_output:
 						print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(completion_data['status']), "{:>6.3f}".format(completion_data['energy']), completion_data['source'], "{:d}".format(completion_data['parse']['id']), str(make_tree_like_lisp(completion_data['parse'])), str(completion_data['agents'])])))
 			chain_results = []
-			for chain in parent_chains:
+			for chain in prev_chains:
 				items = []
 				energy = 0
 				for item in chain:
