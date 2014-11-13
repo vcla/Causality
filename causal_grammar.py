@@ -686,7 +686,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				if not suppress_output:
 					print("\t***** frame {}".format(frame))
 				completion_data = completions[fluent][frame]
-				#completion_data = add_missing_parses(fluent, fluent_hash, event_hash, frame, completion_data)
+				completion_data = add_missing_parses(fluent, fluent_hash, event_hash, frame, completion_data)
 				completion_data_sorted = sorted(completion_data, key=lambda (k): k['energy'])
 				
 				next_chains = []
