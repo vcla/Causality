@@ -9,13 +9,13 @@ import math # for log, etc
 kUnknownEnergy = 0.7 # TODO: may want to tune
 kUnlikelyEnergy = 10.0 # TODO: may want to tune
 kZeroProbabilityEnergy = 10.0 # TODO: may want to tune: 10.0 = very low
-# these are used to keep something that's flipping "around" 50% to not keep triggering fluent changes
+# these are used to keep something that's flipping "around" 50% to not keep triggering fluent changes TODO: no they're not. but they are used in dealWithDbResults for posting "certain" results to the database... and they're passed into the main causal_grammar fn as fluent_on_probability and fluent_off_probability
 kFluentThresholdOnEnergy = 0.36 # TODO: may want to tune: 0.36 = 0.7 probability
 kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
 kReportingThresholdEnergy = 0.5 # TODO: may want to tune
 kDefaultEventTimeout = 10 # shouldn't need to tune because this should be tuned in grammar
 kFilterNonEventTriggeredParseTimeouts = False # what the uber-long variable name implies
-kDebugEnergies = False # if true, print out fluent current/prev and event energies when completing a parse tree
+kDebugEnergies = True # if true, print out fluent current/prev and event energies when completing a parse tree
 
 kFluentStatusUnknown = 1
 kFluentStatusOn = 2
@@ -47,9 +47,10 @@ def import_summerdata(exampleName,actionDirectory):
 	import parsingSummerActionAndFluentOutput
 	fluent_parses = parsingSummerActionAndFluentOutput.readFluentResults(exampleName)
 	action_parses = parsingSummerActionAndFluentOutput.readActionResults("{}.{}".format(actionDirectory,exampleName))
-	#import pprint
-	#pp = pprint.PrettyPrinter(depth=6)
-	#pp.pprint(action_parses)
+	import pprint
+	pp = pprint.PrettyPrinter(depth=6)
+	pp.pprint(action_parses)
+	pp.pprint(fluent_parses)
 	return [fluent_parses, action_parses]
 
 def import_xml(filename):
@@ -531,10 +532,18 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 							initial_condition = probability_to_energy(1-energy_to_probability(initial_condition))
 				fluent_hash[key] = {"energy": initial_condition, "prev_energy": initial_condition, "trees": [causal_tree,]}
 			fluent_hash[key]["status"] = kFluentStatusUnknown
+	#trying to trace through why fluent hash energies are not being updated.... and action hash energies, most likely....
+	#print "FLUENT HASH KEYS: "
 	#for key in fluent_hash.keys():
 	#	print("{}: {}".format(key,fluent_hash[key]['energy']))
+	#print "INITIAL CONDITIONS"
 	#print(initial_conditions)
-	# print_current_energies(fluent_hash, event_hash)
+	#print "CURRENT ENERGIES"
+	#print_current_energies(fluent_hash, event_hash)
+	#print "FLUENT HASH"
+	#import pprint
+	#pp = pprint.PrettyPrinter(depth=6)
+	#pp.pprint(fluent_hash)
 	parse_id = 0 # give each parse tree a unique id
 	parse_array = []
 	parse_id_hash_by_fluent = {}
@@ -609,6 +618,10 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				# fluent_on and fluent_off _should_ never both change to on, so we consider this safe
 				if fluent_changed:
 					#print "fluent changed: {}".format(fluent_changed)
+					fluent_hash[fluent_on_string]["prev_energy"] = fluent_hash[fluent_on_string]["energy"]
+					fluent_hash[fluent_off_string]["prev_energy"] = fluent_hash[fluent_off_string]["energy"]
+					fluent_hash[fluent_on_string]["energy"] = fluent_on_energy
+					fluent_hash[fluent_off_string]["energy"] = fluent_off_energy
 					# go through all parses that this fluent touches, or its inverse
 					fluents_actually_changed.append(fluent_changed,)
 					for parse_id in parse_id_hash_by_fluent[fluent_changed] + parse_id_hash_by_fluent[invert_name(fluent_changed)]:
@@ -643,6 +656,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				# by the other...? NOT worrying about this now.
 				info = changes[event]
 				# print("SETTING EVENT {} AT {} TO {}".format(event,frame,info['energy']))
+				event_hash[event]['prev_energy'] = event_hash[event]['energy']
 				event_hash[event]['energy'] = info['energy']
 				event_hash[event]['agent'] = info['agent']
 				event_hash[event]['frame'] = frame
