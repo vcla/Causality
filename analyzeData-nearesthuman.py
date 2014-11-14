@@ -10,7 +10,17 @@ def findDistanceBetweenTwoVectors(A, B, fields, fluent):
 	dist = 0
 	for i in range(len(A)):
 		if fields[i].startswith(fluent):
-			dist += abs(int(A[i]) - int(B[i]))
+			Ai = A[i]
+			Bi = B[i]
+			try:
+				Ai = int(Ai)
+			except ValueError:
+				Ai = 0
+			try:
+				Bi = int(Bi)
+			except ValueError:
+				Bi = 0
+			dist += abs(Ai - Bi)
 	return dist
 
 ## for each file in our csvs directory, find the smallest "human" distance for each "computer" vector
@@ -74,6 +84,8 @@ for filename in os.listdir (kCSVDir):
 					for computer in kComputerTypes:
 						fluentDiffSums[fluent][computer][0] += bestscores[computer]
 						fluentDiffSums[fluent][computer][1] = "{} avg".format(fluentDiffSums[fluent][computer][0] / fluentDiffSums[fluent]['_count'])
+			except ValueError as hmm:
+				raise hmm
 			except Exception as foo:
 				exceptions.append(foo)
 
@@ -86,4 +98,4 @@ import pprint
 pp = pprint.PrettyPrinter(depth=6)
 pp.pprint(fluentDiffSums)
 
-#print exceptions
+print exceptions

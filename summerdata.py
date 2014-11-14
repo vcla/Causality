@@ -31,6 +31,7 @@ for example in args.example:
 		if args.simplify:
 			#TODO: does not work on door_13_light_3_roomname, for instance. could/should split
 			# prune causal forest to 'screen' events
+			#also doesn't work with phone ~ PHONE_ACTIVE ... fluent = "PHONE_ACTIVE"
 			causal_forest = []
 			fluent = example.split("_",1)[0]
 			for root in causal_forest_orig:

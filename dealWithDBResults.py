@@ -8,7 +8,7 @@ DBHOST = "127.0.0.1" # forwarding 3306
 DBPASS = "rC2xfLQFDMUZqJxf"
 TBLPFX = "cvpr2012_"
 kInfinityCutpoint = 1000000000000000 # close enough to infinity, anyway; working on an off-by-one issue
-kKnownObjects = ["screen","door","light"]
+kKnownObjects = ["screen","door","light","phone","ringer"]
 kInsertionHash = "1234567890"
 
 # managing human responses for comparison - note upload versus download
@@ -236,8 +236,7 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 			else:
 				off = 100
 		else:
-			on = 50
-			off = 50
+			pass
 	retval = {
 		"{}{}_{}".format(prefix,onstring,offstring): on_off,
 		"{}{}_{}".format(prefix,offstring,onstring): off_on,
@@ -277,8 +276,8 @@ def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,fra
 	#	print("query results: {}".format({"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }))
 	#return {"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }
 	if not on_off and not off_on:
-		on = 50
-		off = 50
+		on = 0
+		off = 0
 	retval = {
 		"{}{}_{}".format(prefix,onstring,offstring): on_off,
 		"{}{}_{}".format(prefix,offstring,onstring): off_on,
@@ -291,7 +290,8 @@ def buildDictForActionPossibilities(fluent,frame,actions):
 	prefix = "{}_action_{}_".format(fluent,frame)
 	retval = {}
 	for key in actions:
-		retval["{}{}".format(prefix,key)] = actions[key]
+		keykey = "{}{}".format(prefix,key)
+		retval[keykey] = actions[key]
 		#if actions[key] > 100:
 		#	print fluent
 		#	print frame
@@ -323,9 +323,12 @@ def buildDictForFluentChangePossibilities(fluent,frame,onstring,offstring,prev,n
 def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 	# get actions and fluents for the oject
 	retval = {}
-	onsoffs = { "door": ["open","closed"], "light": ["on","off"], "screen": ["on","off"] }
+	onsoffs = { "door": ["open","closed"], "light": ["on","off"], "screen": ["on","off"], "phone": ["active","off"], "ringer": ["ring","no_ring"] }
 	if not oject in onsoffs.keys():
-		raise "Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject)
+		raise ValueError("unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
+	if oject == "ringer":
+		#nothing to do with this
+		return retval
 	#fluents
 	onsoffs = onsoffs[oject]
 	if dumb:
@@ -333,8 +336,8 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 	else:
 		result = buildDictForFluentBetweenFramesIntoResults(xml,oject,onsoffs,frame1,frame2)
 	retval.update(result)
+	#actions
 	if oject == "door":
-		#actions
 		result = {"act_opened":0, "act_closed":0, "act_not_opened_closed":0}
 		count = queryXMLForActionBetweenFrames(xml,"standing_START",frame1,frame2)
 		noaction = True
@@ -363,8 +366,18 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 			result['act_mousekeyboard'] = 100 * count
 		else:
 			result['act_no_mousekeyboard'] = 100
+	elif oject == "phone":
+		# act_made_call, act_no_call, act_received_call 
+		result = {"act_made_call":0, "act_no_call":0, "act_received_call":0}
+		# don't need to worry about end
+		count = queryXMLForActionBetweenFrames(xml,"makecall_START",frame1,frame2)
+		if count:
+			result['act_made_call'] = 50 * count
+			result['act_received_call'] = 50 * count
+		else:
+			result['act_no_call'] = 100
 	else:
-		raise("unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
+		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
 	result = buildDictForActionPossibilities(oject,frame1,result)
 	retval.update(result)
 	return retval
@@ -465,7 +478,10 @@ if __name__ == '__main__':
 		for filename in os.listdir (kSummerDataPythonDir):
 			if filename.endswith(".py") and filename != "__init__.py":
 				example = filename[:-3]
-				print example
+				exampleNameForDB, room = example.rsplit('_',1)
+				exampleNameForDB = exampleNameForDB.replace("_","")
+				m = hashlib.md5(exampleNameForDB)
+				print("{}	{}".format(example,m.hexdigest()))
 	if args.mode in ("upload","upanddown",):
 		print("===========")
 		print("UPLOADING")
