@@ -6,7 +6,7 @@ causal grammar parser and helper functions
 import itertools
 import math # for log, etc
 
-kUnknownEnergy = 0.7 # TODO: may want to tune
+kUnknownEnergy = 8#0.7 # TODO: may want to tune
 kUnlikelyEnergy = 10.0 # TODO: may want to tune
 kZeroProbabilityEnergy = 10.0 # TODO: may want to tune: 10.0 = very low
 # these are used to keep something that's flipping "around" 50% to not keep triggering fluent changes TODO: no they're not. but they are used in dealWithDbResults for posting "certain" results to the database... and they're passed into the main causal_grammar fn as fluent_on_probability and fluent_off_probability
@@ -273,7 +273,7 @@ def calculate_energy(node, fluent_hash, event_hash):
 			node_energy += tmp_energy
 		elif node["symbol_type"] in ("nonevent",):
 			tmp_energy = event_hash[node["symbol"]]["energy"]
-			node_energy += probability_to_energy(1-energy_to_probability(tmp_energy))
+			node_energy += probability_to_energy(1-energy_to_probability(tmp_energy)) + .3 #trying to add action penalty here for non-action
 		elif node["symbol_type"] in ("timer","jump",):
 			# these are zero-probability events at this stage of evaluation
 			#tmp_energy = event_hash[node["symbol"]]["energy"]
