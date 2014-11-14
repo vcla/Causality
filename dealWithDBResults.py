@@ -230,13 +230,14 @@ def queryXMLForDumbFluentBetweenFrames(xml,fluent,frame1,frame2):
 	for fluent_change in fluent_changes:
 		if fluent_change.attributes['fluent'].nodeValue == fluent:
 			frame = int(fluent_change.attributes['frame'].nodeValue)
-			if (frame >= frame1 or frame <= frame2) and 'old_value' in fluent_change.attributes.keys():
+			if (frame >= frame1 or frame <= frame2):
 				# we're only counting "changes" because that's all that was ever really detected, despite what our xml might look like
 				# TODO: penalize conflicts somehow. I think that will require a complete reorg of all the things wrapping this
-				start_value = str(fluent_change.attributes['old_value'].nodeValue)
-				start_energy = float(fluent_change.attributes['energy'].nodeValue)
+				# and technically we're counting /everything/ as a change
 				end_value = str(fluent_change.attributes['new_value'].nodeValue)
 				end_energy = float(fluent_change.attributes['energy'].nodeValue)
+				start_energy = end_energy
+				start_value  = "off" if end_value == "on" else "on"
 			if frame >= frame2:
 				break
 	if debugQuery:
