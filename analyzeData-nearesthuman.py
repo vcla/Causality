@@ -66,7 +66,7 @@ for filename in os.listdir (kCSVDir):
 					exampleName, room = filename.rsplit('.',1)
 					exampleNameForDB = exampleName.replace("_","")
 					fluent = fluent if fluent else kAllFluentsConstant
-					print("{}\t{}\t{}\t{}\t{}\t{}\t{}".format(filename,fluent,hashlib.md5(exampleNameForDB).hexdigest(),bestscores['origdata'], bestscores['origsmrt'], bestscores['causalgrammar'], besthumans['origdata'], besthumans['origsmrt'], besthumans['causalgrammar']))
+					print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(filename,fluent,hashlib.md5(exampleNameForDB).hexdigest(),bestscores['origdata'], bestscores['origsmrt'], bestscores['causalgrammar'], besthumans['origdata'], besthumans['origsmrt'], besthumans['causalgrammar']))
 					# summing for later
 					if not fluent in fluentDiffSums:
 						fluentDiffSums[fluent] = {'origdata': [0, 0], 'origsmrt': [0, 0], 'causalgrammar': [0, 0], '_count': 0}
