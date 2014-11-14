@@ -157,76 +157,109 @@ def munge_parses_to_xml(fluent_parses,action_parses,suppress_output=False):
 
 # NOTE: this assumes there is at most one action change between frame1 and frame2
 # THERE IS A DISTINCT LACK OF CHECKING THINGS TO BE SURE HERE
+# NOTE: we're now penalizing multiple counts of the same action...
 def queryXMLForActionBetweenFrames(xml,action,frame1,frame2):
-	events = xml.getElementsByTagName('event')
-	found_start = False
-	for event in events:
+	count = 0
+	for event in xml.getElementsByTagName('event'):
 		if event.attributes['action'].nodeValue == action:
 			frame = int(event.attributes['frame'].nodeValue)
 			if frame > frame1 and frame < frame2:
-				return {"frame":frame, "energy": float(event.attributes['energy'].nodeValue)}
-	return None
+				#return {"frame":frame, "energy": float(event.attributes['energy'].nodeValue)}
+				count += 1
+	return count
 
-# NOTE: this doesn't care how many fluent changes there are, only where things start and where they end up
-# THERE IS A DISTINCT LACK OF CHECKING THINGS TO BE SURE HERE
-def queryXMLForFluentBetweenFrames(xml,fluent,frame1,frame2):
+def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2):
 	debugQuery = False
-	fluent_changes = xml.getElementsByTagName('fluent_change')
-	start_value = None
-	start_energy = None
-	end_value = None
-	end_energy = None
-	found_start = False
 	if debugQuery:
 		print("SEARCHING {} between {} and {}".format(fluent,frame1,frame2))
+	prefix = "{}_{}_".format(fluent,frame1)
+	onstring = onsoffs[0]
+	offstring = onsoffs[1]
+	on_off = 0
+	off_on = 0
+	on = 0
+	off = 0
+	start_value = None
+	end_value = None
+	fluent_changes = xml.getElementsByTagName('fluent_change')
 	for fluent_change in fluent_changes:
 		if fluent_change.attributes['fluent'].nodeValue == fluent:
 			frame = int(fluent_change.attributes['frame'].nodeValue)
-			if not found_start:
+			if not start_value:
 				if frame < frame1:
 					start_value = str(fluent_change.attributes['new_value'].nodeValue)
-					start_energy = float(fluent_change.attributes['energy'].nodeValue)
 					if debugQuery:
 						print("- frame {}: storing 'old' value of {}".format(frame,start_value))
 				else: #frame >= frame1
-					# trust 'old_value' over what we had before ... TODO: penalize if it doesn't agree?
+					# let's just get these ducks lined up....
+					end_value = str(fluent_change.attributes['new_value'].nodeValue)
+					# trust 'old_value' over what we had before ...  TODO: penalize if it doesn't agree?
 					if 'old_value' in fluent_change.attributes.keys():
 						start_value = str(fluent_change.attributes['old_value'].nodeValue)
-						start_energy = float(fluent_change.attributes['energy'].nodeValue)
+						if end_value != start_value:
+							if start_value == "on":
+								on_off += 100
+							else:
+								off_on += 100
 					else:
-						# for lack of anything better, we'll assume we've always been like this
-						start_value = str(fluent_change.attributes['new_value'].nodeValue)
-						start_energy = float(fluent_change.attributes['energy'].nodeValue)
+						# assume we're staying steady and just reporting it because of some other reason?
+						start_value = end_value
 					if debugQuery:
 						print("+ frame {}: start: {}; now: {}".format(frame,start_value,start_value))
-					# and let's just get these ducks lined up....
-					end_value = str(fluent_change.attributes['new_value'].nodeValue)
-					end_energy = float(fluent_change.attributes['energy'].nodeValue)
-					found_start = True
 					continue
 			else:
 				if frame >= frame2:
 					break
 				else:
-					end_value = str(fluent_change.attributes['new_value'].nodeValue)
-					end_energy = float(fluent_change.attributes['energy'].nodeValue)
+					next_end_value = str(fluent_change.attributes['new_value'].nodeValue)
+					next_old_value = str(fluent_change.attributes['old_value'].nodeValue)
+					if end_value and next_old_value != end_value:
+						#conflict! we need to add a transition from next_old to end_value
+						if next_old == "on":
+							off_on += 100
+						else:
+							on_off += 100
+					end_value = next_end_value
+					if end_value == "on":
+						off_on += 100
+					else:
+						on_off += 100
 					if debugQuery:
 						print("+ frame {}: start: {}; now: {}".format(frame,start_value,end_value))
-	if debugQuery:
-		print("query results: {}".format({"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }))
-	return {"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }
+	#if debugQuery:
+	#	print("query results: {}".format({"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }))
+	#return {"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }
+	if not on_off and not off_on:
+		if start_value:
+			if start_value == "on":
+				on = 100
+			else:
+				off = 100
+		else:
+			on = 50
+			off = 50
+	retval = {
+		"{}{}_{}".format(prefix,onstring,offstring): on_off,
+		"{}{}_{}".format(prefix,offstring,onstring): off_on,
+		"{}{}".format(prefix,onstring): on,
+		"{}{}".format(prefix,offstring): off,
+	}
+	return retval
 
 # NOTE: this doesn't care how many fluent changes there are, only where things start and where they end up
 # THERE IS A DISTINCT LACK OF CHECKING THINGS TO BE SURE HERE
-def queryXMLForDumbFluentBetweenFrames(xml,fluent,frame1,frame2):
+def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2):
 	debugQuery = False
-	fluent_changes = xml.getElementsByTagName('fluent_change')
-	start_value = None
-	start_energy = None
-	end_value = None
-	end_energy = None
 	if debugQuery:
 		print("DUMB SEARCHING {} between {} and {}".format(fluent,frame1,frame2))
+	prefix = "{}_{}_".format(fluent,frame1)
+	onstring = onsoffs[0]
+	offstring = onsoffs[1]
+	on_off = 0
+	off_on = 0
+	on = 0
+	off = 0
+	fluent_changes = xml.getElementsByTagName('fluent_change')
 	for fluent_change in fluent_changes:
 		if fluent_change.attributes['fluent'].nodeValue == fluent:
 			frame = int(fluent_change.attributes['frame'].nodeValue)
@@ -234,21 +267,36 @@ def queryXMLForDumbFluentBetweenFrames(xml,fluent,frame1,frame2):
 				# we're only counting "changes" because that's all that was ever really detected, despite what our xml might look like
 				# TODO: penalize conflicts somehow. I think that will require a complete reorg of all the things wrapping this
 				# and technically we're counting /everything/ as a change
-				end_value = str(fluent_change.attributes['new_value'].nodeValue)
-				end_energy = float(fluent_change.attributes['energy'].nodeValue)
-				start_energy = end_energy
-				start_value  = "off" if end_value == "on" else "on"
+				if str(fluent_change.attributes['new_value'].nodeValue) == "on":
+					off_on += 100
+				else:
+					on_off += 100
 			if frame >= frame2:
 				break
-	if debugQuery:
-		print("query results: {}".format({"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }))
-	return {"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }
+	#if debugQuery:
+	#	print("query results: {}".format({"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }))
+	#return {"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }
+	if not on_off and not off_on:
+		on = 50
+		off = 50
+	retval = {
+		"{}{}_{}".format(prefix,onstring,offstring): on_off,
+		"{}{}_{}".format(prefix,offstring,onstring): off_on,
+		"{}{}".format(prefix,onstring): on,
+		"{}{}".format(prefix,offstring): off,
+	}
+	return retval
 
 def buildDictForActionPossibilities(fluent,frame,actions):
 	prefix = "{}_action_{}_".format(fluent,frame)
 	retval = {}
 	for key in actions:
 		retval["{}{}".format(prefix,key)] = actions[key]
+		#if actions[key] > 100:
+		#	print fluent
+		#	print frame
+		#	print actions
+		#	raise SystemExit(0)
 	return retval
 	
 def buildDictForFluentChangePossibilities(fluent,frame,onstring,offstring,prev,now):
@@ -281,39 +329,38 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 	#fluents
 	onsoffs = onsoffs[oject]
 	if dumb:
-		fluent_change = queryXMLForDumbFluentBetweenFrames(xml,oject,frame1,frame2)
+		result = buildDictForDumbFluentBetweenFramesIntoResults(xml,oject,onsoffs,frame1,frame2)
 	else:
-		fluent_change = queryXMLForFluentBetweenFrames(xml,oject,frame1,frame2)
-	result = buildDictForFluentChangePossibilities(oject,frame1,onsoffs[0],onsoffs[1],fluent_change['start']['value'],fluent_change['end']['value'])
-	#print "RESULT"
-	#print "------"
-	#print result
-	#raise SystemExit(0)
+		result = buildDictForFluentBetweenFramesIntoResults(xml,oject,onsoffs,frame1,frame2)
 	retval.update(result)
 	if oject == "door":
 		#actions
 		result = {"act_opened":0, "act_closed":0, "act_not_opened_closed":0}
-		action = queryXMLForActionBetweenFrames(xml,"standing_START",frame1,frame2)
-		if action:
-			result['act_opened'] = 100
-		else:
-			action = queryXMLForActionBetweenFrames(xml,"standing_END",frame1,frame2)
-			if action:
-				result['act_closed'] = 100
-			else:
-				result['act_not_opened_closed'] = 100
+		count = queryXMLForActionBetweenFrames(xml,"standing_START",frame1,frame2)
+		noaction = True
+		if count:
+			noaction = False
+			result['act_opened'] = 100 * count
+		count = queryXMLForActionBetweenFrames(xml,"standing_END",frame1,frame2)
+		if count:
+			noaction = False
+			result['act_closed'] = 100 * count
+		if noaction:
+			result['act_not_opened_closed'] = 100
 	elif oject == "light":
 		result = {"act_pushbutton":0, "act_no_pushbutton":0}
 		# don't need to worry about end
-		if queryXMLForActionBetweenFrames(xml,"pressbutton_START",frame1,frame2):
-			result['act_pushbutton'] = 100
+		count = queryXMLForActionBetweenFrames(xml,"pressbutton_START",frame1,frame2)
+		if count:
+			result['act_pushbutton'] = 100 * count
 		else:
 			result['act_no_pushbutton'] = 100
 	elif oject == "screen":
 		result = {"act_mousekeyboard":0, "act_no_mousekeyboard":0}
 		# don't need to worry about end
-		if queryXMLForActionBetweenFrames(xml,"usecomputer_START",frame1,frame2):
-			result['act_mousekeyboard'] = 100
+		count = queryXMLForActionBetweenFrames(xml,"usecomputer_START",frame1,frame2)
+		if count:
+			result['act_mousekeyboard'] = 100 * count
 		else:
 			result['act_no_mousekeyboard'] = 100
 	else:
