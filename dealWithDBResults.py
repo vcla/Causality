@@ -367,13 +367,12 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 		else:
 			result['act_no_mousekeyboard'] = 100
 	elif oject == "phone":
-		# act_made_call, act_no_call, act_received_call 
-		result = {"act_made_call":0, "act_no_call":0, "act_received_call":0}
+		# act_no_call, act_received_call 
+		result = {"act_no_call":0, "act_received_call":0}
 		# don't need to worry about end
 		count = queryXMLForActionBetweenFrames(xml,"makecall_START",frame1,frame2)
 		if count:
-			result['act_made_call'] = 50 * count
-			result['act_received_call'] = 50 * count
+			result['act_received_call'] = 100 * count
 		else:
 			result['act_no_call'] = 100
 	else:
