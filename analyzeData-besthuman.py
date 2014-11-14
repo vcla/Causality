@@ -81,6 +81,6 @@ for filename in os.listdir (kCSVDir):
 			except Exception as foo:
 				exceptions.append(foo)
 
-print("{}\t{}\t{}\t{}\t{}".format("AVERAGE",total_human_score / N,total_origdata_score / N,total_causalgrammar_score / N))
+print("{}\t{}\t{}\t{}\t{}".format("AVERAGE",total_human_score / N,total_origdata_score / N, total_origsmrt_score / N, total_causalgrammar_score / N))
 
 print exceptions
