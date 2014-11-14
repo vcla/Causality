@@ -235,7 +235,7 @@ abbreviated_summerdata_grammar = [
 			# ON CAUSALLY
 			("and", False, False, .5, False, [
 					("leaf", "prev_fluent", "light_off", False, False, False),
-					("leaf", "event", "pressbutton_START",  False, 10, False),
+					("leaf", "event", "pressbutton_START",  False, 30, False),
 				]
 			)
 		]
@@ -251,7 +251,7 @@ abbreviated_summerdata_grammar = [
 			# OFF CAUSALLY
 			("and", False, False, .5, False, [
 					("leaf", "prev_fluent", "light_on", False, False, False),
-					("leaf", "event", "pressbutton_START",  False, 10, False),
+					("leaf", "event", "pressbutton_START",  False, 30, False),
 				]
 			)
 		]
