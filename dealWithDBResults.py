@@ -6,6 +6,10 @@ DBNAME = "amy_cvpr2012"
 DBUSER = "amycvpr2012"
 DBHOST = "127.0.0.1" # forwarding 3306
 DBPASS = "rC2xfLQFDMUZqJxf"
+TBLPFX = "cvpr2012_"
+kInfinityCutpoint = 1000000000000000 # close enough to infinity, anyway; working on an off-by-one issue
+kKnownObjects = ["screen","door","light"]
+kInsertionHash = "1234567890"
 
 # managing human responses for comparison - note upload versus download
 
@@ -13,7 +17,7 @@ def getExampleFromDB(exampleName, conn=False):
 	resultStorageFolder = "cvpr_db_results/"
 	exampleNameForDB = exampleName.replace("_","")
 	m = hashlib.md5(exampleNameForDB)
-	tableName = "cvpr2012_" + m.hexdigest()
+	tableName = TBLPFX + m.hexdigest()
 	leaveconn = True
 	if not conn:
 		leaveconn = False
@@ -166,60 +170,77 @@ def queryXMLForActionBetweenFrames(xml,action,frame1,frame2):
 # NOTE: this doesn't care how many fluent changes there are, only where things start and where they end up
 # THERE IS A DISTINCT LACK OF CHECKING THINGS TO BE SURE HERE
 def queryXMLForFluentBetweenFrames(xml,fluent,frame1,frame2):
+	debugQuery = False
 	fluent_changes = xml.getElementsByTagName('fluent_change')
-	prev_value = None
-	prev_energy = None
-	found_start = False
 	start_value = None
-	end_value = None
 	start_energy = None
+	end_value = None
 	end_energy = None
-	#causal_grammar.hr()
-	#print("SEARCHING {} between {} and {}".format(fluent,frame1,frame2))
-	#print("{}\t{}\t{}\t{}".format('frame','prev','start','end'))
+	found_start = False
+	if debugQuery:
+		print("SEARCHING {} between {} and {}".format(fluent,frame1,frame2))
 	for fluent_change in fluent_changes:
 		if fluent_change.attributes['fluent'].nodeValue == fluent:
 			frame = int(fluent_change.attributes['frame'].nodeValue)
-			#print("comparing {}".format([frame, frame1, frame2, type(frame1),type(frame2)]))
-			#print("{}\t{}\t{}\t{}".format(frame,prev_value,start_value,end_value))
 			if not found_start:
-				if frame > frame1:
-					#print("FOUND FIRST FRAME: {}".format(frame))
-					if prev_value:
-						start_value = prev_value
-						start_energy = prev_energy
-						#print("assigning prev ({})-> start".format(start_value))
-					elif 'prev_value' in fluent_change.attributes.keys():
-						start_value = str(fluent_change.attributes['prev_value'].nodeValue)
+				if frame < frame1:
+					start_value = str(fluent_change.attributes['new_value'].nodeValue)
+					start_energy = float(fluent_change.attributes['energy'].nodeValue)
+					if debugQuery:
+						print("- frame {}: storing 'old' value of {}".format(frame,start_value))
+				else: #frame >= frame1
+					# trust 'old_value' over what we had before ... TODO: penalize if it doesn't agree?
+					if 'old_value' in fluent_change.attributes.keys():
+						start_value = str(fluent_change.attributes['old_value'].nodeValue)
 						start_energy = float(fluent_change.attributes['energy'].nodeValue)
-						#print("assigning now[prev] ({}) -> start".format(start_value))
 					else:
 						# for lack of anything better, we'll assume we've always been like this
 						start_value = str(fluent_change.attributes['new_value'].nodeValue)
 						start_energy = float(fluent_change.attributes['energy'].nodeValue)
-						#print("assigning now ({}) -> start".format(start_value))
-					if frame < frame2:
-						end_value = str(fluent_change.attributes['new_value'].nodeValue)
-						end_energy = float(fluent_change.attributes['energy'].nodeValue)
-						#print("assigning now[new] ({}) -> end".format(end_value))
-					else:
-						end_value = start_value
-						end_value = end_value
-						#print("assigning start value ({}) -> end".format(end_value))
-					found_start = True
-					continue
-				#print("assigning now[new] -> prev")
-				#prev_value =  str(fluent_change.attributes['new_value'].nodeValue)
-				#prev_energy = float(fluent_change.attributes['energy'].nodeValue)
-			else:
-				if frame >= frame2:
-					#print("breaking")
-					break
-				else:
-					#print("assigning now[new] -> end")
+					if debugQuery:
+						print("+ frame {}: start: {}; now: {}".format(frame,start_value,start_value))
+					# and let's just get these ducks lined up....
 					end_value = str(fluent_change.attributes['new_value'].nodeValue)
 					end_energy = float(fluent_change.attributes['energy'].nodeValue)
-					#print("end set: {}, {}".format(end_value,end_energy))
+					found_start = True
+					continue
+			else:
+				if frame >= frame2:
+					break
+				else:
+					end_value = str(fluent_change.attributes['new_value'].nodeValue)
+					end_energy = float(fluent_change.attributes['energy'].nodeValue)
+					if debugQuery:
+						print("+ frame {}: start: {}; now: {}".format(frame,start_value,end_value))
+	if debugQuery:
+		print("query results: {}".format({"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }))
+	return {"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }
+
+# NOTE: this doesn't care how many fluent changes there are, only where things start and where they end up
+# THERE IS A DISTINCT LACK OF CHECKING THINGS TO BE SURE HERE
+def queryXMLForDumbFluentBetweenFrames(xml,fluent,frame1,frame2):
+	debugQuery = False
+	fluent_changes = xml.getElementsByTagName('fluent_change')
+	start_value = None
+	start_energy = None
+	end_value = None
+	end_energy = None
+	if debugQuery:
+		print("DUMB SEARCHING {} between {} and {}".format(fluent,frame1,frame2))
+	for fluent_change in fluent_changes:
+		if fluent_change.attributes['fluent'].nodeValue == fluent:
+			frame = int(fluent_change.attributes['frame'].nodeValue)
+			if (frame >= frame1 or frame <= frame2) and 'old_value' in fluent_change.attributes.keys():
+				# we're only counting "changes" because that's all that was ever really detected, despite what our xml might look like
+				# TODO: penalize conflicts somehow. I think that will require a complete reorg of all the things wrapping this
+				start_value = str(fluent_change.attributes['old_value'].nodeValue)
+				start_energy = float(fluent_change.attributes['energy'].nodeValue)
+				end_value = str(fluent_change.attributes['new_value'].nodeValue)
+				end_energy = float(fluent_change.attributes['energy'].nodeValue)
+			if frame >= frame2:
+				break
+	if debugQuery:
+		print("query results: {}".format({"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }))
 	return {"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }
 
 def buildDictForActionPossibilities(fluent,frame,actions):
@@ -250,7 +271,7 @@ def buildDictForFluentChangePossibilities(fluent,frame,onstring,offstring,prev,n
 		"{}{}".format(prefix,offstring): off,
 	}
 	
-def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2):
+def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 	# get actions and fluents for the oject
 	retval = {}
 	onsoffs = { "door": ["open","closed"], "light": ["on","off"], "screen": ["on","off"] }
@@ -258,8 +279,15 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2):
 		raise "Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject)
 	#fluents
 	onsoffs = onsoffs[oject]
-	fluent_change = queryXMLForFluentBetweenFrames(xml,oject,frame1,frame2)
+	if dumb:
+		fluent_change = queryXMLForDumbFluentBetweenFrames(xml,oject,frame1,frame2)
+	else:
+		fluent_change = queryXMLForFluentBetweenFrames(xml,oject,frame1,frame2)
 	result = buildDictForFluentChangePossibilities(oject,frame1,onsoffs[0],onsoffs[1],fluent_change['start']['value'],fluent_change['end']['value'])
+	#print "RESULT"
+	#print "------"
+	#print result
+	#raise SystemExit(0)
 	retval.update(result)
 	if oject == "door":
 		#actions
@@ -297,7 +325,7 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 	exampleNameForDB, room = example.rsplit('_',1)
 	exampleNameForDB = exampleNameForDB.replace("_","")
 	m = hashlib.md5(exampleNameForDB)
-	tableName = "cvpr2012_" + m.hexdigest()
+	tableName = TBLPFX + m.hexdigest()
 	leaveconn = True
 	if not conn:
 		leaveconn = False
@@ -327,24 +355,24 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 				frame = tmp
 			ojects.append(oject,)
 			cutpoints.append(int(frame))
-	cutpoints.append(1000000000000000) # close enough to infinity, anyway; working on an off-by-one issue
+	cutpoints.append(kInfinityCutpoint) # close enough to infinity, anyway; working on an off-by-one issue
 	ojects = list(set(ojects))
 	cutpoints = sorted(list(set(cutpoints)))
 	# let's make sure we know how to work on all of these objects
-	known_ojects = ["screen","door","light"]
+	known_ojects = kKnownObjects
 	if not all(map(lambda x: x in known_ojects,ojects)):
 		print("skipping {} due to an un unknown object (one of {})".format(example,ojects))
 		return
 	# for each of our objects, figure out what we think went on at each cutpoint
 	#print("objects: {}".format(ojects))
 	#print("frames: {}".format(cutpoints))
-	insertion_object = {"name": source, "hash": "1234567890"}
+	insertion_object = {"name": source, "hash": kInsertionHash}
 	print fluent_and_action_xml.toprettyxml(indent="\t")
 	for oject in ojects:
 		prev_frame = cutpoints[0]
 		for frame in cutpoints[1:]:
 			#print("{} - {}".format(oject, frame))
-			insertion_object.update(queryXMLForAnswersBetweenFrames(fluent_and_action_xml,oject,prev_frame,frame))
+			insertion_object.update(queryXMLForAnswersBetweenFrames(fluent_and_action_xml,oject,prev_frame,frame,source == 'origdata'))
 			prev_frame = frame
 	print("INSERT: {}".format(insertion_object))
 	# http://stackoverflow.com/a/9336427/856925
@@ -371,7 +399,8 @@ if __name__ == '__main__':
 	parser.add_argument("mode", choices=["upload","download","upanddown","list"])
 	group = parser.add_mutually_exclusive_group()
 	group.add_argument('-o','--only', action='append', dest='examples_only', required=False, help='specific examples to run, versus all found examples')
-	group.add_argument('-s','--skip', action='append', dest='examples_skip', required=False, help='specific examples to skip, out of all found examples', default=[])
+	group.add_argument('-x','--exclude', action='append', dest='examples_exclude', required=False, help='specific examples to exclude, out of all found examples', default=[])
+	parser.add_argument("-s","--simplify", action="store_true", required=False, help="simplify the summerdata grammar to only include fluents that start with the example name[s]")
 	# parser.add_argument("--dry-run",required=False,action="store_true") #TODO: would be nie
 	args = parser.parse_args()
 	examples = []
@@ -381,7 +410,7 @@ if __name__ == '__main__':
 		for filename in os.listdir (kSummerDataPythonDir):
 			if filename.endswith(".py") and filename != "__init__.py":
 				example = filename[:-3]
-				if example not in args.examples_skip:
+				if example not in args.examples_exclude:
 					examples.append(filename[:-3])
 	conn = MySQLdb.connect (host = DBHOST, user = DBUSER, passwd = DBPASS, db = DBNAME)
 	if args.mode in ("list",):
@@ -399,7 +428,8 @@ if __name__ == '__main__':
 		also_oject_failed = []
 		import_failed = []
 		import causal_grammar
-		import causal_grammar_summerdata as causal_grammar_summerdata # sets up causal_forest
+		import causal_grammar_summerdata # sets up causal_forest
+		causal_forest_orig = causal_grammar_summerdata.causal_forest
 		# These thresholds tuned for this fluent data because it's not "flipping between on and off", it's 
 		# flipping "did transition closed to on" and "didn't transition closed to on"
 		causal_grammar.kFluentThresholdOnEnergy = 0.6892
@@ -407,14 +437,30 @@ if __name__ == '__main__':
 		#raise("MAYBE DELETE 'computer' FROM RESULTS BEFORE RERUNNING")
 		for example in examples:
 			print("---------\nEXAMPLE: {}\n-------".format(example))
+			if args.simplify:
+				if len(example.split("_")) == 3:
+					#TODO: does not work on door_13_light_3_roomname, for instance. could/should split
+					# prune causal forest to 'screen' events
+					causal_forest = []
+					fluent = example.split("_",1)[0]
+					for root in causal_forest_orig:
+						if root['symbol'].startswith(fluent + "_"):
+							causal_forest.append(root)
+					causal_grammar_summerdata.causal_forest = causal_forest
+				else:
+					causal_grammar_summerdata.causal_forest = causal_forest_orig
 			try:
 				fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,kSummerDataPythonDir)
 				import pprint
 				pp = pprint.PrettyPrinter(indent=1)
+				print" fluent parses "
 				pp.pprint(fluent_parses)
+				print("")
+				print" action parses "
 				pp.pprint(temporal_parses)
+				print("")
 			except ImportError as ie:
-				print("IMPORT FAILED: {}".format(ie))
+				#print("IMPORT FAILED: {}".format(ie))
 				import_failed.append(example)
 				continue
 			orig_xml = munge_parses_to_xml(fluent_parses,temporal_parses)
@@ -425,11 +471,15 @@ if __name__ == '__main__':
 			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalgrammar', conn):
 				completed.append(example)
 			else:
-				also_oject_failed.append(example)
+				oject_failed.append(example)
 			if uploadComputerResponseToDB(example, orig_xml, 'origdata', conn):
 				also_completed.append(example)
 			else:
-				oject_failed.append(example)
+				also_oject_failed.append(example)
+			if uploadComputerResponseToDB(example, orig_xml, 'origsmrt', conn):
+				also_completed.append(example)
+			else:
+				also_oject_failed.append(example)
 		print("COMPLETED: {}".format(completed))
 		print("ALSO COMPLETED: {}".format(also_completed))
 		print("SKIPPED DUE TO OBJECT: {}".format(oject_failed))

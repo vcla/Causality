@@ -36,7 +36,7 @@ for example in args.example:
 			for root in causal_forest_orig:
 				if root['symbol'].startswith(fluent + "_"):
 					causal_forest.append(root)
-				causal_grammar_summerdata.causal_forest = causal_forest
+			causal_grammar_summerdata.causal_forest = causal_forest
 		fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,kActionDetections)
 		import pprint
 		pp = pprint.PrettyPrinter(indent=1)

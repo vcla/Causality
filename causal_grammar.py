@@ -15,7 +15,7 @@ kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
 kReportingThresholdEnergy = 0.5 # TODO: may want to tune
 kDefaultEventTimeout = 10 # shouldn't need to tune because this should be tuned in grammar
 kFilterNonEventTriggeredParseTimeouts = False # what the uber-long variable name implies
-kDebugEnergies = True # if true, print out fluent current/prev and event energies when completing a parse tree
+kDebugEnergies = False # if true, print out fluent current/prev and event energies when completing a parse tree
 
 kFluentStatusUnknown = 1
 kFluentStatusOn = 2
@@ -47,10 +47,10 @@ def import_summerdata(exampleName,actionDirectory):
 	import parsingSummerActionAndFluentOutput
 	fluent_parses = parsingSummerActionAndFluentOutput.readFluentResults(exampleName)
 	action_parses = parsingSummerActionAndFluentOutput.readActionResults("{}.{}".format(actionDirectory,exampleName))
-	import pprint
-	pp = pprint.PrettyPrinter(depth=6)
-	pp.pprint(action_parses)
-	pp.pprint(fluent_parses)
+	#import pprint
+	#pp = pprint.PrettyPrinter(depth=6)
+	#pp.pprint(action_parses)
+	#pp.pprint(fluent_parses)
 	return [fluent_parses, action_parses]
 
 def import_xml(filename):

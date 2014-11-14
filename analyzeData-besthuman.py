@@ -3,7 +3,7 @@
 
 import os
 kCSVDir = 'cvpr_db_results' # from the 'export' option in dealWithDBResults.py
-kComputerTypes = ['causalgrammar', 'origdata']
+kComputerTypes = ['causalgrammar', 'origdata', 'origsmrt']
 
 def findDistanceBetweenTwoVectors(A, B):
 	dist = 0
@@ -13,10 +13,11 @@ def findDistanceBetweenTwoVectors(A, B):
 
 
 ## for each file in our csvs directory, find the "mode" human, then use their values to evaluate each "computer"
-print("FILENAME\tBESTHUMANSCORE\tORIGDATA\tCAUSALGRAMMAR")
+print("FILENAME\tBESTHUMANSCORE\tORIGDATA\tORIGSMRT\tCAUSALGRAMMAR")
 exceptions = []
 total_human_score = 0
 total_origdata_score = 0
+total_origsmrt_score = 0
 total_causalgrammar_score = 0
 N = 0
 for filename in os.listdir (kCSVDir):
@@ -49,31 +50,37 @@ for filename in os.listdir (kCSVDir):
 					elif bestscore == currentscore:
 						besthumans.append(humanA)
 					#print("{}: {}".format(humanA,currentscore))
-				#print("{}\t{}\t{}\t{}\t".format(filename,besthumans,currentscore,humans[besthumans[0]]))
+				#print("{}\t{}\t{}\t{}".format(filename,besthumans,currentscore,humans[besthumans[0]]))
 				## FILE, BEST HUMAN SCORE, ORIGDATA SCORE, CAUSALGRAMMAR SCORE
 				if not humans:
 					raise Exception("NO HUMANS FOR {}".format(filename))
 				if not 'origdata' in computers:
 					raise Exception("NO ORIGDATA FOR {}".format(filename))
+				if not 'origsmrt' in computers:
+					raise Exception("NO ORIGDATA FOR {}".format(filename))
 				if not 'causalgrammar' in computers:
 					raise Exception("NO CAUSALGRAMMAR FOR {}".format(filename))
 				besthumansN = len(besthumans)
 				origdata_score = 0
+				origsmrt_score = 0
 				causalgrammar_score = 0
 				for i in range(besthumansN):
 					origdata_score += findDistanceBetweenTwoVectors(computers['origdata'],humans[besthumans[i]])
+					origsmrt_score += findDistanceBetweenTwoVectors(computers['origsmrt'],humans[besthumans[i]])
 					causalgrammar_score += findDistanceBetweenTwoVectors(computers['causalgrammar'],humans[besthumans[i]])
 				origdata_score /= besthumansN
+				origsmrt_score /= besthumansN
 				causalgrammar_score /= besthumansN
-				#print("{}\t{}\t{}\t{}\t".format(filename,besthumans,currentscore,humans[besthumans[0]]))
-				print("{}\t{}\t{}\t{}\t".format(filename,bestscore,origdata_score,causalgrammar_score))
+				#print("{}\t{}\t{}\t{}".format(filename,besthumans,currentscore,humans[besthumans[0]]))
+				print("{}\t{}\t{}\t{}\t{}".format(filename,bestscore,origdata_score,origsmrt_score,causalgrammar_score))
 				N += 1
 				total_human_score += bestscore
 				total_origdata_score += origdata_score
+				total_origsmrt_score += origdata_score
 				total_causalgrammar_score += causalgrammar_score
 			except Exception as foo:
 				exceptions.append(foo)
 
-print("{}\t{}\t{}\t{}\t".format("AVERAGE",total_human_score / N,total_origdata_score / N,total_causalgrammar_score / N))
+print("{}\t{}\t{}\t{}\t{}".format("AVERAGE",total_human_score / N,total_origdata_score / N,total_causalgrammar_score / N))
 
 print exceptions
