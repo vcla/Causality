@@ -612,14 +612,14 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				if fluent_on_energy < fluent_threshold_on_energy:
 					fluent_changed = fluent_on_string
 					fluent_hash[fluent_on_string]["status"] = kFluentStatusOn
-				if fluent_off_energy < fluent_threshold_on_energy:
+				if fluent_off_energy < fluent_threshold_off_energy:
 					fluent_changed = fluent_off_string
 					fluent_hash[fluent_off_string]["status"] = kFluentStatusOn
 				# fluent_on and fluent_off _should_ never both change to on, so we consider this safe
 				if fluent_changed:
 					#print "fluent changed: {}".format(fluent_changed)
-					fluent_hash[fluent_on_string]["prev_energy"] = fluent_hash[fluent_on_string]["energy"]
-					fluent_hash[fluent_off_string]["prev_energy"] = fluent_hash[fluent_off_string]["energy"]
+					fluent_hash[fluent_on_string]["prev_energy"] = fluent_off_energy
+					fluent_hash[fluent_off_string]["prev_energy"] = fluent_on_energy
 					fluent_hash[fluent_on_string]["energy"] = fluent_on_energy
 					fluent_hash[fluent_off_string]["energy"] = fluent_off_energy
 					# go through all parses that this fluent touches, or its inverse
