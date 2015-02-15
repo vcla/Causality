@@ -742,7 +742,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 						chain.append(node)
 						next_chains.append(chain)
 						next_chain_energies.append(best_energy + node['energy'])
-						print(">best<   {}".format("\t".join(["{:>6.3f}".format(best_energy), "{:>6.3f}".format(best_chain[-1]['status']), "{:>6.3f}".format(best_chain[-1]['energy']), best_chain[-1]['source'], "{:d}".format(best_chain[-1]['parse']['id']), str(make_tree_like_lisp(best_chain[-1]['parse'])), str(best_chain[-1]['agents'])])))
+						if not suppress_output:
+							print(">best<   {}".format("\t".join(["{:>6.3f}".format(best_energy), "{:>6.3f}".format(best_chain[-1]['status']), "{:>6.3f}".format(best_chain[-1]['energy']), best_chain[-1]['source'], "{:d}".format(best_chain[-1]['parse']['id']), str(make_tree_like_lisp(best_chain[-1]['parse'])), str(best_chain[-1]['agents'])])))
 					else:
 						if prev_chains:
 							import pprint
@@ -821,8 +822,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				hr()
 	doc = build_xml_output_for_chain(results_for_xml_output,parse_array,suppress_output) # for lowest energy chain
 	if not suppress_output:
-		print("{}".format(doc.toprettyxml(indent="\t")))
-	return doc
+		print("{}".format(doc.toprettyxml(encoding="utf-8",indent="\t")))
+	return doc.toxml("utf-8")
 
 def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 	from xml.dom.minidom import Document
