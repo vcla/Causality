@@ -48,7 +48,6 @@ causal_forest_light = [
 
 xml_string = causal_grammar.process_events_and_fluents(causal_forest_light, fluents_simple_light, actions_simple_light, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,True) # final True: suppress output
 root = ET.fromstring(xml_string)
-print xml_string
 
 class LightingTestCase(unittest.TestCase):
 
