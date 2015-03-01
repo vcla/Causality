@@ -5,6 +5,8 @@ causal grammar parser and helper functions
 
 import itertools
 import math # for log, etc
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
 
 kUnknownEnergy = 8#0.7 # TODO: may want to tune
 kUnlikelyEnergy = 10.0 # TODO: may want to tune
@@ -56,8 +58,7 @@ def import_summerdata(exampleName,actionDirectory):
 def import_xml(filename):
 	fluent_parses = {'initial':{}}
 	action_parses = {}
-	from xml.dom.minidom import parse
-	document = parse(filename)
+	document = minidom.parse(filename)
 	interpretation_chunk = document.getElementsByTagName('interpretation')[0]
 	interpretation_probability = float(interpretation_chunk.attributes['probability'].nodeValue)
 	interpretation_energy = probability_to_energy(interpretation_probability)
@@ -822,18 +823,13 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				hr()
 	doc = build_xml_output_for_chain(results_for_xml_output,parse_array,suppress_output) # for lowest energy chain
 	if not suppress_output:
-		print("{}".format(doc.toprettyxml(encoding="utf-8",indent="\t")))
-	return doc.toxml("utf-8")
+		print("{}".format(minidom.parseString(ET.tostring(doc,method='xml',encoding='utf-8')).toprettyxml(encoding="utf-8",indent="\t")))
+	return ET.tostring(doc,encoding="utf-8",method="xml")
 
 def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
-	from xml.dom.minidom import Document
-	doc = Document()
-	temporal_stuff = doc.createElement("temporal")
-	doc.appendChild(temporal_stuff)
-	fluent_changes = doc.createElement("fluent_changes")
-	temporal_stuff.appendChild(fluent_changes)
-	actions_el = doc.createElement("actions")
-	temporal_stuff.appendChild(actions_el)
+	temporal = ET.Element('temporal')
+	fluent_changes = ET.SubElement(temporal,'fluent_changes')
+	actions_el = ET.SubElement(temporal,"actions")
 	seen = [] # keeping track of whether we've seen a fluent and thus have included its initial state
 	for chain in all_chains:
 		energy = chain[0][1]
@@ -847,10 +843,13 @@ def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 				#print("{}".format(frame_number))
 				#print("{}".format(parse['symbol']))
 				print("{}".format(parse))
-			fluent_parse = doc.createElement("fluent_change")
 			fluent, fluent_value = parse['symbol'].rsplit("_",1)
-			fluent_parse.setAttribute("fluent",fluent)
-			fluent_parse.setAttribute("new_value",fluent_value)
+			fluent_attributes = {
+				"fluent": fluent,
+				"new_value": fluent_value,
+				"frame": str(frame_number),
+				"energy": str(energy)
+			};
 			prev_value = get_prev_fluent_value_from_parse(parse,fluent)
 			if len(prev_value) != 1:
 				print("{}".format(len(prev_value)))
@@ -861,21 +860,19 @@ def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 				if not fluent in seen:
 					seen.append(fluent,)
 				else:
-					fluent_parse.setAttribute("old_value",prev_value[0])
-				fluent_parse.setAttribute("frame",str(frame_number))
-				fluent_parse.setAttribute("energy",str(energy))
-				fluent_changes.appendChild(fluent_parse)
+					fluent_attributes['old_value'] = prev_value[0];
+			fluent_parse = ET.SubElement(fluent_changes, "fluent_change", fluent_attributes)
 			#TODO: missing attributes id, object, time in fluent_change
 			# now let's see if there's an action associated with this fluent change and pop that in our bag
 			actions = get_actions_from_parse(parse)
 			if actions:
-				action_el = doc.createElement("event")
 				for action in actions:
-					action_el.setAttribute("frame",str(frame_number))
-					action_el.setAttribute("energy",str(energy))
-					action_el.setAttribute("action",str(action))
-					actions_el.appendChild(action_el)
-	return doc
+					action_el = ET.SubElement(actions_el,"event", {
+						"frame": str(frame_number),
+						"energy": str(energy),
+						"action": str(action),
+					});
+	return temporal
 
 # TODO: this assumes we're only going to find one previous fluent value for the given fluent
 def get_prev_fluent_value_from_parse(parse,fluent):
