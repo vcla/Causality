@@ -256,6 +256,8 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 # NOTE: THIS IS THE ONE TO USE. IT IS SIMPLE AND DOES ITS BEST TO MAINTAIN THE RAW
 # FLUENT DATA UP TO THE GRAMMAR/WHATNOT
 # NOTE: this doesn't care how many fluent changes there are, only where things start and where they end up
+# NOTE: this appears to fail to fill in "stayed on" or "stayed off" appropriately,
+# doesn't look back to see what the value was BEFORE the frame range
 # THERE IS A DISTINCT LACK OF CHECKING THINGS TO BE SURE HERE
 def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2):
 	debugQuery = False
