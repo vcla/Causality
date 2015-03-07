@@ -270,15 +270,15 @@ def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,fra
 	off_on = 0
 	on = 0
 	off = 0
-	fluent_changes = xml.getElementsByTagName('fluent_change')
+	fluent_changes = xml.findall('.//fluent_change')
 	for fluent_change in fluent_changes:
-		if fluent_change.attributes['fluent'].nodeValue == fluent:
-			frame = int(fluent_change.attributes['frame'].nodeValue)
+		if fluent_change.attrib['fluent'] == fluent:
+			frame = int(fluent_change.attrib['frame'])
 			if (frame >= frame1 or frame <= frame2):
 				# we're only counting "changes" because that's all that was ever really detected, despite what our xml might look like
 				# TODO: penalize conflicts somehow. I think that will require a complete reorg of all the things wrapping this
 				# and technically we're counting /everything/ as a change
-				if str(fluent_change.attributes['new_value'].nodeValue) == "on":
+				if str(fluent_change.attrib['new_value']) == "on":
 					off_on += 100
 				else:
 					on_off += 100

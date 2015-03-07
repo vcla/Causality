@@ -67,22 +67,54 @@ class LightingTestCase(unittest.TestCase):
 		pass
 
 
-	def testZeroState(self):
+	def testFluentZeroState(self):
 		light_0 = root.findall("./fluent_changes/fluent_change[@frame='0']")
 		assert light_0[0].attrib['new_value'] == 'off', "should have decided light started out as off; was: {}".format(light_0[0].attrib['new_value'])
 
-	def testTrueFluentChangeState(self):
+	def testFluentTrueChangeState(self):
 		light_8 = root.findall("./fluent_changes/fluent_change[@frame='8']")
 		assert light_8[0].attrib['new_value'] == 'on', "should have decided light changed to on at 8; was: {}".format(light_8[0].attrib['new_value'])
 
-	def testMisdetectedFluentChangeState(self):
+	def testFluentMisdetectedChangeState(self):
 		light_6 = root.findall("./fluent_changes/fluent_change[@frame='6']")
 		assert (not light_6), "should have shown no change at 6; changed to: {}".format(light_6[0].attrib['new_value'])
 
-	def testForActionTooEarly(self):
+	def getFluentChangesForFluent(self, fluent):
+		return root.findall("./fluent_changes/fluent_change[@fluent='{}'][@old_value]".format(fluent))
+
+	def getFluentChangesForFluentBetweenFrames(self, fluent, frame1, frame2):
+		assert(frame1 <= frame2)
+		changes = self.getFluentChangesForFluent(fluent)
+		retval = []
+		for change in changes:
+			if change.attrib['frame'] >= frame1 and change.attrib['frame'] <= frame2:
+				retval.append(change)
+		return retval
+
+	def testFluentTooEarly(self):
+		frame = 9
+		light_changes = self.getFluentChangesForFluentBetweenFrames('light',0, frame)
+		light_changes = root.findall("./fluent_changes/fluent_change[@fluent='light'][@old_value]")
+		assert not len(light_changes), "found {} unexpected changes before frame {}".format(len(light_changes),frame)
+
+	def testFluentTooEarlyToo(self):
+		frame = 9
+		# only returns valid results for changed-on or changed-off, not stayed-on, stayed-off
+		fluentDict = dealWithDBResults.buildDictForDumbFluentBetweenFramesIntoResults(root, "light", ('light_on','light_off'), 0, frame)
+		assert not fluentDict['light_0_light_on_light_off'] and not fluentDict['light_0_light_off_light_on'], "should have had no light status change before {}".format(frame)
+
+	def testActionTooEarly(self):
 		#queryXMLForActionBetweenFrames(xml,action,frame1,frame2)
-		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(root,"E2_START",0,10)
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(root,"E1_START",0,8)
 		assert (not action_occurrences), "should have had no action before 7; n times action occurred: {}".format(action_occurrences)
+
+	def testActionJustRight(self):
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(root,"E1_START",7,9)
+		assert (action_occurrences), "should have had action at 8; n times action occurred: {}".format(action_occurrences)
+
+	def testActionTooLate(self):
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(root,"E1_START",8,15)
+		assert (not action_occurrences), "should have had no action after 8; n times action occurred: {}".format(action_occurrences)
 
 	def testBetterAction(self):
 		"""Test case A. note that all test method names must begin with 'test.'"""
