@@ -2,6 +2,9 @@ import csv
 import hashlib
 import MySQLdb
 import os
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
+
 DBNAME = "amy_cvpr2012"
 DBUSER = "amycvpr2012"
 DBHOST = "127.0.0.1" # forwarding 3306
@@ -70,16 +73,11 @@ temporal_parses
 """
 
 def munge_parses_to_xml(fluent_parses,action_parses,suppress_output=False):
-	from xml.dom.minidom import Document
 	import causal_grammar
 	import math
-	doc = Document()
-	temporal_stuff = doc.createElement("temporal")
-	doc.appendChild(temporal_stuff)
-	fluent_changes = doc.createElement("fluent_changes")
-	temporal_stuff.appendChild(fluent_changes)
-	actions_el = doc.createElement("actions")
-	temporal_stuff.appendChild(actions_el)
+	temporal = ET.Element('temporal')
+	fluent_changes = ET.SubElement(temporal,'fluent_changes')
+	actions_el = ET.SubElement(temporal,'actions')
 	# avoiding cleverness. step 1: get all actions and fluents.
 	fluents = set()
 	actions = set()
@@ -92,7 +90,6 @@ def munge_parses_to_xml(fluent_parses,action_parses,suppress_output=False):
 		prev_value = None
 		for frame in sorted(fluent_parses):
 			if fluent in fluent_parses[frame]:
-				fluent_parse = doc.createElement("fluent_change")
 				fluent_value = fluent_parses[frame][fluent]
 				fluent_on_probability = math.exp(-fluent_value)
 				fluent_off_probability = 1 - fluent_on_probability
@@ -108,26 +105,29 @@ def munge_parses_to_xml(fluent_parses,action_parses,suppress_output=False):
 					fluent_value = fluent_off_energy
 				else:
 					continue
-				fluent_parse.setAttribute("fluent",fluent)
-				fluent_parse.setAttribute("new_value",fluent_status)
+				fluent_attributes = {
+					'fluent': fluent,
+					'new_value': fluent_status,
+					'frame': str(frame),
+					'energy': str(fluent_value),
+				}
 				if prev_value:
-					fluent_parse.setAttribute("old_value",prev_value)
-				fluent_parse.setAttribute("frame",str(frame))
-				fluent_parse.setAttribute("energy",str(fluent_value))
-				fluent_changes.appendChild(fluent_parse)
+					fluent_attributes['old_value'] = prev_value
+				fluent_parse = ET.SubElement(fluent_changes,'fluent_change', fluent_attributes)
 				prev_value = fluent_status
 	# continuing to avoid cleverness, now for each action in all frames, build our xml
 	for action in sorted(actions):
 		prev_value = None
 		for frame in sorted(action_parses):
 			if action in action_parses[frame]:
-				event = doc.createElement("event")
 				event_value = action_parses[frame][action]
-				event.setAttribute("action",action)
-				event.setAttribute("energy",str(event_value['energy'])) # ignore 'agent'
-				event.setAttribute("frame",str(frame))
-				actions_el.appendChild(event)
-	return doc
+				event_attributes = {
+					'action': action,
+					'energy': str(event_value['energy']), # ignore 'agent'
+					'frame': str(frame),
+				}
+				event = ET.SubElement(actions_el, "event", event_attributes)
+	return ET.tostring(temporal, method='xml', encoding='utf-8')
 
 """
 <?xml version="1.0" ?>
@@ -158,13 +158,14 @@ def munge_parses_to_xml(fluent_parses,action_parses,suppress_output=False):
 # NOTE: this assumes there is at most one action change between frame1 and frame2
 # THERE IS A DISTINCT LACK OF CHECKING THINGS TO BE SURE HERE
 # NOTE: we're now penalizing multiple counts of the same action...
+# NOTE: does not pair START and END together???
 def queryXMLForActionBetweenFrames(xml,action,frame1,frame2):
 	count = 0
-	for event in xml.getElementsByTagName('event'):
-		if event.attributes['action'].nodeValue == action:
-			frame = int(event.attributes['frame'].nodeValue)
+	for event in xml.findall('actions/event'):
+		if event.attrib['action'] == action:
+			frame = int(event.attrib['frame'])
 			if frame > frame1 and frame < frame2:
-				#return {"frame":frame, "energy": float(event.attributes['energy'].nodeValue)}
+				#return {"frame":frame, "energy": float(event.attrib['energy']}
 				count += 1
 	return count
 
@@ -427,7 +428,7 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 	#print("objects: {}".format(ojects))
 	#print("frames: {}".format(cutpoints))
 	insertion_object = {"name": source, "hash": kInsertionHash}
-	print fluent_and_action_xml.toprettyxml(indent="\t")
+	print minidom.parseString(ET.tostring(fluent_and_action_xml,method="xml",encoding="utf-8")) #.toprettyxml(indent="\t")
 	for oject in ojects:
 		prev_frame = cutpoints[0]
 		for frame in cutpoints[1:]:
@@ -528,8 +529,8 @@ if __name__ == '__main__':
 				continue
 			orig_xml = munge_parses_to_xml(fluent_parses,temporal_parses)
 			fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, True) # last true: suppress the xml output
-			print orig_xml.toprettyxml(indent="\t")
-			print fluent_and_action_xml.toprettyxml(indent="\t")
+			print minidom.parseString(orig_xml).toprettyxml(indent="\t")
+			print minidom.parseString(fluent_and_action_xml).toprettyxml(indent="\t")
 			#print fluent_and_action_xml.toprettyxml(indent="\t")
 			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalgrammar', conn):
 				completed.append(example)

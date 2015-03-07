@@ -171,7 +171,6 @@ abbreviated_summerdata_grammar = [
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "door_off", False, False, False),
 					("leaf", "event", "standing_START", False, 10, False), # TODO: make ONGOING option 
-					("leaf", "nonevent", "standing_END", False, 1, False), # TODO: make ONGOING option 
 				]
 			),
 		]
@@ -179,13 +178,13 @@ abbreviated_summerdata_grammar = [
 	# DOOR CLOSED (DOOR OPEN OFF) 
 	("root", "fluent", "door_off", .5, False, [
 			# inertially OFF
-			("and", False, False, .5, False, [
+			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "door_off", False, False, False),
 					("leaf", "nonevent", "standing_START", False, 10, False), # TODO: make ONGOING nonaction
 				]
 			),
 			# causally OFF
-			("and", False, False, .5, False, [
+			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "door_on", False, False, False),
 					("leaf", "event", "standing_END", False, 1, False),
 				]
@@ -227,13 +226,13 @@ abbreviated_summerdata_grammar = [
 	# LIGHT ON
 	("root", "fluent", "light_on", .5, False, [
 			# ON INERTIALLY
-			("and", False, False, .5, False, [
+			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "light_on", False, False, False),
 					("leaf", "nonevent", "pressbutton_START",  False, 10, False),
 				]
 			),
 			# ON CAUSALLY
-			("and", False, False, .5, False, [
+			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "light_off", False, False, False),
 					("leaf", "event", "pressbutton_START",  False, 30, False),
 				]
@@ -243,13 +242,13 @@ abbreviated_summerdata_grammar = [
 	# LIGHT OFF	(LIGHT_ON_OFF)
 	("root", "fluent", "light_off", .5, False, [
 			# ON INERTIALLY
-			("and", False, False, .5, False, [
+			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "light_off", False, False, False),
 					("leaf", "nonevent", "pressbutton_START",  False, 10, False),
 				]
 			),
 			# OFF CAUSALLY
-			("and", False, False, .5, False, [
+			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "light_on", False, False, False),
 					("leaf", "event", "pressbutton_START",  False, 30, False),
 				]
@@ -323,7 +322,7 @@ abbreviated_summerdata_grammar = [
 	# SCREEN ON
 	("root", "fluent", "screen_on", .5, False, [
 			# ON INERTIALLY -- stay screen
-			("and", False, False, .3, False, [
+			("and", False, False, .35, False, [
 					("leaf", "prev_fluent", "screen_on", False, False, False),
 					("leaf", "nonevent", "usecomputer_END", False, 1, False),
 				]
@@ -341,7 +340,7 @@ abbreviated_summerdata_grammar = [
 				]
 			),
 			# ON CONTINUED USE - TODO
-			("and", False, False, .4, False, [
+			("and", False, False, .35, False, [
 					("leaf", "prev_fluent", "screen_on", False, False, False),
 					("leaf", "event", "usecomputer_START", False, 100, False),
 				]
