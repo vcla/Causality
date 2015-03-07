@@ -169,6 +169,13 @@ def queryXMLForActionBetweenFrames(xml,action,frame1,frame2):
 				count += 1
 	return count
 
+"""
+This tried to be smart and see whether fluent changes were conflicting and
+what that really meant in terms of whether and how fluents changed between frames...
+which was a kind of bad approach because that was looking at maybe pre-fixing stuff
+unintelligently as compared to handing the raw-ish fluent data to the grammar
+### DO NOT USE ###
+"""
 def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2):
 	debugQuery = False
 	if debugQuery:
@@ -246,6 +253,8 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 	}
 	return retval
 
+# NOTE: THIS IS THE ONE TO USE. IT IS SIMPLE AND DOES ITS BEST TO MAINTAIN THE RAW
+# FLUENT DATA UP TO THE GRAMMAR/WHATNOT
 # NOTE: this doesn't care how many fluent changes there are, only where things start and where they end up
 # THERE IS A DISTINCT LACK OF CHECKING THINGS TO BE SURE HERE
 def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2):
