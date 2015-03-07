@@ -158,13 +158,14 @@ def munge_parses_to_xml(fluent_parses,action_parses,suppress_output=False):
 # NOTE: this assumes there is at most one action change between frame1 and frame2
 # THERE IS A DISTINCT LACK OF CHECKING THINGS TO BE SURE HERE
 # NOTE: we're now penalizing multiple counts of the same action...
+# NOTE: does not pair START and END together???
 def queryXMLForActionBetweenFrames(xml,action,frame1,frame2):
 	count = 0
-	for event in xml.getElementsByTagName('event'):
-		if event.attributes['action'].nodeValue == action:
-			frame = int(event.attributes['frame'].nodeValue)
+	for event in xml.findall('actions/event'):
+		if event.attrib['action'] == action:
+			frame = int(event.attrib['frame'])
 			if frame > frame1 and frame < frame2:
-				#return {"frame":frame, "energy": float(event.attributes['energy'].nodeValue)}
+				#return {"frame":frame, "energy": float(event.attrib['energy']}
 				count += 1
 	return count
 

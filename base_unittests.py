@@ -53,7 +53,8 @@ causal_forest_light = [
 
 xml_string = causal_grammar.process_events_and_fluents(causal_forest_light, fluents_simple_light, actions_simple_light, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,not kDebug) # !kDebug: suppress output
 root = ET.fromstring(xml_string)
-print(xml_string)
+if kDebug:
+	print(xml_string)
 
 class LightingTestCase(unittest.TestCase):
 
@@ -80,7 +81,7 @@ class LightingTestCase(unittest.TestCase):
 
 	def testForActionTooEarly(self):
 		#queryXMLForActionBetweenFrames(xml,action,frame1,frame2)
-		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(xml_string,"E1_START",0,10)
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(root,"E2_START",0,10)
 		assert (not action_occurrences), "should have had no action before 7; n times action occurred: {}".format(action_occurrences)
 
 	def testBetterAction(self):
