@@ -87,14 +87,13 @@ class LightingTestCase(unittest.TestCase):
 		changes = self.getFluentChangesForFluent(fluent)
 		retval = []
 		for change in changes:
-			if change.attrib['frame'] >= frame1 and change.attrib['frame'] <= frame2:
+			if int(change.attrib['frame']) >= frame1 and int(change.attrib['frame']) <= frame2:
 				retval.append(change)
 		return retval
 
 	def testFluentTooEarly(self):
 		frame = 9
 		light_changes = self.getFluentChangesForFluentBetweenFrames('light',0, frame)
-		light_changes = root.findall("./fluent_changes/fluent_change[@fluent='light'][@old_value]")
 		assert not len(light_changes), "found {} unexpected changes before frame {}".format(len(light_changes),frame)
 
 	def testFluentTooEarlyToo(self):
