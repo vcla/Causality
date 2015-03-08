@@ -56,6 +56,7 @@ root = ET.fromstring(xml_string)
 if kDebug:
 	print(xml_string)
 
+# the ideal result: action at 5, light changes to on at 8
 class LightingTestCase(unittest.TestCase):
 
 	def setUp(self):
@@ -65,7 +66,6 @@ class LightingTestCase(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 		pass
-
 
 	def testFluentZeroState(self):
 		light_0 = root.findall("./fluent_changes/fluent_change[@frame='0']")
@@ -92,41 +92,28 @@ class LightingTestCase(unittest.TestCase):
 		return retval
 
 	def testFluentTooEarly(self):
-		frame = 9
+		frame = 7
 		light_changes = self.getFluentChangesForFluentBetweenFrames('light',0, frame)
 		assert not len(light_changes), "found {} unexpected changes before frame {}".format(len(light_changes),frame)
 
 	def testFluentTooEarlyToo(self):
-		frame = 9
+		frame = 7
 		# only returns valid results for changed-on or changed-off, not stayed-on, stayed-off
 		fluentDict = dealWithDBResults.buildDictForDumbFluentBetweenFramesIntoResults(root, "light", ('light_on','light_off'), 0, frame)
 		assert not fluentDict['light_0_light_on_light_off'] and not fluentDict['light_0_light_off_light_on'], "should have had no light status change before {}".format(frame)
 
 	def testActionTooEarly(self):
 		#queryXMLForActionBetweenFrames(xml,action,frame1,frame2)
-		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(root,"E1_START",0,8)
-		assert (not action_occurrences), "should have had no action before 7; n times action occurred: {}".format(action_occurrences)
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(root,"E1_START",0,5)
+		assert (not action_occurrences), "should have had no action before 5; n times action occurred: {}".format(action_occurrences)
 
 	def testActionJustRight(self):
-		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(root,"E1_START",7,9)
-		assert (action_occurrences), "should have had action at 8; n times action occurred: {}".format(action_occurrences)
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(root,"E1_START",4,6)
+		assert (action_occurrences), "should have had action at 5; n times action occurred: {}".format(action_occurrences)
 
 	def testActionTooLate(self):
-		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(root,"E1_START",8,15)
-		assert (not action_occurrences), "should have had no action after 8; n times action occurred: {}".format(action_occurrences)
-
-	def testBetterAction(self):
-		"""Test case A. note that all test method names must begin with 'test.'"""
-		#assert foo.bar() == 543, "bar() not calculating values correctly"
-		pass
-
-	#def testB(self):
-	#	"""test case B"""
-	#	assert foo+foo == 34, "can't add Foo instances"
-
-	#def testC(self):
-	#	"""test case C"""
-	#	assert foo.baz() == "blah", "baz() not returning blah correctly"
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(root,"E1_START",5,15)
+		assert (not action_occurrences), "should have had no action after 5; n times action occurred: {}".format(action_occurrences)
 
 
 #class OtherTestCase(unittest.TestCase):
