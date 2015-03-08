@@ -90,6 +90,11 @@ class LightingTestCaseSecondOfTwoFluents(unittest.TestCase):
 		fluentDict = dealWithDBResults.buildDictForDumbFluentBetweenFramesIntoResults(self.root, "light", ('light_on','light_off'), 0, frame)
 		assert not fluentDict['light_0_light_on_light_off'] and not fluentDict['light_0_light_off_light_on'], "should have had no light status change before {}".format(frame)
 
+	def testFluentTooLate(self):
+		frame = 9
+		light_changes = evaluateXML.getFluentChangesForFluentBetweenFrames(self.root,'light',frame, 15)
+		assert not len(light_changes), "found {} unexpected changes after frame {}".format(len(light_changes),frame)
+
 	def testActionTooEarly(self):
 		#queryXMLForActionBetweenFrames(xml,action,frame1,frame2)
 		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"E1_START",0,5)
@@ -143,21 +148,9 @@ class LightingTestCaseFirstOfTwoFluents(unittest.TestCase):
 		light_8 = self.root.findall("./fluent_changes/fluent_change[@frame='8']")
 		assert (not light_8), "should have shown no change at 8; changed to: {}".format(light_8[0].attrib['new_value'])
 
-	def getFluentChangesForFluent(self, fluent):
-		return self.root.findall("./fluent_changes/fluent_change[@fluent='{}'][@old_value]".format(fluent))
-
-	def getFluentChangesForFluentBetweenFrames(self, fluent, frame1, frame2):
-		assert(frame1 <= frame2)
-		changes = self.getFluentChangesForFluent(fluent)
-		retval = []
-		for change in changes:
-			if int(change.attrib['frame']) >= frame1 and int(change.attrib['frame']) <= frame2:
-				retval.append(change)
-		return retval
-
 	def testFluentTooEarly(self):
 		frame = 5
-		light_changes = self.getFluentChangesForFluentBetweenFrames('light',0, frame)
+		light_changes = evaluateXML.getFluentChangesForFluentBetweenFrames(self.root,'light',0, frame)
 		assert not len(light_changes), "found {} unexpected changes before frame {}".format(len(light_changes),frame)
 
 	def testFluentTooEarlyToo(self):
@@ -165,6 +158,11 @@ class LightingTestCaseFirstOfTwoFluents(unittest.TestCase):
 		# only returns valid results for changed-on or changed-off, not stayed-on, stayed-off
 		fluentDict = dealWithDBResults.buildDictForDumbFluentBetweenFramesIntoResults(self.root, "light", ('light_on','light_off'), 0, frame)
 		assert not fluentDict['light_0_light_on_light_off'] and not fluentDict['light_0_light_off_light_on'], "should have had no light status change before {}".format(frame)
+
+	def testFluentTooLate(self):
+		frame = 7
+		light_changes = evaluateXML.getFluentChangesForFluentBetweenFrames(self.root,'light',frame, 15)
+		assert not len(light_changes), "found {} unexpected changes after frame {}".format(len(light_changes),frame)
 
 	def testActionTooEarly(self):
 		#queryXMLForActionBetweenFrames(xml,action,frame1,frame2)
