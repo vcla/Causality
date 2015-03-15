@@ -59,14 +59,6 @@ class LightingTestCaseSecondOfTwoFluents(unittest.TestCase):
 		if kDebug:
 			print(xml_string)
 
-	def setUp(self):
-		"""Call before every test case."""
-		pass
-
-	def tearDown(self):
-		"""Call after every test case."""
-		pass
-
 	def testFluentZeroState(self):
 		light_0 = self.root.findall("./fluent_changes/fluent_change[@frame='0']")
 		assert light_0[0].attrib['new_value'] == 'off', "should have decided light started out as off; was: {}".format(light_0[0].attrib['new_value'])
@@ -128,14 +120,6 @@ class LightingTestCaseFirstOfTwoFluents(unittest.TestCase):
 		if kDebug:
 			print(xml_string)
 
-	def setUp(self):
-		"""Call before every test case."""
-		pass
-
-	def tearDown(self):
-		"""Call after every test case."""
-		pass
-
 	def testFluentZeroState(self):
 		light_0 = self.root.findall("./fluent_changes/fluent_change[@frame='0']")
 		assert light_0[0].attrib['new_value'] == 'off', "should have decided light started out as off; was: {}".format(light_0[0].attrib['new_value'])
@@ -176,6 +160,8 @@ class LightingTestCaseFirstOfTwoFluents(unittest.TestCase):
 	def testActionTooLate(self):
 		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"E1_START",5,15)
 		assert (not action_occurrences), "should have had no action after 5; n times action occurred: {}".format(action_occurrences)
+
+
 
 
 #class OtherTestCase(unittest.TestCase):
