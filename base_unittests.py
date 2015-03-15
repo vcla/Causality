@@ -41,6 +41,7 @@ causal_forest_light = [
 },
 ]
 
+
 ######################## NEW TEST CLASS: 2 FLUENTS, 2nd IS CORRECT ###################
 # the ideal result: action at 5, light changes to on at 8
 class LightingTestCaseSecondOfTwoFluents(unittest.TestCase):
@@ -86,6 +87,25 @@ class LightingTestCaseSecondOfTwoFluents(unittest.TestCase):
 		frame = 9
 		light_changes = evaluateXML.getFluentChangesForFluentBetweenFrames(self.root,'light',frame, 15)
 		assert not len(light_changes), "found {} unexpected changes after frame {}".format(len(light_changes),frame)
+
+
+################## NEW TEST CLASS: ACTION TIME SHOULD BE WHEN ACTION OCCURS ##############
+# Answer: action at 5 only (fluent change at 8)
+class LightingTestCaseExactActionTime2ndOf2Fluents(unittest.TestCase):
+
+	@classmethod
+	def setUpClass(cls):
+		fluents_simple_light = {
+			6:  { "light": causal_grammar.probability_to_energy(.6)}, #light turns on at 6
+			8:  { "light": causal_grammar.probability_to_energy(.9)}, #light turns on at 8
+		}
+		actions_simple_light = {
+			5:  { "E1_START": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} },
+		}
+		xml_string = causal_grammar.process_events_and_fluents(causal_forest_light, fluents_simple_light, actions_simple_light, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,not kDebug) # !kDebug: suppress output
+		cls.root = ET.fromstring(xml_string)
+		if kDebug:
+			print(xml_string)
 
 	def testActionTooEarly(self):
 		#queryXMLForActionBetweenFrames(xml,action,frame1,frame2)
@@ -148,6 +168,25 @@ class LightingTestCaseFirstOfTwoFluents(unittest.TestCase):
 		light_changes = evaluateXML.getFluentChangesForFluentBetweenFrames(self.root,'light',frame, 15)
 		assert not len(light_changes), "found {} unexpected changes after frame {}".format(len(light_changes),frame)
 
+
+######################## NEW TEST CLASS: ACTION TIME EXACT
+# the ideal result: action at 5, light changes to on at 6
+class LightingTestCaseExactActionTime1stOf2Fluents(unittest.TestCase):
+
+	@classmethod
+	def setUpClass(cls):
+		fluents_simple_light = {
+			6:  { "light": causal_grammar.probability_to_energy(.9)}, #light turns on at 6
+			8:  { "light": causal_grammar.probability_to_energy(.6)}, #light turns on at 8
+		}
+		actions_simple_light = {
+			5:  { "E1_START": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} },
+		}
+		xml_string = causal_grammar.process_events_and_fluents(causal_forest_light, fluents_simple_light, actions_simple_light, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,not kDebug) # !kDebug: suppress output
+		cls.root = ET.fromstring(xml_string)
+		if kDebug:
+			print(xml_string)
+
 	def testActionTooEarly(self):
 		#queryXMLForActionBetweenFrames(xml,action,frame1,frame2)
 		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"E1_START",0,5)
@@ -160,7 +199,6 @@ class LightingTestCaseFirstOfTwoFluents(unittest.TestCase):
 	def testActionTooLate(self):
 		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"E1_START",5,15)
 		assert (not action_occurrences), "should have had no action after 5; n times action occurred: {}".format(action_occurrences)
-
 
 
 
