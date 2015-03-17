@@ -274,7 +274,7 @@ def calculate_energy(node, fluent_hash, event_hash):
 			node_energy += tmp_energy
 		elif node["symbol_type"] in ("nonevent",):
 			tmp_energy = event_hash[node["symbol"]]["energy"]
-			node_energy += probability_to_energy(1-energy_to_probability(tmp_energy)) + .3 #trying to add action penalty here for non-action
+			node_energy += probability_to_energy(1-energy_to_probability(tmp_energy))
 		elif node["symbol_type"] in ("timer","jump",):
 			# these are zero-probability events at this stage of evaluation
 			#tmp_energy = event_hash[node["symbol"]]["energy"]
