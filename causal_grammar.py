@@ -7,6 +7,7 @@ import itertools
 import math # for log, etc
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
+import os
 
 TYPE_FLUENT = "fluent"
 TYPE_ACTION = "action"
@@ -14,6 +15,8 @@ TYPE_ACTION = "action"
 kUnknownEnergy = 8#0.7 # TODO: may want to tune
 kUnlikelyEnergy = 10.0 # TODO: may want to tune
 kZeroProbabilityEnergy = 10.0 # TODO: may want to tune: 10.0 = very low
+kNonActionPenaltyEnergy = 0. # TODO: need to validate; kind of matches a penalty energy in readActionResults of parsingSummerActionAndFluentOutput
+
 # these are used to keep something that's flipping "around" 50% to not keep triggering fluent changes TODO: no they're not. but they are used in dealWithDbResults for posting "certain" results to the database... and they're passed into the main causal_grammar fn as fluent_on_probability and fluent_off_probability
 kFluentThresholdOnEnergy = 0.36 # TODO: may want to tune: 0.36 = 0.7 probability
 kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
@@ -50,6 +53,16 @@ def get_simplified_forest_for_fluents(forest, fluents):
 				simplified_forest.append(root)
 				break
 	return simplified_forest
+
+def sequence_generator():
+	i = 0
+	while 1:
+		yield i
+		i += 1
+
+actionid_generator = sequence_generator()
+fluentid_generator = sequence_generator()
+branchid_generator = sequence_generator()
 
 def generate_causal_forest_from_abbreviated_forest(abbreviated_forest):
 	forest = []
@@ -302,7 +315,7 @@ def calculate_energy(node, fluent_hash, event_hash):
 			node_energy += tmp_energy
 		elif node["symbol_type"] in ("nonevent",):
 			tmp_energy = event_hash[node["symbol"]]["energy"]
-			node_energy += probability_to_energy(1-energy_to_probability(tmp_energy))
+			node_energy += probability_to_energy(1-energy_to_probability(tmp_energy)) + kNonActionPenaltyEnergy
 		elif node["symbol_type"] in ("timer","jump",):
 			# these are zero-probability events at this stage of evaluation
 			#tmp_energy = event_hash[node["symbol"]]["energy"]
@@ -489,7 +502,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 		if frame - active_parse['frame'] > max_event_timeout:
 			# print("REMOVING {}".format(parse_id))
 			active_parses.pop(parse_id)
-			effective_frame = active_parse['frame'] + max_event_timeout
+			effective_frame = active_parse['frame'] # + max_event_timeout
 			parse_ids_completed.append(parse_id,)
 			parse_symbols_completed.append(symbol,)
 			effective_frames[symbol] = effective_frame
@@ -531,13 +544,18 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	event_hash = {}
 	fluent_hash = {}
 	event_timeouts = get_event_timeouts(causal_forest)
+	# build out the list of all event types in our forest, setting their initial (frame -1) values
+	# to kUnlikelyEnergy, and making a lookup to all relevant causal trees for those event types;
+	# also build out the list of all fluent types in our forest, setting their initial
+	# ('prev_energy' and 'energy') to either unknown or whatever our raw "initial" parses suggest
 	for causal_tree in causal_forest:
 		keys = get_fluent_and_event_keys_we_care_about([causal_tree])
 		for key in keys['events']:
-			if key in event_hash:
-				event_hash[key]["trees"].append(causal_tree)
-			else:
+			if not key in event_hash:
+				# initialize our event_hash for that key if we haven't seen it in another tree
 				event_hash[key] = {"agent": False, "frame": -1, "energy": kUnlikelyEnergy, "trees": [causal_tree,]}
+			else:
+				event_hash[key]["trees"].append(causal_tree)
 		for key in keys['fluents']:
 			if key in fluent_hash:
 				fluent_hash[key]["trees"].append(causal_tree)
@@ -560,31 +578,24 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 						else:
 							initial_condition = probability_to_energy(1-energy_to_probability(initial_condition))
 				fluent_hash[key] = {"energy": initial_condition, "prev_energy": initial_condition, "trees": [causal_tree,]}
+			#TODO: is this a bug? because we seem to think our status might be known in some cases above
 			fluent_hash[key]["status"] = kFluentStatusUnknown
-	#trying to trace through why fluent hash energies are not being updated.... and action hash energies, most likely....
-	#print "FLUENT HASH KEYS: "
-	#for key in fluent_hash.keys():
-	#	print("{}: {}".format(key,fluent_hash[key]['energy']))
-	#print "INITIAL CONDITIONS"
-	#print(initial_conditions)
-	#print "CURRENT ENERGIES"
-	#print_current_energies(fluent_hash, event_hash)
-	#print "FLUENT HASH"
-	#import pprint
-	#pp = pprint.PrettyPrinter(depth=6)
-	#pp.pprint(fluent_hash)
-	parse_id = 0 # give each parse tree a unique id
+
+	# build lookups by fluent and event -- the parse_array will be all of the parses,
+	# while the parse_id_hash* will list, for each fluent and event respectively, all of the
+	# parses associated with it
 	parse_array = []
 	parse_id_hash_by_fluent = {}
 	parse_id_hash_by_event = {}
-	# build lookups by fluent and event
+	parseid_generator = sequence_generator()
+	# TODO: what exactly are the generated parses used for? I have forgotten...
 	for causal_tree in causal_forest:
-		# print("PARSES FOR CAUSAL TREE {}:".format(causal_tree["symbol"]))
 		causal_tree["parses"] = generate_parses(causal_tree)
 		for parse in causal_tree["parses"]:
+			parse_id = parseid_generator.next()
 			parse["id"] = parse_id
 			parse_array.append(parse)
-			keys = get_fluent_and_event_keys_we_care_about((parse,)) # get_fluent_yadda expects a forest
+			keys = get_fluent_and_event_keys_we_care_about((parse,))
 			for key in keys['events']:
 				if key in parse_id_hash_by_event:
 					parse_id_hash_by_event[key].append(parse_id)
@@ -595,16 +606,22 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 					parse_id_hash_by_fluent[key].append(parse_id)
 				else:
 					parse_id_hash_by_fluent[key] = [parse_id,]
-			#print("*: {}".format(parse))
-			#parse_energy = calculate_energy(parse, fluent_hash, event_hash)
-			#print("E: {}".format(parse_energy))
-			parse_id += 1
 	# loop through the parses, getting the "next frame a change happens in"; if a change happens
-	# in both at the same time, they will be handled sequentially, the fluent first
+	# in both fluents and events at the same time, they will be handled sequentially,
+	# the fluent first
+	# TODO: since we complete 'actions' when we look at fluents, if they happen in the same frame
+	# we should probably handling actions first
 	active_parse_trees = {}
 	completions = {}
+	import pprint
+	pp = pprint.PrettyPrinter(depth=6)
 	for parse in parse_array:
 		complete_parse_tree(parse, fluent_hash, event_hash, 0, completions, 'initial')
+	pp.pprint(active_parse_trees)
+	pp.pprint("----")
+	pp.pprint(fluent_hash)
+	pp.pprint(event_hash)
+	pp.pprint("----")
 	while fluent_parse_index < len(fluent_parses) or action_parse_index < len(action_parses):
 		fluents_complete = fluent_parse_index >= len(fluent_parses)
 		action_complete = action_parse_index >= len(action_parses)
@@ -623,7 +640,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				fluent_on_probability = math.exp(-fluent_on_energy)
 				fluent_off_probability = 1 - fluent_on_probability
 				# print ("Fluent: {}; on probability: {}; off probability: {}".format(fluent,fluent_on_probability,fluent_off_probability))
-				if 0 == fluent_off_probability:  
+				if 0 == fluent_off_probability:
 					# TODO: might also need to catch this for fluent_on_probability 
 					fluent_off_energy = kZeroProbabilityEnergy
 				else:
@@ -679,7 +696,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 			filter_changes(changes, fluent_and_event_keys_we_care_about['events'])
 			action_parse_index += 1
 			for event in changes:
-				# for more complex situations, we need to think this through further; for instane, 
+				# for more complex situations, we need to think this through further; for instance,
 				# with the elevator: if agent 1 pushes the button; and then agent 2 pushes the button...
 				# then are each of those separate parses, or are they a combined parse, or is one subsumed
 				# by the other...? NOT worrying about this now.

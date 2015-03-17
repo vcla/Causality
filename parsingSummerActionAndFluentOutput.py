@@ -10,6 +10,7 @@ if results_dir:
 	sys.path.append(results_dir)
 
 import math
+import causal_grammar.kNonActionPenaltyEnergy
 
 # takes Bruce's detections
 def readFluentResults(exampleName):
@@ -153,7 +154,7 @@ def readActionResults(module):
 	# we don't trust the action parses as much as they want us to
 	for frame in action_parses:
 		for action in action_parses[frame]:
-			action_parses[frame][action]['energy'] = action_parses[frame][action]['energy'] # + 0.3 # + 0.69 # + 0.69314718056;
+			action_parses[frame][action]['energy'] = action_parses[frame][action]['energy'] + causal_grammar.kNonActionPenaltyEnergy # + 0.69 # + 0.69314718056;
 	return action_parses
 
 ##########################
