@@ -13,13 +13,13 @@ causal_forest_light = [
 	"symbol_type": "fluent",
 	"symbol": "light_on",
 	"children": [
-		{ "node_type": "and", "probability": .6, "children": [ #on inertially -- higher chance of occurrence?
+		{ "node_type": "and", "probability": .6, "children": [ #on inertially -- higher chance of occurrence? #energy = .51
 				{ "node_type": "leaf", "symbol": "light_on", "symbol_type": "prev_fluent" },
-				{ "node_type": "leaf", "symbol": "E1_START", "symbol_type": "nonevent", "timeout": 10 },
+				{ "node_type": "leaf", "symbol": "A1", "symbol_type": "nonevent", "timeout": 10 },
 		]},
-		{ "node_type": "and", "probability": .4, "children": [ #on by causing action E1_START
+		{ "node_type": "and", "probability": .4, "children": [ #on by causing action A1#energy = .92
 				{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_off" },
-				{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1_START", "timeout": 10 },
+				{ "node_type": "leaf", "symbol_type": "event", "symbol": "A1", "timeout": 10 },
 			]
 		},
 	],
@@ -28,13 +28,13 @@ causal_forest_light = [
 	"symbol_type": "fluent",
 	"symbol": "light_off",
 	"children": [
-		{ "node_type": "and", "probability": .6, "children": [ #off inertially
+		{ "node_type": "and", "probability": .6, "children": [ #off inertially #energy = .51
 				{ "node_type": "leaf", "symbol": "light_off", "symbol_type": "prev_fluent" },
-				{ "node_type": "leaf", "symbol": "E1_START", "symbol_type": "nonevent", "timeout": 10 },
+				{ "node_type": "leaf", "symbol": "A1", "symbol_type": "nonevent", "timeout": 10 },
 		]},
-		{ "node_type": "and", "probability": .4, "children": [ #off by causing action E1_START
+		{ "node_type": "and", "probability": .4, "children": [ #off by causing action A1#energy = .92
 				{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_on" },
-				{ "node_type": "leaf", "symbol_type": "event", "symbol": "E1_START", "timeout": 10 },
+				{ "node_type": "leaf", "symbol_type": "event", "symbol": "A1", "timeout": 10 },
 			]
 		},
 	],
@@ -49,11 +49,11 @@ class LightingTestCaseSecondOfTwoFluents(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
 		fluents_simple_light = {
-			6:  { "light": causal_grammar.probability_to_energy(.6)}, #light turns on at 6
-			8:  { "light": causal_grammar.probability_to_energy(.9)}, #light turns on at 8
+			6:  { "light": causal_grammar.probability_to_energy(.6)}, #light turns on at 6 -- energy = .51
+			8:  { "light": causal_grammar.probability_to_energy(.9)}, #light turns on at 8 -- energy = .11
 		}
 		actions_simple_light = {
-			5:  { "E1_START": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} },
+			5:  { "A1": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} }, #energy = .11
 		}
 		xml_string = causal_grammar.process_events_and_fluents(causal_forest_light, fluents_simple_light, actions_simple_light, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,not kDebug) # !kDebug: suppress output
 		cls.root = ET.fromstring(xml_string)
@@ -100,7 +100,7 @@ class LightingTestCaseExactActionTime2ndOf2Fluents(unittest.TestCase):
 			8:  { "light": causal_grammar.probability_to_energy(.9)}, #light turns on at 8
 		}
 		actions_simple_light = {
-			5:  { "E1_START": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} },
+			5:  { "A1": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} },
 		}
 		xml_string = causal_grammar.process_events_and_fluents(causal_forest_light, fluents_simple_light, actions_simple_light, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,not kDebug) # !kDebug: suppress output
 		cls.root = ET.fromstring(xml_string)
@@ -109,15 +109,15 @@ class LightingTestCaseExactActionTime2ndOf2Fluents(unittest.TestCase):
 
 	def testActionTooEarly(self):
 		#queryXMLForActionBetweenFrames(xml,action,frame1,frame2)
-		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"E1_START",0,5)
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A1",0,5)
 		assert (not action_occurrences), "should have had no action before 5; n times action occurred: {}".format(action_occurrences)
 
 	def testActionJustRight(self):
-		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"E1_START",4,6)
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A1",4,6)
 		assert (action_occurrences), "should have had action at 5; n times action occurred: {}".format(action_occurrences)
 
 	def testActionTooLate(self):
-		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"E1_START",5,15)
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A1",5,15)
 		assert (not action_occurrences), "should have had no action after 5; n times action occurred: {}".format(action_occurrences)
 
 
@@ -133,7 +133,7 @@ class LightingTestCaseFirstOfTwoFluents(unittest.TestCase):
 			8:  { "light": causal_grammar.probability_to_energy(.6)}, #light turns on at 8
 		}
 		actions_simple_light = {
-			5:  { "E1_START": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} },
+			5:  { "A1": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} },
 		}
 		xml_string = causal_grammar.process_events_and_fluents(causal_forest_light, fluents_simple_light, actions_simple_light, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,not kDebug) # !kDebug: suppress output
 		cls.root = ET.fromstring(xml_string)
@@ -180,7 +180,7 @@ class LightingTestCaseExactActionTime1stOf2Fluents(unittest.TestCase):
 			8:  { "light": causal_grammar.probability_to_energy(.6)}, #light turns on at 8
 		}
 		actions_simple_light = {
-			5:  { "E1_START": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} },
+			5:  { "A1": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} },
 		}
 		xml_string = causal_grammar.process_events_and_fluents(causal_forest_light, fluents_simple_light, actions_simple_light, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,not kDebug) # !kDebug: suppress output
 		cls.root = ET.fromstring(xml_string)
@@ -189,29 +189,167 @@ class LightingTestCaseExactActionTime1stOf2Fluents(unittest.TestCase):
 
 	def testActionTooEarly(self):
 		#queryXMLForActionBetweenFrames(xml,action,frame1,frame2)
-		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"E1_START",0,5)
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A1",0,5)
 		assert (not action_occurrences), "should have had no action before 5; n times action occurred: {}".format(action_occurrences)
 
 	def testActionJustRight(self):
-		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"E1_START",4,6)
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A1",4,6)
 		assert (action_occurrences), "should have had action at 5; n times action occurred: {}".format(action_occurrences)
 
 	def testActionTooLate(self):
-		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"E1_START",5,15)
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A1",5,15)
 		assert (not action_occurrences), "should have had no action after 5; n times action occurred: {}".format(action_occurrences)
 
 
+######################## NEW TEST CLASS: TWO ACTIONS, FIRST BEST
+# the ideal result: 
+class LightingTestCase1stOf2Actions(unittest.TestCase):
 
-#class OtherTestCase(unittest.TestCase):
-#
-#	def setUp(self):
-#		blah_blah_blah()
-#
-#	def tearDown(self):
-#		blah_blah_blah()
-#
-#	def testBlah(self):
-#		assert self.blahblah == "blah", "blah isn't blahing blahing correctly"
+	@classmethod
+	def setUpClass(cls):
+		causal_forest_modified = [
+		{
+			"node_type": "root",
+			"symbol_type": "fluent",
+			"symbol": "light_on",
+			"children": [
+				{ "node_type": "and", "probability": .25, "children": [ #on inertially -- higher chance of occurrence?
+						{ "node_type": "leaf", "symbol": "light_on", "symbol_type": "prev_fluent" },
+						{ "node_type": "leaf", "symbol": "A3", "symbol_type": "nonevent", "timeout": 10 },
+						{ "node_type": "leaf", "symbol": "A4", "symbol_type": "nonevent", "timeout": 10 },
+				]},
+				{ "node_type": "and", "probability": .375, "children": [ #on by causing action
+						{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_off" },
+						{ "node_type": "leaf", "symbol_type": "event", "symbol": "A1", "timeout": 10 },
+					]
+				},
+				{ "node_type": "and", "probability": .375, "children": [ #on by causing action
+						{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_off" },
+						{ "node_type": "leaf", "symbol_type": "event", "symbol": "A2", "timeout": 10 },
+					]
+				},
+			],
+		}, {
+			"node_type": "root",
+			"symbol_type": "fluent",
+			"symbol": "light_off",
+			"children": [
+				{ "node_type": "and", "probability": .25, "children": [ #off inertially
+						{ "node_type": "leaf", "symbol": "light_off", "symbol_type": "prev_fluent" },
+						{ "node_type": "leaf", "symbol": "A1", "symbol_type": "nonevent", "timeout": 10 },
+						{ "node_type": "leaf", "symbol": "A2", "symbol_type": "nonevent", "timeout": 10 },
+				]},
+				{ "node_type": "and", "probability": .375, "children": [ #off by causing action
+						{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_on" },
+						{ "node_type": "leaf", "symbol_type": "event", "symbol": "A3", "timeout": 10 },
+					]
+				},
+				{ "node_type": "and", "probability": .375, "children": [ #off by causing action
+						{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_on" },
+						{ "node_type": "leaf", "symbol_type": "event", "symbol": "A4", "timeout": 10 },
+					]
+				},
+			],
+		},
+		]
+		fluents_simple_light = {
+			8:  { "light": causal_grammar.probability_to_energy(.9)}, #light turns on at 8
+		}
+		actions_simple_light = {
+			5:  { "A1": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} },
+			6:  { "A2": {"energy": causal_grammar.probability_to_energy(.6), "agent": ("uuid4")} },
+		}
+		xml_string = causal_grammar.process_events_and_fluents(causal_forest_modified, fluents_simple_light, actions_simple_light, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,not kDebug) # !kDebug: suppress output
+		cls.root = ET.fromstring(xml_string)
+		if kDebug:
+			print(xml_string)
+
+	def testCorrectAction(self):
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A1",0,15)
+		assert (action_occurrences == 1), "should have had action A1; n times action occurred: {}".format(action_occurrences)
+
+	def testNotIncorrectAction(self):
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A2",0,15)
+		action_occurrences += dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A3",0,15)
+		action_occurrences += dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A4",0,15)
+		assert (not action_occurrences), "should not have had action A2; n times action occurred: {}".format(action_occurrences)
+
+
+######################## NEW TEST CLASS: TWO ACTIONS, SECOND BEST
+# the ideal result:  action 
+class LightingTestCase2ndOf2Actions(unittest.TestCase):
+
+	@classmethod
+	def setUpClass(cls):
+		causal_forest_modified = [
+		{
+			"node_type": "root",
+			"symbol_type": "fluent",
+			"symbol": "light_on",
+			"children": [
+				{ "node_type": "and", "probability": .4, "children": [ #on inertially -- higher chance of occurrence?
+						{ "node_type": "leaf", "symbol": "light_on", "symbol_type": "prev_fluent" },
+						{ "node_type": "leaf", "symbol": "A1", "symbol_type": "nonevent", "timeout": 10 },
+						{ "node_type": "leaf", "symbol": "A2", "symbol_type": "nonevent", "timeout": 10 },
+				]},
+				{ "node_type": "and", "probability": .3, "children": [ #on by causing action
+						{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_off" },
+						{ "node_type": "leaf", "symbol_type": "event", "symbol": "A1", "timeout": 10 },
+					]
+				},
+				{ "node_type": "and", "probability": .3, "children": [ #on by causing action
+						{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_off" },
+						{ "node_type": "leaf", "symbol_type": "event", "symbol": "A2", "timeout": 10 },
+					]
+				},
+			],
+		}, {
+			"node_type": "root",
+			"symbol_type": "fluent",
+			"symbol": "light_off",
+			"children": [
+				{ "node_type": "and", "probability": .4, "children": [ #off inertially
+						{ "node_type": "leaf", "symbol": "light_off", "symbol_type": "prev_fluent" },
+						{ "node_type": "leaf", "symbol": "A1", "symbol_type": "nonevent", "timeout": 10 },
+				]},
+				{ "node_type": "and", "probability": .3, "children": [ #off by causing action
+						{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_on" },
+						{ "node_type": "leaf", "symbol_type": "event", "symbol": "A3", "timeout": 10 },
+					]
+				},
+				{ "node_type": "and", "probability": .3, "children": [ #off by causing action
+						{ "node_type": "leaf", "symbol_type": "prev_fluent", "symbol": "light_on" },
+						{ "node_type": "leaf", "symbol_type": "event", "symbol": "A4", "timeout": 10 },
+					]
+				},
+			],
+		},
+		]
+		fluents_simple_light = {
+			8:  { "light": causal_grammar.probability_to_energy(.9)}, #light turns on at 8
+		}
+		actions_simple_light = {
+			5:  { "A1": {"energy": causal_grammar.probability_to_energy(.6), "agent": ("uuid4")} },
+			6:  { "A2": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} },
+		}
+		xml_string = causal_grammar.process_events_and_fluents(causal_forest_modified, fluents_simple_light, actions_simple_light, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,not kDebug) # !kDebug: suppress output
+		cls.root = ET.fromstring(xml_string)
+		if kDebug:
+			print(xml_string)
+
+	def testCorrectAction(self):
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A2",0,15)
+		assert (action_occurrences == 1), "should have had action A2; n times action occurred: {}".format(action_occurrences)
+
+	def testNotIncorrectAction(self):
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A1",0,15)
+		action_occurrences += dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A3",0,15)
+		action_occurrences += dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A4",0,15)
+		assert (not action_occurrences), "should not have had action A1, A3, A4; n times action occurred: {}".format(action_occurrences)
+
+
+# TODO: test "nonevent" does what i really want
+# TODO: make sure not averaging to calculate mismatched number of nodes -- need the probabilities to appropriately compensate for that
 
 
 if __name__ == "__main__":
