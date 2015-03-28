@@ -17,7 +17,7 @@ kInsertionHash = "1234567890"
 # managing human responses for comparison - note upload versus download
 
 def getExampleFromDB(exampleName, conn=False):
-	resultStorageFolder = "cvpr_db_results/"
+	resultStorageFolder = "results/cvpr_db_results/"
 	exampleNameForDB = exampleName.replace("_","")
 	m = hashlib.md5(exampleNameForDB)
 	tableName = TBLPFX + m.hexdigest()

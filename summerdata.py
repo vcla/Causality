@@ -4,7 +4,7 @@
 import causal_grammar
 import causal_grammar_summerdata # sets up causal_forest
 
-kActionDetections = 'CVPR2012_reverse_slidingwindow_action_detection_logspace'
+kActionDetections = 'results/CVPR2012_reverse_slidingwindow_action_detection_logspace'
 
 # These thresholds tuned for this fluent data because it's not "flipping between on and off", it's 
 # flipping "did transition closed to on" and "didn't transition closed to on"
@@ -26,6 +26,7 @@ args = parser.parse_args()
 
 causal_forest_orig = causal_grammar_summerdata.causal_forest
 
+import_failed = list()
 for example in args.example:
 	try:
 		if args.simplify:
@@ -48,3 +49,5 @@ for example in args.example:
 		import_failed.append(example)
 		continue
 	fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, False) # last true: suppress the xml output
+if len(import_failed):
+	print("FAILED IMPORTING: {}".format(", ".join(import_failed)))
