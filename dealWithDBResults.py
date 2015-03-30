@@ -189,21 +189,21 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 	off = 0
 	start_value = None
 	end_value = None
-	fluent_changes = xml.getElementsByTagName('fluent_change')
+	fluent_changes = xml.findall('.//fluent_change')
 	for fluent_change in fluent_changes:
-		if fluent_change.attributes['fluent'].nodeValue == fluent:
-			frame = int(fluent_change.attributes['frame'].nodeValue)
+		if fluent_change.attrib['fluent'] == fluent:
+			frame = int(fluent_change.attrib['frame'])
 			if not start_value:
 				if frame < frame1:
-					start_value = str(fluent_change.attributes['new_value'].nodeValue)
+					start_value = str(fluent_change.attrib['new_value'])
 					if debugQuery:
 						print("- frame {}: storing 'old' value of {}".format(frame,start_value))
 				else: #frame >= frame1
 					# let's just get these ducks lined up....
-					end_value = str(fluent_change.attributes['new_value'].nodeValue)
+					end_value = str(fluent_change.attrib['new_value'])
 					# trust 'old_value' over what we had before ...  TODO: penalize if it doesn't agree?
-					if 'old_value' in fluent_change.attributes.keys():
-						start_value = str(fluent_change.attributes['old_value'].nodeValue)
+					if 'old_value' in fluent_change.attrib.keys():
+						start_value = str(fluent_change.attrib['old_value'])
 						if end_value != start_value:
 							if start_value == "on":
 								on_off += 100
@@ -219,11 +219,14 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 				if frame >= frame2:
 					break
 				else:
-					next_end_value = str(fluent_change.attributes['new_value'].nodeValue)
-					next_old_value = str(fluent_change.attributes['old_value'].nodeValue)
+					next_end_value = str(fluent_change.attrib['new_value'])
+					if 'old_value' in fluent_change.attrib.keys():
+						next_old_value = str(fluent_change.attrib['old_value'])
+					else:
+						next_old_value = None
 					if end_value and next_old_value != end_value:
 						#conflict! we need to add a transition from next_old to end_value
-						if next_old == "on":
+						if next_old_value == "on":
 							off_on += 100
 						else:
 							on_off += 100
@@ -439,12 +442,13 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 	#print("objects: {}".format(ojects))
 	#print("frames: {}".format(cutpoints))
 	insertion_object = {"name": source, "hash": kInsertionHash}
-	print minidom.parseString(ET.tostring(fluent_and_action_xml,method="xml",encoding="utf-8")) #.toprettyxml(indent="\t")
+	print minidom.parseString(fluent_and_action_xml) #.toprettyxml(indent="\t")
+	fluent_and_action_xml_xml = ET.fromstring(fluent_and_action_xml)
 	for oject in ojects:
 		prev_frame = cutpoints[0]
 		for frame in cutpoints[1:]:
 			#print("{} - {}".format(oject, frame))
-			insertion_object.update(queryXMLForAnswersBetweenFrames(fluent_and_action_xml,oject,prev_frame,frame,source == 'origdata'))
+			insertion_object.update(queryXMLForAnswersBetweenFrames(fluent_and_action_xml_xml,oject,prev_frame,frame,not source.endswith('smrt')))
 			prev_frame = frame
 	print("INSERT: {}".format(insertion_object))
 	# http://stackoverflow.com/a/9336427/856925
@@ -466,7 +470,7 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 
 if __name__ == '__main__':
 	import argparse
-	kSummerDataPythonDir="CVPR2012_reverse_slidingwindow_action_detection_logspace";
+	kSummerDataPythonDir="results/CVPR2012_reverse_slidingwindow_action_detection_logspace";
 	parser = argparse.ArgumentParser()
 	parser.add_argument("mode", choices=["upload","download","upanddown","list"])
 	group = parser.add_mutually_exclusive_group()
@@ -544,6 +548,10 @@ if __name__ == '__main__':
 			print minidom.parseString(fluent_and_action_xml).toprettyxml(indent="\t")
 			#print fluent_and_action_xml.toprettyxml(indent="\t")
 			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalgrammar', conn):
+				completed.append(example)
+			else:
+				oject_failed.append(example)
+			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalsmrt', conn):
 				completed.append(example)
 			else:
 				oject_failed.append(example)

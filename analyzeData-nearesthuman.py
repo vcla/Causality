@@ -3,8 +3,8 @@
 
 import os
 import hashlib
-kCSVDir = 'cvpr_db_results' # from the 'export' option in dealWithDBResults.py
-kComputerTypes = ['causalgrammar', 'origsmrt', 'origdata']
+kCSVDir = 'results/cvpr_db_results' # from the 'export' option in dealWithDBResults.py
+kComputerTypes = ['causalgrammar', 'origsmrt', 'origdata', 'causalsmrt']
 
 def findDistanceBetweenTwoVectors(A, B, fields, fluent):
 	dist = 0
@@ -24,7 +24,7 @@ def findDistanceBetweenTwoVectors(A, B, fields, fluent):
 	return dist
 
 ## for each file in our csvs directory, find the smallest "human" distance for each "computer" vector
-print("FILENAME\tFLUENT\tHASH\tORIGDATA\tORIGSMRT\tCAUSALGRAMMAR\tORIGHUMANS\tSMRTHUMANS\tCAUSALHUMANS")
+print("FILENAME\tFLUENT\tHASH\tORIGDATA\tORIGSMRT\tCAUSALGRAMMAR\tCAUSALSMRT\tORIGHUMANS\tSMRTHUMANS\tCAUSALHUMANS\tCAUSSMRTHUMANS")
 exceptions = []
 kAllFluentsConstant="all"
 fluentDiffSums = {}
@@ -57,8 +57,12 @@ for filename in os.listdir (kCSVDir):
 						raise Exception("NO HUMANS FOR {}".format(filename))
 					if not 'origdata' in computers:
 						raise Exception("NO ORIGDATA FOR {}".format(filename))
+					if not 'origsmrt' in computers:
+						raise Exception("NO ORIGSMRT FOR {}".format(filename))
 					if not 'causalgrammar' in computers:
 						raise Exception("NO CAUSALGRAMMAR FOR {}".format(filename))
+					if not 'causalsmrt' in computers:
+						raise Exception("NO CAUSALSMRT FOR {}".format(filename))
 					humansN = len(humans)
 					bestscores = {}
 					besthumans = {}
@@ -76,10 +80,10 @@ for filename in os.listdir (kCSVDir):
 					exampleName, room = filename.rsplit('.',1)
 					exampleNameForDB = exampleName.replace("_","")
 					fluent = fluent if fluent else kAllFluentsConstant
-					print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(filename,fluent,hashlib.md5(exampleNameForDB).hexdigest(),bestscores['origdata'], bestscores['origsmrt'], bestscores['causalgrammar'], besthumans['origdata'], besthumans['origsmrt'], besthumans['causalgrammar']))
+					print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(filename,fluent,hashlib.md5(exampleNameForDB).hexdigest(),bestscores['origdata'], bestscores['origsmrt'], bestscores['causalgrammar'], bestscores['causalsmrt'], besthumans['origdata'], besthumans['origsmrt'], besthumans['causalgrammar'], besthumans['causalsmrt']))
 					# summing for later
 					if not fluent in fluentDiffSums:
-						fluentDiffSums[fluent] = {'origdata': [0, 0], 'origsmrt': [0, 0], 'causalgrammar': [0, 0], '_count': 0}
+						fluentDiffSums[fluent] = {'origdata': [0, 0], 'origsmrt': [0, 0], 'causalgrammar': [0, 0], 'causalsmrt': [0, 0], '_count': 0}
 					fluentDiffSums[fluent]['_count'] += 1
 					for computer in kComputerTypes:
 						fluentDiffSums[fluent][computer][0] += bestscores[computer]
@@ -92,7 +96,7 @@ for filename in os.listdir (kCSVDir):
 #if not N:
 #	N = 1
 
-print("-\t-\t-\t-\t-\t-\t-\t-")
+print("-\t-\t-\t-\t-\t-\t-\t-\t-\t-")
 #print("{}\t{}\t{}\t{}\t{}".format("AVERAGE",total_origdata_score / N,total_causalgrammar_score / N,"",""))
 import pprint
 pp = pprint.PrettyPrinter(depth=6)

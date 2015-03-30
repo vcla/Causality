@@ -1,9 +1,9 @@
 # used with analyze_results.R (which is tied to analyze_results.go somehow?)
 fluentList = ['screen', 'door', 'light']
-fluentComputerTypes = ['causalgrammar', 'origdata']#, 'fluent']
+fluentComputerTypes = ['causalgrammar', 'origdata', 'origsmrt', 'causalsmrt']#, 'fluent']
 actionList = ['screen_action', 'door_action', 'light_action']
-actionComputerTypes = ['causalgrammar', 'origdata']#, 'action']
-dbcsv = 'cvpr_db_results.csv' # TODO: R < analyze_results.R --vanilla to run mingtians code to toss the DB results together
+actionComputerTypes = ['causalgrammar', 'origdata', 'origsmrt', 'causalsmrt']#, 'action']
+dbcsv = 'results/cvpr_db_results.csv' # TODO: R < analyze_results.R --vanilla to run mingtians code to toss the DB results together
 thresh = 50
 
 def readMingtiansDBCompilation(dbcsv, oject, computerType):
