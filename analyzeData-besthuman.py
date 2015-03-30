@@ -2,8 +2,8 @@
 #QUESTION: how should these costs aggregate across video clips?
 
 import os
-kCSVDir = 'cvpr_db_results' # from the 'export' option in dealWithDBResults.py
-kComputerTypes = ['causalgrammar', 'origdata', 'origsmrt']
+kCSVDir = 'results/cvpr_db_results' # from the 'export' option in dealWithDBResults.py
+kComputerTypes = ['causalgrammar', 'causalsmrt', 'origdata', 'origsmrt']
 
 def findDistanceBetweenTwoVectors(A, B):
 	dist = 0
@@ -13,12 +13,13 @@ def findDistanceBetweenTwoVectors(A, B):
 
 
 ## for each file in our csvs directory, find the "mode" human, then use their values to evaluate each "computer"
-print("FILENAME\tBESTHUMANSCORE\tORIGDATA\tORIGSMRT\tCAUSALGRAMMAR")
+print("FILENAME\tBESTHUMANSCORE\tORIGDATA\tORIGSMRT\tCAUSALGRAMMAR\tCAUSALSMRT")
 exceptions = []
 total_human_score = 0
 total_origdata_score = 0
 total_origsmrt_score = 0
 total_causalgrammar_score = 0
+total_causalsmrt_score = 0
 N = 0
 for filename in os.listdir (kCSVDir):
 	if filename.endswith(".csv"):
@@ -57,30 +58,36 @@ for filename in os.listdir (kCSVDir):
 				if not 'origdata' in computers:
 					raise Exception("NO ORIGDATA FOR {}".format(filename))
 				if not 'origsmrt' in computers:
-					raise Exception("NO ORIGDATA FOR {}".format(filename))
+					raise Exception("NO ORIGSMRT FOR {}".format(filename))
 				if not 'causalgrammar' in computers:
 					raise Exception("NO CAUSALGRAMMAR FOR {}".format(filename))
+				if not 'causalsmrt' in computers:
+					raise Exception("NO CAUSALSMRT FOR {}".format(filename))
 				besthumansN = len(besthumans)
 				origdata_score = 0
 				origsmrt_score = 0
 				causalgrammar_score = 0
+				causalsmrt_score = 0
 				for i in range(besthumansN):
 					origdata_score += findDistanceBetweenTwoVectors(computers['origdata'],humans[besthumans[i]])
 					origsmrt_score += findDistanceBetweenTwoVectors(computers['origsmrt'],humans[besthumans[i]])
 					causalgrammar_score += findDistanceBetweenTwoVectors(computers['causalgrammar'],humans[besthumans[i]])
+					causalsmrt_score += findDistanceBetweenTwoVectors(computers['causalsmrt'],humans[besthumans[i]])
 				origdata_score /= besthumansN
 				origsmrt_score /= besthumansN
 				causalgrammar_score /= besthumansN
+				causalsmrt_score /= besthumansN
 				#print("{}\t{}\t{}\t{}".format(filename,besthumans,currentscore,humans[besthumans[0]]))
-				print("{}\t{}\t{}\t{}\t{}".format(filename,bestscore,origdata_score,origsmrt_score,causalgrammar_score))
+				print("{}\t{}\t{}\t{}\t{}\t{}".format(filename,bestscore,origdata_score,origsmrt_score,causalgrammar_score,causalsmrt_score))
 				N += 1
 				total_human_score += bestscore
 				total_origdata_score += origdata_score
 				total_origsmrt_score += origdata_score
 				total_causalgrammar_score += causalgrammar_score
+				total_causalsmrt_score += causalsmrt_score
 			except Exception as foo:
 				exceptions.append(foo)
 
-print("{}\t{}\t{}\t{}\t{}".format("AVERAGE",total_human_score / N,total_origdata_score / N, total_origsmrt_score / N, total_causalgrammar_score / N))
+print("{}\t{}\t{}\t{}\t{}\t{}".format("AVERAGE",total_human_score / N,total_origdata_score / N, total_origsmrt_score / N, total_causalgrammar_score / N, total_causalsmrt_score / N))
 
 print exceptions

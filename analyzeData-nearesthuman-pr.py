@@ -6,7 +6,7 @@ pp = pprint.PrettyPrinter(depth=6)
 
 import os
 import hashlib
-kCSVDir = 'cvpr_db_results' # from the 'export' option in dealWithDBResults.py
+kCSVDir = 'results/cvpr_db_results' # from the 'export' option in dealWithDBResults.py
 kComputerTypes = ['causalgrammar', 'origsmrt', 'origdata']
 
 # note that "negative" action must be the last one specified for proper P/R and there must be only one "no action"
