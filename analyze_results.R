@@ -1,7 +1,8 @@
 input_dir <- "cvpr_db_results"
 output_csv <- "cvpr_db_results.csv"
+setwd('results')
 
-csv_files <- dir(input_dir, patter=".csv", full.names=TRUE)
+csv_files <- dir(input_dir, pattern=".csv", full.names=TRUE)
 records <- matrix(c("entity", "instance", "subject", "option", "score"), nrow=1, ncol=5)
 for (csv_file in csv_files) {
   data <- read.csv(csv_file)

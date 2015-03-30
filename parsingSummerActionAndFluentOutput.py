@@ -1,6 +1,13 @@
-fluent_dir = "CVPR2012_fluent_result/"
+results_dir = "results"
+fluent_dir = "CVPR2012_fluent_result"
 fluent_types = ["door_open_closed", "door_closed_open", "light_on_off", "light_off_on", "screen_on_off", "screen_off_on"]
 objectInitials = ["d", "l", "t", "s", "w", "p", "e"]
+
+import os
+import sys
+if results_dir:
+	fluent_dir = os.sep.join((results_dir,fluent_dir))
+	sys.path.append(results_dir)
 
 import math
 
@@ -11,10 +18,7 @@ def readFluentResults(exampleName):
 	fluent_parses = {}
 	for fluent_type in fluent_types:
 		[fluent, old_value, new_value] = fluent_type.split("_")
-		fluent_file = fluent_dir + fluent_type + "_fluent_results.txt"
-		#print("READING {}".format(fluent_file))
-		#print("opening {}".format(fluent_file))
-		#print("looking for {}".format(exampleName))
+		fluent_file = os.sep.join((fluent_dir,fluent_type + "_fluent_results.txt"))
 		thefile = open(fluent_file, 'r')
 		results = thefile.readlines()
 		i = 0
@@ -70,7 +74,7 @@ def readFluentResults(exampleName):
 
 def returnExampleNames():
 	# each fluent detection file seems to contain all examples, so only need one...
-	fluent_file = fluent_dir + fluent_types[0] + "_fluent_results.txt"
+	fluent_file = os.sep.join((fluent_dir, fluent_types[0] + "_fluent_results.txt"))
 	results = open(fluent_file, 'r');
 	example_names = []
 	for line in results:
@@ -141,12 +145,15 @@ def readActionResults(exampleName, action_dir, resultNumber):
 """
 
 def readActionResults(module):
+	if results_dir:
+		module = module.replace(results_dir+os.sep,"")
 	module = __import__(module,fromlist=['temporal_parses'])
+
 	action_parses = module.temporal_parses[0]
 	# we don't trust the action parses as much as they want us to
 	for frame in action_parses:
 		for action in action_parses[frame]:
-			action_parses[frame][action]['energy'] = action_parses[frame][action]['energy'] + 0.3 # + 0.69 # + 0.69314718056;
+			action_parses[frame][action]['energy'] = action_parses[frame][action]['energy'] # + 0.3 # + 0.69 # + 0.69314718056;
 	return action_parses
 
 ##########################

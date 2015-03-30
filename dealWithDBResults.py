@@ -14,10 +14,12 @@ kInfinityCutpoint = 1000000000000000 # close enough to infinity, anyway; working
 kKnownObjects = ["screen","door","light","phone","ringer"]
 kInsertionHash = "1234567890"
 
+globalDryRun = None # commandline argument
+
 # managing human responses for comparison - note upload versus download
 
 def getExampleFromDB(exampleName, conn=False):
-	resultStorageFolder = "cvpr_db_results/"
+	resultStorageFolder = "results/cvpr_db_results/"
 	exampleNameForDB = exampleName.replace("_","")
 	m = hashlib.md5(exampleNameForDB)
 	tableName = TBLPFX + m.hexdigest()
@@ -44,10 +46,11 @@ def getExampleFromDB(exampleName, conn=False):
 	sqlStatement = sqlStatement[:-2]
 	sqlStatement += " FROM " + tableName + " WHERE " + notNullColumn[0] + " IS NOT NULL"
 	cursor.execute(sqlStatement)
-	csv_writer = csv.writer(open((resultStorageFolder + exampleName + ".csv"), "wt"))
-	csv_writer.writerow([i[0] for i in cursor.description]) # write headers
-	csv_writer.writerows(cursor)
-	del csv_writer # this will close the CSV file
+	if not globalDryRun:
+		csv_writer = csv.writer(open((resultStorageFolder + exampleName + ".csv"), "wt"))
+		csv_writer.writerow([i[0] for i in cursor.description]) # write headers
+		csv_writer.writerows(cursor)
+		del csv_writer # this will close the CSV file
 	cursor.close()
 	if not leaveconn:
 		conn.close()
@@ -189,21 +192,21 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 	off = 0
 	start_value = None
 	end_value = None
-	fluent_changes = xml.getElementsByTagName('fluent_change')
+	fluent_changes = xml.findall('.//fluent_change')
 	for fluent_change in fluent_changes:
-		if fluent_change.attributes['fluent'].nodeValue == fluent:
-			frame = int(fluent_change.attributes['frame'].nodeValue)
+		if fluent_change.attrib['fluent'] == fluent:
+			frame = int(fluent_change.attrib['frame'])
 			if not start_value:
 				if frame < frame1:
-					start_value = str(fluent_change.attributes['new_value'].nodeValue)
+					start_value = str(fluent_change.attrib['new_value'])
 					if debugQuery:
 						print("- frame {}: storing 'old' value of {}".format(frame,start_value))
 				else: #frame >= frame1
 					# let's just get these ducks lined up....
-					end_value = str(fluent_change.attributes['new_value'].nodeValue)
+					end_value = str(fluent_change.attrib['new_value'])
 					# trust 'old_value' over what we had before ...  TODO: penalize if it doesn't agree?
-					if 'old_value' in fluent_change.attributes.keys():
-						start_value = str(fluent_change.attributes['old_value'].nodeValue)
+					if 'old_value' in fluent_change.attrib.keys():
+						start_value = str(fluent_change.attrib['old_value'])
 						if end_value != start_value:
 							if start_value == "on":
 								on_off += 100
@@ -219,11 +222,14 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 				if frame >= frame2:
 					break
 				else:
-					next_end_value = str(fluent_change.attributes['new_value'].nodeValue)
-					next_old_value = str(fluent_change.attributes['old_value'].nodeValue)
+					next_end_value = str(fluent_change.attrib['new_value'])
+					if 'old_value' in fluent_change.attrib.keys():
+						next_old_value = str(fluent_change.attrib['old_value'])
+					else:
+						next_old_value = None
 					if end_value and next_old_value != end_value:
 						#conflict! we need to add a transition from next_old to end_value
-						if next_old == "on":
+						if next_old_value == "on":
 							off_on += 100
 						else:
 							on_off += 100
@@ -439,12 +445,13 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 	#print("objects: {}".format(ojects))
 	#print("frames: {}".format(cutpoints))
 	insertion_object = {"name": source, "hash": kInsertionHash}
-	print minidom.parseString(ET.tostring(fluent_and_action_xml,method="xml",encoding="utf-8")) #.toprettyxml(indent="\t")
+	print minidom.parseString(fluent_and_action_xml) #.toprettyxml(indent="\t")
+	fluent_and_action_xml_xml = ET.fromstring(fluent_and_action_xml)
 	for oject in ojects:
 		prev_frame = cutpoints[0]
 		for frame in cutpoints[1:]:
 			#print("{} - {}".format(oject, frame))
-			insertion_object.update(queryXMLForAnswersBetweenFrames(fluent_and_action_xml,oject,prev_frame,frame,source == 'origdata'))
+			insertion_object.update(queryXMLForAnswersBetweenFrames(fluent_and_action_xml_xml,oject,prev_frame,frame,not source.endswith('smrt')))
 			prev_frame = frame
 	print("INSERT: {}".format(insertion_object))
 	# http://stackoverflow.com/a/9336427/856925
@@ -452,9 +459,10 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 		if type(insertion_object[key]) is str:
 			insertion_object[key] = "'{}'".format(insertion_object[key])
 	qry = "INSERT INTO %s (%s) VALUES (%s)" % (tableName, ", ".join(insertion_object.keys()), ", ".join(map(str,insertion_object.values())))
-	cursor.execute("DELETE FROM %s WHERE name IN ('%s')" % (tableName,source))
-	cursor.execute(qry)
-	conn.commit()
+	if not globalDryRun:
+		cursor.execute("DELETE FROM %s WHERE name IN ('%s')" % (tableName,source))
+		cursor.execute(qry)
+		conn.commit()
 	cursor.close()
 	if not leaveconn:
 		conn.close()
@@ -466,16 +474,20 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 
 if __name__ == '__main__':
 	import argparse
-	kSummerDataPythonDir="CVPR2012_reverse_slidingwindow_action_detection_logspace";
+	kSummerDataPythonDir="results/CVPR2012_reverse_slidingwindow_action_detection_logspace";
 	parser = argparse.ArgumentParser()
 	parser.add_argument("mode", choices=["upload","download","upanddown","list"])
 	group = parser.add_mutually_exclusive_group()
+	group.add_argument('-d','--dry-run', action='store_true', dest='dryrun', required=False, help='Do not actually upload data to the db or save downloaded data; only valid for "upload" or "download", does not make sense for "upanddown" or "list"')
 	group.add_argument('-o','--only', action='append', dest='examples_only', required=False, help='specific examples to run, versus all found examples')
 	group.add_argument('-x','--exclude', action='append', dest='examples_exclude', required=False, help='specific examples to exclude, out of all found examples', default=[])
 	parser.add_argument("-s","--simplify", action="store_true", required=False, help="simplify the summerdata grammar to only include fluents that start with the example name[s]")
 	# parser.add_argument("--dry-run",required=False,action="store_true") #TODO: would be nie
 	args = parser.parse_args()
 	examples = []
+	globalDryRun = args.dryrun
+	if args.mode in ("list","upanddown",) and globalDryRun:
+		raise ValueError("dryrun is only valid for 'download' or 'upload', not 'upanddown' or 'list'")
 	if args.examples_only:
 		examples = args.examples_only
 	else:
@@ -535,7 +547,7 @@ if __name__ == '__main__':
 				pp.pprint(temporal_parses)
 				print("")
 			except ImportError as ie:
-				#print("IMPORT FAILED: {}".format(ie))
+				print("IMPORT FAILED: {}".format(ie))
 				import_failed.append(example)
 				continue
 			orig_xml = munge_parses_to_xml(fluent_parses,temporal_parses)
@@ -544,6 +556,10 @@ if __name__ == '__main__':
 			print minidom.parseString(fluent_and_action_xml).toprettyxml(indent="\t")
 			#print fluent_and_action_xml.toprettyxml(indent="\t")
 			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalgrammar', conn):
+				completed.append(example)
+			else:
+				oject_failed.append(example)
+			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalsmrt', conn):
 				completed.append(example)
 			else:
 				oject_failed.append(example)
