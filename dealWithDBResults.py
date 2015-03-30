@@ -14,6 +14,8 @@ kInfinityCutpoint = 1000000000000000 # close enough to infinity, anyway; working
 kKnownObjects = ["screen","door","light","phone","ringer"]
 kInsertionHash = "1234567890"
 
+globalDryRun = None # commandline argument
+
 # managing human responses for comparison - note upload versus download
 
 def getExampleFromDB(exampleName, conn=False):
@@ -44,10 +46,11 @@ def getExampleFromDB(exampleName, conn=False):
 	sqlStatement = sqlStatement[:-2]
 	sqlStatement += " FROM " + tableName + " WHERE " + notNullColumn[0] + " IS NOT NULL"
 	cursor.execute(sqlStatement)
-	csv_writer = csv.writer(open((resultStorageFolder + exampleName + ".csv"), "wt"))
-	csv_writer.writerow([i[0] for i in cursor.description]) # write headers
-	csv_writer.writerows(cursor)
-	del csv_writer # this will close the CSV file
+	if not globalDryRun:
+		csv_writer = csv.writer(open((resultStorageFolder + exampleName + ".csv"), "wt"))
+		csv_writer.writerow([i[0] for i in cursor.description]) # write headers
+		csv_writer.writerows(cursor)
+		del csv_writer # this will close the CSV file
 	cursor.close()
 	if not leaveconn:
 		conn.close()
@@ -456,9 +459,10 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 		if type(insertion_object[key]) is str:
 			insertion_object[key] = "'{}'".format(insertion_object[key])
 	qry = "INSERT INTO %s (%s) VALUES (%s)" % (tableName, ", ".join(insertion_object.keys()), ", ".join(map(str,insertion_object.values())))
-	cursor.execute("DELETE FROM %s WHERE name IN ('%s')" % (tableName,source))
-	cursor.execute(qry)
-	conn.commit()
+	if not globalDryRun:
+		cursor.execute("DELETE FROM %s WHERE name IN ('%s')" % (tableName,source))
+		cursor.execute(qry)
+		conn.commit()
 	cursor.close()
 	if not leaveconn:
 		conn.close()
@@ -474,12 +478,16 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument("mode", choices=["upload","download","upanddown","list"])
 	group = parser.add_mutually_exclusive_group()
+	group.add_argument('-d','--dry-run', action='store_true', dest='dryrun', required=False, help='Do not actually upload data to the db or save downloaded data; only valid for "upload" or "download", does not make sense for "upanddown" or "list"')
 	group.add_argument('-o','--only', action='append', dest='examples_only', required=False, help='specific examples to run, versus all found examples')
 	group.add_argument('-x','--exclude', action='append', dest='examples_exclude', required=False, help='specific examples to exclude, out of all found examples', default=[])
 	parser.add_argument("-s","--simplify", action="store_true", required=False, help="simplify the summerdata grammar to only include fluents that start with the example name[s]")
 	# parser.add_argument("--dry-run",required=False,action="store_true") #TODO: would be nie
 	args = parser.parse_args()
 	examples = []
+	globalDryRun = args.dryrun
+	if args.mode in ("list","upanddown",) and globalDryRun:
+		raise ValueError("dryrun is only valid for 'download' or 'upload', not 'upanddown' or 'list'")
 	if args.examples_only:
 		examples = args.examples_only
 	else:
@@ -539,7 +547,7 @@ if __name__ == '__main__':
 				pp.pprint(temporal_parses)
 				print("")
 			except ImportError as ie:
-				#print("IMPORT FAILED: {}".format(ie))
+				print("IMPORT FAILED: {}".format(ie))
 				import_failed.append(example)
 				continue
 			orig_xml = munge_parses_to_xml(fluent_parses,temporal_parses)
