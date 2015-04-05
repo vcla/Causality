@@ -47,7 +47,9 @@ def getExampleFromDB(exampleName, conn=False):
 	sqlStatement += " FROM " + tableName + " WHERE " + notNullColumn[0] + " IS NOT NULL"
 	cursor.execute(sqlStatement)
 	if not globalDryRun:
-		csv_writer = csv.writer(open((resultStorageFolder + exampleName + ".csv"), "wt"))
+		csv_filename = resultStorageFolder + exampleName + ".csv"
+		print(" as {}".format(csv_filename))
+		csv_writer = csv.writer(open(csv_filename, "wt"))
 		csv_writer.writerow([i[0] for i in cursor.description]) # write headers
 		csv_writer.writerows(cursor)
 		del csv_writer # this will close the CSV file
@@ -439,13 +441,14 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 	# let's make sure we know how to work on all of these objects
 	known_ojects = kKnownObjects
 	if not all(map(lambda x: x in known_ojects,ojects)):
-		print("skipping {} due to an un unknown object (one of {})".format(example,ojects))
+		difference = set(ojects).difference(known_ojects)
+		print("skipping {} due to unknown: {}".format(example,", ".join(difference)))
 		return
 	# for each of our objects, figure out what we think went on at each cutpoint
 	#print("objects: {}".format(ojects))
 	#print("frames: {}".format(cutpoints))
 	insertion_object = {"name": source, "hash": kInsertionHash}
-	print minidom.parseString(fluent_and_action_xml) #.toprettyxml(indent="\t")
+	print minidom.parseString(fluent_and_action_xml).toprettyxml(indent="\t")
 	fluent_and_action_xml_xml = ET.fromstring(fluent_and_action_xml)
 	for oject in ojects:
 		prev_frame = cutpoints[0]
@@ -453,7 +456,7 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 			#print("{} - {}".format(oject, frame))
 			insertion_object.update(queryXMLForAnswersBetweenFrames(fluent_and_action_xml_xml,oject,prev_frame,frame,not source.endswith('smrt')))
 			prev_frame = frame
-	print("INSERT: {}".format(insertion_object))
+	# print("INSERT: {}".format(insertion_object))
 	# http://stackoverflow.com/a/9336427/856925
 	for key in insertion_object.keys():
 		if type(insertion_object[key]) is str:
@@ -556,26 +559,26 @@ if __name__ == '__main__':
 			print minidom.parseString(fluent_and_action_xml).toprettyxml(indent="\t")
 			#print fluent_and_action_xml.toprettyxml(indent="\t")
 			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalgrammar', conn):
-				completed.append(example)
+				completed.append("{}-{}".format(example,'causalgrammar'))
 			else:
-				oject_failed.append(example)
+				oject_failed.append("{}-{}".format(example,'causalgrammar'))
 			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalsmrt', conn):
-				completed.append(example)
+				completed.append("{}-{}".format(example,'causalsmrt'))
 			else:
-				oject_failed.append(example)
+				oject_failed.append("{}-{}".format(example,'causalsmrt'))
 			if uploadComputerResponseToDB(example, orig_xml, 'origdata', conn):
-				also_completed.append(example)
+				completed.append("{}-{}".format(example,'origdata'))
 			else:
-				also_oject_failed.append(example)
+				oject_failed.append("{}-{}".format(example,'origdata'))
 			if uploadComputerResponseToDB(example, orig_xml, 'origsmrt', conn):
-				also_completed.append(example)
+				completed.append("{}-{}".format(example,'origsmrt'))
 			else:
-				also_oject_failed.append(example)
+				oject_failed.append("{}-{}".format(example,'origsmrt'))
 		print("COMPLETED: {}".format(completed))
-		print("ALSO COMPLETED: {}".format(also_completed))
-		print("SKIPPED DUE TO OBJECT: {}".format(oject_failed))
-		print("ALSO SKIPPED DUE TO OBJECT: {}".format(also_oject_failed))
-		print("SKIPPED DUE TO IMPORT: {}".format(import_failed))
+		if oject_failed:
+			print("SKIPPED DUE TO OBJECT: {}".format(oject_failed))
+		if import_failed:
+			print("SKIPPED DUE TO IMPORT: {}".format(import_failed))
 		print("....................")
 		print("....................")
 	if args.mode in ("download","upanddown"):
