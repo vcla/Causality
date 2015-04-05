@@ -30,6 +30,7 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 	m = hashlib.md5(exampleNameForDB)
 	tableName = TBLPFX + m.hexdigest()
 	leaveconn = True
+	human_dups = dict()
 	if not conn:
 		leaveconn = False
 		conn = MySQLdb.connect (host = DBHOST, user = DBUSER, passwd = DBPASS, db = DBNAME)
@@ -56,15 +57,20 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 	csv_rows = []
 	first = True
 	action_width = 20
-	frames_sorted = sorted(video_clippoints[exampleNameForClippoints].keys())
-	start_of_frames = int(frames_sorted[0])
-	end_of_frames = int(video_clippoints[exampleNameForClippoints][frames_sorted[-1]])
+	frames_sorted = sorted(int(x) for x in video_clippoints[exampleNameForClippoints].keys())
+	start_of_frames = frames_sorted[0]
+	end_of_frames = int(video_clippoints[exampleNameForClippoints][str(frames_sorted[-1])])
 	for row in cursor:
 		fluent_matrix = []
 		action_matrix = []
 		fluents = False
 		actions = False
 		name = row[0]
+		if name in human_dups:
+			human_dups[name] += 1
+			name = "{}_{}".format(name, human_dups[name])
+		else:
+			human_dups[name] = 1
 		xindex = 1
 		while xindex < len(row):
 			(root, actiontest, rest) = headers[xindex].split("_",2)
@@ -95,7 +101,10 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 				# TODO: -1 class to represent unknown/unsure?
 				choices = row[xindex:xindex+4]
 				sum_choices = float(sum(choices))
-				choices = [a/sum_choices for a in choices]
+				if sum_choices == 0:
+					choices = [.25, .25, .25, .25] # TODO: is this a valid something? or a sign of a bug?
+				else:
+					choices = [a/sum_choices for a in choices]
 				offon = choices[0]
 				onoff = choices[1]
 				on = choices[2]
@@ -163,7 +172,7 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 			fluents = True
 	if not fluents:
 		# we've never seen anything! 50% all the way!
-		result = [0.5,]*last_db_frame
+		result = [0.5,]*(end_of_frames-start_of_frames)
 		fluent_matrix.extend(result)
 	elif last_frame < end_of_frames:
 		result = [last_probability,]*(end_of_frames-last_frame)
