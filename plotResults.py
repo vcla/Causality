@@ -236,4 +236,11 @@ with open(kHumanAnnotationClippoints, 'ra') as file:
 			video_clippoints[example_key] = nextexample
 			nextexample = dict()
 
-buildHeatmapForExample('screen_1_lounge','screen')
+import sys
+if len(sys.argv) > 1:
+	example = sys.argv[1]
+	key = sys.argv[2]
+else:
+	example = 'screen_1_lounge'
+	key = 'screen'
+buildHeatmapForExample(example,key)
