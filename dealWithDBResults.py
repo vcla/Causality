@@ -5,6 +5,7 @@ import os
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import videoCutpoints
+import summerdata
 
 DBNAME = "amy_cvpr2012"
 DBUSER = "amycvpr2012"
@@ -165,6 +166,7 @@ def munge_parses_to_xml(fluent_parses,action_parses,suppress_output=False):
 # NOTE: we're now penalizing multiple counts of the same action...
 # NOTE: does not pair START and END together???
 def queryXMLForActionBetweenFrames(xml,action,frame1,frame2):
+	debugOn = True
 	count = 0
 	for event in sorted(xml.findall('actions/event'), key=lambda elem: int(elem.attrib['frame'])):
 		if event.attrib['action'] == action:
@@ -172,6 +174,42 @@ def queryXMLForActionBetweenFrames(xml,action,frame1,frame2):
 			if frame > frame1 and frame < frame2:
 				#return {"frame":frame, "energy": float(event.attrib['energy']}
 				count += 1
+			elif frame >= frame2:
+				break
+	return count
+
+# AS ABOVE BUT PAIRS START AND END, so it knows if an action is "ongoing" into the frameslice you care about
+# TODO: does not know how multiple action pairings turn into different actions, or how to handle fake action pairings ala door ... 
+def queryXMLForActionsBetweenFrames(xml,actions,frame1,frame2):
+	debugOn = False
+	count = 0
+	if len(actions) > 1:
+		raise ValueError("DOES NOT KNOW HOW TO HANDLE multiple action pairings yet: {}".format(actions))
+	actions = actions[0]
+	if debugOn:
+		print("HUNTING FOR {} BETWEEN {} AND {}".format(actions[0],frame1,frame2))
+		xml_stuff.printXMLActions(xml)
+	is_happening = False
+	for event in sorted(xml.findall('actions/event'), key=lambda elem: int(elem.attrib['frame'])):
+		frame = int(event.attrib['frame'])
+		if event.attrib['action'] == actions[0]:
+			if frame < frame1:
+				is_happening = True
+			elif frame > frame1 and frame < frame2:
+				is_happening = False
+				count += 1
+			elif frame >= frame2:
+				break
+		elif event.attrib['action'] == actions[1]:
+			if frame < frame1:
+				is_happening = False
+			elif frame > frame1 and frame < frame2:
+				is_happening = False
+				count += 1
+			elif frame >= frame2:
+				break
+	if is_happening:
+		count += 1
 	return count
 
 """
@@ -392,7 +430,7 @@ def buildDictForFluentChangePossibilities(fluent,frame,onstring,offstring,prev,n
 def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 	# get actions and fluents for the oject
 	retval = {}
-	onsoffs = { "door": ["open","closed"], "light": ["on","off"], "screen": ["on","off"], "phone": ["active","off"], "ringer": ["ring","no_ring"] }
+	onsoffs = summerdata.onsoffs
 	if not oject in onsoffs.keys():
 		raise ValueError("unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
 	if oject == "ringer":
@@ -400,6 +438,10 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 		return retval
 	#fluents
 	onsoffs = onsoffs[oject]
+	if oject in summerdata.actionPairings:
+		actionpairings = summerdata.actionPairings[oject]
+	else:
+		print("WARNING: missing actionpairing: {}".format(oject))
 	if dumb:
 		result = buildDictForDumbFluentBetweenFramesIntoResults(xml,oject,onsoffs,frame1,frame2)
 	else:
@@ -421,7 +463,6 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 			result['act_not_opened_closed'] = 100
 	elif oject == "light":
 		result = {"act_pushbutton":0, "act_no_pushbutton":0}
-		# don't need to worry about end
 		count = queryXMLForActionBetweenFrames(xml,"pressbutton_START",frame1,frame2)
 		if count:
 			result['act_pushbutton'] = 100 * count
@@ -429,8 +470,7 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 			result['act_no_pushbutton'] = 100
 	elif oject == "screen":
 		result = {"act_mousekeyboard":0, "act_no_mousekeyboard":0}
-		# don't need to worry about end
-		count = queryXMLForActionBetweenFrames(xml,"usecomputer_START",frame1,frame2)
+		count = queryXMLForActionsBetweenFrames(xml,actionpairings,frame1,frame2)
 		if count:
 			result['act_mousekeyboard'] = 100 * count
 		else:

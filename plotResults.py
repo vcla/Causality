@@ -7,6 +7,7 @@ from xml.dom import minidom
 import pprint
 import xml_stuff
 import videoCutpoints
+import summerdata
 
 #TODO: this really shouldn't require the database, should it? everything's already dumped to cvpr_db_results.... but kResultStorageFolder is unused! BAH! DOH! Yes. So ideally before this "python dealWithDBResults.py upanddown" to create those.
 
@@ -18,13 +19,9 @@ TBLPFX = "cvpr2012_"
 
 kSummerDataPythonDir="results/CVPR2012_reverse_slidingwindow_action_detection_logspace";
 kResultStorageFolder = "results/cvpr_db_results/"
-kActionPairings = {
-	"screen":(["usecomputer_START","usecomputer_END"],),
-	#"water":(["benddown_START","benddown_END"],["drink_START","drink_END"]),
-	"door":(["standing_START","standing_END"],),
-	"light":(["pressbutton_START","pressbutton_END"],),
-	#"trash":(["throwtrash_START","throwtrash_END"],["PICKUP TRASH]_START","[PICKUP TRASH]_END"],),
-}
+kActionPairings = summerdata.actionPairings
+kOnsOffs = summerdata.onsoffs
+
 kTruthDir = "results/truth/"
 
 #TODO: how to manage more complicated fluents, such as cup_MORE_on, cup_MORE_off, cup_LESS_on, cup_LESS_off, TRASH_LESS_on, TRASH_LESS_OFF, trash_MORE_on, trash_MORE_off? these should each get a new line, simplest answer. but then our alternating rows thing DIES.
@@ -240,6 +237,8 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 	fluent_matrix = []
 	fluents = False
 	last_probability = 0
+	thison = kOnsOffs[prefix][0]
+	thisoff = kOnsOffs[prefix][1]
 	for fluent in fluent_changes:
 		# prefix is, for example, 'screen', the root of the tree we are looking at
 		# ignoring energies at the moment because they are the sum of all the energies for this 'chain' as compared to other chains, and not for the individual nodes (oops TODO?)
@@ -250,11 +249,11 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 			if 'old_value' in fluent.attrib:
 				fluents = True # this counts as having an answer if we needed one
 				old_value = fluent.attrib['old_value']
-				if old_value == "on":
+				if old_value == thison:
 					last_probability = 1.
 				else:
 					last_probability = 0.
-			if new_value == "on":
+			if new_value == thison:
 				probability = 1.
 			else:
 				probability = 0.
