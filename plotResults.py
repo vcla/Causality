@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import pprint
 import xml_stuff
+import videoCutpoints
 
 #TODO: this really shouldn't require the database, should it? everything's already dumped to cvpr_db_results.... but kResultStorageFolder is unused! BAH! DOH! Yes. So ideally before this "python dealWithDBResults.py upanddown" to create those.
 
@@ -17,7 +18,6 @@ TBLPFX = "cvpr2012_"
 
 kSummerDataPythonDir="results/CVPR2012_reverse_slidingwindow_action_detection_logspace";
 kResultStorageFolder = "results/cvpr_db_results/"
-kHumanAnnotationClippoints = "results/CVPR2012_humanTestAnnotation.txt"
 kActionPairings = {
 	"screen":(["usecomputer_START","usecomputer_END"],),
 	#"water":(["benddown_START","benddown_END"],["drink_START","drink_END"]),
@@ -41,8 +41,8 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 	# -------------------- STAGE 1: READ FROM DB --------------------------
 	# for db lookup, remove "room" at end, and munge _'s away
 	exampleNameForDB = "".join(parsedExampleName[:-1])
-	# for clippoints, just remove "room" at end
-	exampleNameForClippoints = "_".join(parsedExampleName[:-1])
+	# for cutpoints, just remove "room" at end
+	exampleNameForCutpoints = "_".join(parsedExampleName[:-1])
 	m = hashlib.md5(exampleNameForDB)
 	tableName = TBLPFX + m.hexdigest()
 	leaveconn = True
@@ -73,9 +73,9 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 	csv_rows = []
 	first = True
 	action_width = 20
-	frames_sorted = sorted(int(x) for x in video_clippoints[exampleNameForClippoints].keys())
+	frames_sorted = sorted(int(x) for x in videoCutpoints.cutpoints[exampleNameForCutpoints].keys())
 	start_of_frames = frames_sorted[0]
-	end_of_frames = int(video_clippoints[exampleNameForClippoints][str(frames_sorted[-1])])
+	end_of_frames = int(videoCutpoints.cutpoints[exampleNameForCutpoints][str(frames_sorted[-1])])
 	for row in cursor:
 		fluent_matrix = []
 		action_matrix = []
@@ -95,7 +95,7 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 				# a yes action at this point means we "trigger" it for 1 frame in the middle of our framecount, give or take
 				(start_frame, _, action) = rest.split("_") # assumes "act" before "act_no"; assumes only "act" and "act_no"; TODO: what else exists in the database???
 				start_frame = int(start_frame)
-				end_frame = int(video_clippoints[exampleNameForClippoints][str(start_frame)])
+				end_frame = int(videoCutpoints.cutpoints[exampleNameForCutpoints][str(start_frame)])
 				frame_diff = end_frame - start_frame
 				zeros = ['0',]*(frame_diff)
 				choices = row[xindex:xindex+2]
@@ -110,7 +110,7 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 			else:
 				fluents = True
 				start_frame = int(actiontest)
-				end_frame = int(video_clippoints[exampleNameForClippoints][str(start_frame)])
+				end_frame = int(videoCutpoints.cutpoints[exampleNameForCutpoints][str(start_frame)])
 				frame_diff = end_frame-start_frame
 				# note this throws preference to on, then off, then onoff, then offon
 				# just because we need some simple tie-breaking way
@@ -398,23 +398,6 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 
 	if not debugOn:
 		print("\n".join(csv_rows))
-
-video_clippoints = dict()
-with open(kHumanAnnotationClippoints, 'ra') as file:
-	import re
-	clip_frames_regexp = re.compile(r"Frame: (\d+).*End: (\d+)")
-	newlines = (line.rstrip() for line in file)
-	nextexample = dict()
-	example_key = False
-	for line in newlines:
-		if line.startswith("Testing Data Name:"):
-			example_key = line[19:]
-		elif line.startswith("Clip Start Frame:"):
-			match = re.findall(clip_frames_regexp, line)[0]
-			nextexample[match[0]] = match[1]
-		elif line.startswith("****"):
-			video_clippoints[example_key] = nextexample
-			nextexample = dict()
 
 import sys
 if len(sys.argv) > 1:

@@ -4,13 +4,13 @@ import MySQLdb
 import os
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
+import videoCutpoints
 
 DBNAME = "amy_cvpr2012"
 DBUSER = "amycvpr2012"
 DBHOST = "127.0.0.1" # forwarding 3306
 DBPASS = "rC2xfLQFDMUZqJxf"
 TBLPFX = "cvpr2012_"
-kInfinityCutpoint = 1000000000000000 # close enough to infinity, anyway; working on an off-by-one issue
 kKnownObjects = ["screen","door","light","phone","ringer"]
 kInsertionHash = "1234567890"
 
@@ -187,6 +187,8 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 		print("SEARCHING {} between {} and {}".format(fluent,frame1,frame2))
 		xml_stuff.printXMLFluents(xml)
 	prefix = "{}_{}_".format(fluent,frame1)
+	frame1 = int(frame1)
+	frame2 = int(frame2)
 	onstring = onsoffs[0]
 	offstring = onsoffs[1]
 	on_off = 0
@@ -298,12 +300,16 @@ def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,fra
 	off_on = 0
 	on = 0
 	off = 0
+	frame1 = int(frame1)
+	frame2 = int(frame2)
 	fluent_changes = sorted(xml.findall('.//fluent_change'), key=lambda elem: int(elem.attrib['frame']))
+	old_value = False
 	for fluent_change in fluent_changes:
-		old_value = False
 		if fluent_change.attrib['fluent'] == fluent:
 			frame = int(fluent_change.attrib['frame'])
-			if (frame >= frame1 and frame <= frame2):
+			if frame < frame1:
+				old_value = fluent_change.attrib['new_value']
+			if frame >= frame1 and frame <= frame2:
 				# we're only counting "changes" because that's all that was ever really detected, despite what our xml might look like
 				# TODO: penalize conflicts somehow. I think that will require a complete reorg of all the things wrapping this
 				# and technically we're counting /everything/ as a change
@@ -332,8 +338,13 @@ def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,fra
 				break
 	#return {"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }
 	if not on_off and not off_on:
-		on = 0
-		off = 0
+		if old_value == "on":
+			on = 100
+		elif old_value == "off":
+			off = 100
+		else:
+			on = 50
+			off = 50
 	retval = {
 		"{}{}_{}".format(prefix,onstring,offstring): on_off,
 		"{}{}_{}".format(prefix,offstring,onstring): off_on,
@@ -441,8 +452,11 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 
 def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = False):
 	debugQuery = False
-	exampleNameForDB, room = example.rsplit('_',1)
-	exampleNameForDB = exampleNameForDB.replace("_","")
+	parsedExampleName = example.split('_')
+	# for db lookup, remove "room" at end, and munge _'s away
+	exampleNameForDB = "".join(parsedExampleName[:-1])
+	# for cutpoints, just remove "room" at end
+	exampleNameForCutpoints = "_".join(parsedExampleName[:-1])
 	m = hashlib.md5(exampleNameForDB)
 	tableName = TBLPFX + m.hexdigest()
 	leaveconn = True
@@ -458,6 +472,7 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 	allColumns = cursor.fetchall()
 	# get cutpoints and objects from our columns; we'll build the actions and fluents back up manually from lookups
 	print("{}".format(tableName))
+	cutpoint_lookup = videoCutpoints.cutpoints[exampleNameForCutpoints]
 	cutpoints = []
 	ojects = []
 	sqlStatement = "SELECT "
@@ -474,9 +489,15 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 				frame = tmp
 			ojects.append(oject,)
 			cutpoints.append(int(frame))
-	cutpoints.append(kInfinityCutpoint) # close enough to infinity, anyway; working on an off-by-one issue
 	ojects = list(set(ojects))
 	cutpoints = sorted(list(set(cutpoints)))
+	if str(cutpoints[-1]) in cutpoint_lookup:
+		cutpoints.append(cutpoint_lookup[str(cutpoints[-1])])
+	else:
+		print("WARNING: {} failed to be found in cutpoints for {}".format(str(cutpoints[-1]),exampleNameForCutpoints))
+		last_cutpoint = sorted(int(x) for x in cutpoint_lookup)[-1]
+		cutpoints.append(cutpoint_lookup[str(last_cutpoint)])
+
 	# let's make sure we know how to work on all of these objects
 	known_ojects = kKnownObjects
 	if not all(map(lambda x: x in known_ojects,ojects)):
@@ -566,7 +587,7 @@ if __name__ == '__main__':
 		# flipping "did transition closed to on" and "didn't transition closed to on"
 		causal_grammar.kFluentThresholdOnEnergy = 0.6892
 		causal_grammar.kFluentThresholdOffEnergy = 0.6972
-		#raise("MAYBE DELETE 'computer' FROM RESULTS BEFORE RERUNNING")
+		#raise("MAYBE DELETE 'computer' FROM RESULTS BEFORE RE-RUNNING")
 		for example in examples:
 			print("---------\nEXAMPLE: {}\n-------".format(example))
 			if args.simplify:
