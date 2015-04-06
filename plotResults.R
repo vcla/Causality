@@ -16,20 +16,26 @@
 # options(echo=TRUE) # if you want see commands in output file
 args <- commandArgs(trailingOnly = TRUE)
 doOutputPNG = FALSE
+kIncludeLegendHistogram <- "none"
+kShowLegend <- FALSE
+kAlternateColors <- TRUE
 
 if (length(args) == 0) {
-	kSourceCSV <- "/projects/inference-master/results/timelines/screen_1_lounge_timeline.csv"
+	kSourceCSV <- "/projects/inference-master/results/timelines/screen_1_lounge-screen.csv"
 } else {
 	kSourceCSV <- args[1]
 	doOutputPNG <- TRUE
 	outputPNG <- args[2]
 }
+# filename <- tail(strsplit(kSourceCSV,"/")[[1]],1)
+filename <- basename(kSourceCSV)
+filename <- sub("\\.[[:alnum:]]+$", "", filename)
+filename <- strsplit(filename,"-")
+filename <- paste(filename[[1]][1]," (",filename[[1]][2], ")" )
+
 # doOutputPNG <- TRUE
 # outputPNG="/projects/inference-master/output.png"
 
-kIncludeLegendHistogram <- "none"
-kShowLegend <- FALSE
-kAlternateColors <- TRUE
 # kColors = colorRampPalette(c('white','lightgreen','darkgreen'))(255)
 kColors = colorRampPalette(c('white', rgb(127,205,187,maxColorValue=255), rgb(44,127,184,maxColorValue=255)))(255)
 # kColorsAlt = colorRampPalette(c('white','purple'))(255)
@@ -58,8 +64,8 @@ firstframe = strtoi(substring(colnames(timeline)[1],2))
 
 if (kAlternateColors) {
 	rowsToColorDifferently = seq(0,dim(timeline)[1],2)
-	timeline_matrix <- timeline_matrix / 2.
-	timeline_matrix[rowsToColorDifferently,] <- timeline_matrix[rowsToColorDifferently,] + 0.50001
+	timeline_matrix <- timeline_matrix / 2.01
+	timeline_matrix[rowsToColorDifferently,] <- timeline_matrix[rowsToColorDifferently,] + 0.50005
 	colors <- append(kColors,kColorsAlt)
 } else {
 	colors <- kColors
@@ -74,9 +80,6 @@ columnsToLabel <- append(columnsToLabel,columnsN-1)
 columnLabels[columnsToLabel + 1] = columnsToLabel + firstframe
 columnsToLabel[length(columnsToLabel)] <- columnsToLabel[length(columnsToLabel)] + 1
 
-if (!doOutputPNG) {
-	graphics.off() # because we're breaking the plot/graphics object with margins or something
-}
 
 #myheatmap = heatmap
 myheatmap = heatmap.2
@@ -93,6 +96,8 @@ op <- par()
 if (doOutputPNG) {
 	png(outputPNG, width=12, height=8, units="in", res=72, pointsize=20)
 	par(cex.axis = 20, cex.lab = 22)
+} else {
+	graphics.off() # because we're breaking the plot/graphics object with margins or something
 }
 
 timeline_heatmap <- myheatmap(
@@ -117,8 +122,11 @@ timeline_heatmap <- myheatmap(
 	notecol="red",
 	cexRow=0.7, # make row text labels smaller
 	#cexCol=1.2,
-
+	xlab=filename,
+#	ylab="bar",
+#	main="main",
 	)
+title(filename)
 if (length(outputPNG) == 0) {
 	par(op)
 }

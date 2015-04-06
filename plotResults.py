@@ -6,6 +6,8 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import pprint
 
+#TODO: this really shouldn't require the database, should it? everything's already dumped to cvpr_db_results.... but kResultStorageFolder is unused! BAH! DOH! Yes. So ideally before this "python dealWithDBResults.py upanddown" to create those.
+
 DBNAME = "amy_cvpr2012"
 DBUSER = "amycvpr2012"
 DBHOST = "127.0.0.1" # forwarding 3306
@@ -15,6 +17,17 @@ TBLPFX = "cvpr2012_"
 kSummerDataPythonDir="results/CVPR2012_reverse_slidingwindow_action_detection_logspace";
 kResultStorageFolder = "results/cvpr_db_results/"
 kHumanAnnotationClippoints = "results/CVPR2012_humanTestAnnotation.txt"
+kActionPairings = {
+	"screen":(["usecomputer_START","usecomputer_END"],),
+	#"water":(["benddown_START","benddown_END"],["drink_START","drink_END"]),
+	"door":(["standing_START","standing_END"],),
+	"light":(["pressbutton_START","pressbutton_END"],),
+	#"trash":(["throwtrash_START","throwtrash_END"],["PICKUP TRASH]_START","[PICKUP TRASH]_END"],),
+}
+
+#TODO: how to manage more complicated fluents, such as cup_MORE_on, cup_MORE_off, cup_LESS_on, cup_LESS_off, TRASH_LESS_on, TRASH_LESS_OFF, trash_MORE_on, trash_MORE_off? these should each get a new line, simplest answer. but then our alternating rows thing DIES.
+#TODO: water and trash above
+#TODO: how to manage timers: become_thirsty?
 
 import causal_grammar
 import causal_grammar_summerdata
@@ -142,8 +155,6 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 	# thankfully, import_summerdata uses parsingSummerActionAndFluentOutput's readFluentResults and readActionResults
 	fluent_parses, action_parses = causal_grammar.import_summerdata(exampleName, kSummerDataPythonDir)
 	last_frame = start_of_frames
-	last_index = 0
-	last_energy = 0
 	fluent_matrix = []
 	fluents = False
 	last_probability = 0
@@ -181,52 +192,42 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 	row.extend([str(x) for x in fluent_matrix])
 	csv_rows.append(",".join(row))
 
-	last_frame = start_of_frames
-	last_index = 0
-	last_energy = 0
-	action_matrix = []
-	actions = False
-	last_probability = 0
 	#{1016: {'usecomputer_END': {'energy': 0.0, 'agent': 'uuid1'}}, 733: {'usecomputer_END': {'energy': 0.0, 'agent': 'uuid1'}}, 388: {'usecomputer_END': {'energy': 0.0, 'agent': 'uuid1'}}, 389: {'usecomputer_START': {'energy': 0.0, 'agent': 'uuid1'}}, 582: {'usecomputer_START': {'energy': 0.001096, 'agent': 'uuid1'}}, 650: {'usecomputer_END': {'energy': 0.0, 'agent': 'uuid1'}}, 651: {'usecomputer_START': {'energy': 6e-06, 'agent': 'uuid1'}}, 525: {'usecomputer_END': {'energy': 3e-06, 'agent': 'uuid1'}}, 526: {'usecomputer_START': {'energy': -0.0, 'agent': 'uuid1'}}, 889: {'usecomputer_START': {'energy': 0.0, 'agent': 'uuid1'}}, 791: {'usecomputer_END': {'energy': -0.0, 'agent': 'uuid1'}}, 593: {'usecomputer_END': {'energy': 0.001096, 'agent': 'uuid1'}}, 594: {'usecomputer_START': {'en
-	thingies = {"screen":["usecomputer_START","usecomputer_END"]}
-	thingy = thingies[prefix]
-	last_state = 0
-	for key in sorted(x for x in action_parses.keys() if x < end_of_frames):
-		# prefix is, for example, 'screen', the root of the tree we are looking at
-		if thingy[0] in action_parses[key]:
-			energy = action_parses[key][thingy[0]]['energy']
-			last_probability = causal_grammar.energy_to_probability(energy)
-			frame_diff = key - last_frame
-			result = [0.,]*frame_diff
+	actionPairings = kActionPairings[prefix]
+	for actionPairing in actionPairings:
+		last_frame = start_of_frames
+		action_matrix = []
+		actions = False
+		last_probability = 0
+		for key in sorted(x for x in action_parses.keys() if x < end_of_frames):
+			# prefix is, for example, 'screen', the root of the tree we are looking at
+			if actionPairing[0] in action_parses[key]:
+				energy = action_parses[key][actionPairing[0]]['energy']
+				last_probability = causal_grammar.energy_to_probability(energy)
+				frame_diff = key - last_frame
+				result = [0.,]*frame_diff
+				action_matrix.extend(result)
+				actions = True
+				last_frame = key
+			elif actionPairing[1] in action_parses[key]:
+				frame_diff = key - last_frame
+				result = [last_probability,]*frame_diff # we know start and stop are symmetric
+				action_matrix.extend(result)
+				last_probability = 0
+				actions = True
+				last_frame = key
+		if not actions:
+			# we've never seen anything! 0% all the way!
+			result = [0.,]*(end_of_frames - start_of_frames)
 			action_matrix.extend(result)
-			actions = True
-			last_frame = key
-		elif thingy[1] in action_parses[key]:
-			frame_diff = key - last_frame
-			result = [last_probability,]*frame_diff # we know start and stop are symmetric
+		elif key < end_of_frames:
+			result = [last_probability,]*(end_of_frames-key)
 			action_matrix.extend(result)
-			last_probability = 0
-			actions = True
-			last_frame = key
-	if not actions:
-		# we've never seen anything! 0% all the way!
-		result = [0.,]*(end_of_frames - start_of_frames)
-		action_matrix.extend(result)
-	elif key < end_of_frames:
-		result = [last_probability,]*(end_of_frames-key)
-		action_matrix.extend(result)
-	row = ['ORIG' + " " + thingies[prefix][0].split("_")[0],]
-	row.extend([str(x) for x in action_matrix])
-	csv_rows.append(",".join(row))
+		row = ['ORIG' + " " + actionPairing[0].split("_")[0],]
+		row.extend([str(x) for x in action_matrix])
+		csv_rows.append(",".join(row))
 
 	print("\n".join(csv_rows))
-
-
-#TODO: run on all videos
-#for filename in os.listdir(kSummerDataPythonDir):
-#	if filename.endswith(".py") and filename != "__init__.py":
-#		example = filename[:-3]
-#TODO: for each video, run on all relevant trees, not having to specify
 
 video_clippoints = dict()
 with open(kHumanAnnotationClippoints, 'ra') as file:
@@ -252,4 +253,7 @@ if len(sys.argv) > 1:
 else:
 	example = 'screen_1_lounge'
 	key = 'screen'
-buildHeatmapForExample(example,key)
+if key in kActionPairings.keys():
+	buildHeatmapForExample(example,key)
+else:
+	raise SystemExit("'{}' not handled; we only know: {}".format(key,", ".join(kActionPairings.keys())))

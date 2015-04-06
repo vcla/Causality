@@ -1,6 +1,9 @@
-for i in `python dealWithDBResults.py list | grep screen_ | cut -d '	' -f 1`
-	do
-	echo RUNNING $i
-	python plotResults.py $i screen > results/timelines/$i.csv
-	Rscript --vanilla plotResults.R results/timelines/$i.csv results/timelines/$i.png
+for j in "screen"
+do
+	for i in `python dealWithDBResults.py list | grep ${j}_ | cut -d '	' -f 1`
+		do
+		echo RUNNING $i
+		python plotResults.py $i $j > results/timelines/$i-$j.csv
+		Rscript --vanilla plotResults.R results/timelines/$i-$j.csv results/timelines/$i-$j.png
+	done
 done

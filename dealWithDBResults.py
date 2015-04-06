@@ -166,7 +166,7 @@ def munge_parses_to_xml(fluent_parses,action_parses,suppress_output=False):
 # NOTE: does not pair START and END together???
 def queryXMLForActionBetweenFrames(xml,action,frame1,frame2):
 	count = 0
-	for event in xml.findall('actions/event'):
+	for event in sorted(xml.findall('actions/event'), key=lambda elem: int(elem.attrib['frame'])):
 		if event.attrib['action'] == action:
 			frame = int(event.attrib['frame'])
 			if frame > frame1 and frame < frame2:
@@ -182,9 +182,10 @@ unintelligently as compared to handing the raw-ish fluent data to the grammar
 ### DO NOT USE ###
 """
 def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2):
-	debugQuery = False
+	debugQuery = True
 	if debugQuery:
 		print("SEARCHING {} between {} and {}".format(fluent,frame1,frame2))
+		printXMLFluents(xml)
 	prefix = "{}_{}_".format(fluent,frame1)
 	onstring = onsoffs[0]
 	offstring = onsoffs[1]
@@ -194,7 +195,7 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 	off = 0
 	start_value = None
 	end_value = None
-	fluent_changes = xml.findall('.//fluent_change')
+	fluent_changes = sorted(xml.findall('.//fluent_change'), key=lambda elem: int(elem.attrib['frame']))
 	for fluent_change in fluent_changes:
 		if fluent_change.attrib['fluent'] == fluent:
 			frame = int(fluent_change.attrib['frame'])
@@ -203,48 +204,64 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 					start_value = str(fluent_change.attrib['new_value'])
 					if debugQuery:
 						print("- frame {}: storing 'old' value of {}".format(frame,start_value))
-				else: #frame >= frame1
-					# let's just get these ducks lined up....
+				else: # frame >= frame1, but didn't have a start value
 					end_value = str(fluent_change.attrib['new_value'])
-					# trust 'old_value' over what we had before ...  TODO: penalize if it doesn't agree?
-					if 'old_value' in fluent_change.attrib.keys():
+					if 'old_value' in fluent_change.attrib:
 						start_value = str(fluent_change.attrib['old_value'])
+					if start_value and start_value != end_value:
+						if debugQuery:
+							print("+ frame {}: start: {}; now: {}".format(frame,start_value,end_value))
+						if start_value == "on":
+							on_off += 100
+						else:
+							off_on += 100
+					elif not start_value:
+						if end_value == "on":
+							if debugQuery:
+								print(". setting start_value to off")
+							start_value = "off"
+							off_on += 100
+						else:
+							start_value = "on"
+							if debugQuery:
+								print(". setting start_value to on")
+							on_off += 100
+					if debugQuery:
+						print("+ frame {}: start: {}; now: {}".format(frame,start_value,end_value))
+					start_value = end_value
+			else:
+				if frame < frame1:
+					start_value = str(fluent_change.attrib['new_value'])
+					if debugQuery:
+						print("- frame {}: storing 'old' value of {}".format(frame,start_value))
+				elif frame >= frame2:
+					break
+				else:
+					end_value = str(fluent_change.attrib['new_value'])
+					if 'old_value' in fluent_change.attrib:
+						next_start_value = str(fluent_change.attrib['old_value'])
+						# there may be a conflict here
+						if start_value and next_start_value != start_value:
+							if start_value == "on":
+								on_off += 100
+							else:
+								off_on += 100
+						start_value = next_start_value
+						# and now to see if we changed /in/ this fluent change, given the old_value
 						if end_value != start_value:
 							if start_value == "on":
 								on_off += 100
 							else:
 								off_on += 100
 					else:
-						# assume we're staying steady and just reporting it because of some other reason?
-						start_value = end_value
-					if debugQuery:
-						print("+ frame {}: start: {}; now: {}".format(frame,start_value,start_value))
-					continue
-			else:
-				if frame >= frame2:
-					break
-				else:
-					next_end_value = str(fluent_change.attrib['new_value'])
-					if 'old_value' in fluent_change.attrib.keys():
-						next_old_value = str(fluent_change.attrib['old_value'])
-					else:
-						next_old_value = None
-					if end_value and next_old_value != end_value:
-						#conflict! we need to add a transition from next_old to end_value
-						if next_old_value == "on":
+						# we don't know what our previous value is, all we know is we have a fluent change, assume it's a change
+						if start_value == "on":
 							off_on += 100
 						else:
 							on_off += 100
-					end_value = next_end_value
-					if end_value == "on":
-						off_on += 100
-					else:
-						on_off += 100
 					if debugQuery:
 						print("+ frame {}: start: {}; now: {}".format(frame,start_value,end_value))
-	#if debugQuery:
-	#	print("query results: {}".format({"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }))
-	#return {"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }
+					start_value = end_value
 	if not on_off and not off_on:
 		if start_value:
 			if start_value == "on":
@@ -259,6 +276,8 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 		"{}{}".format(prefix,onstring): on,
 		"{}{}".format(prefix,offstring): off,
 	}
+	if debugQuery:
+		print("RETVAL FOR FRAME {} to {}:\n{}".format(frame1,frame2,"\n".join(key + ": " + str(retval[key]) for key in retval)))
 	return retval
 
 # NOTE: THIS IS THE ONE TO USE. IT IS SIMPLE AND DOES ITS BEST TO MAINTAIN THE RAW
@@ -268,9 +287,10 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 # doesn't look back to see what the value was BEFORE the frame range
 # THERE IS A DISTINCT LACK OF CHECKING THINGS TO BE SURE HERE
 def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2):
-	debugQuery = False
+	debugQuery = True
 	if debugQuery:
-		print("DUMB SEARCHING {} between {} and {}".format(fluent,frame1,frame2))
+		print("SEARCHING DUMB {} between {} and {}".format(fluent,frame1,frame2))
+		printXMLFluents(xml)
 	prefix = "{}_{}_".format(fluent,frame1)
 	onstring = onsoffs[0]
 	offstring = onsoffs[1]
@@ -278,22 +298,38 @@ def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,fra
 	off_on = 0
 	on = 0
 	off = 0
-	fluent_changes = xml.findall('.//fluent_change')
+	fluent_changes = sorted(xml.findall('.//fluent_change'), key=lambda elem: int(elem.attrib['frame']))
 	for fluent_change in fluent_changes:
+		old_value = False
 		if fluent_change.attrib['fluent'] == fluent:
 			frame = int(fluent_change.attrib['frame'])
-			if (frame >= frame1 or frame <= frame2):
+			if (frame >= frame1 and frame <= frame2):
 				# we're only counting "changes" because that's all that was ever really detected, despite what our xml might look like
 				# TODO: penalize conflicts somehow. I think that will require a complete reorg of all the things wrapping this
 				# and technically we're counting /everything/ as a change
-				if str(fluent_change.attrib['new_value']) == "on":
+				# but we should listen to and trust 'old_value' if we have it. and okay, we'll listen to our previous value a little
+				# just not penalize things for not matching!
+				new_value = fluent_change.attrib['new_value']
+				if 'old_value' in fluent_change.attrib:
+					if fluent_change.attrib['old_value'] == new_value:
+						old_value = new_value
+						continue
+					if debugQuery:
+						print("+ frame {}: now: {} was: {}".format(frame,new_value,fluent_change.attrib['old_value']))
+				else:
+					if debugQuery:
+						print("+ frame {}: now: {} was: {}".format(frame,new_value,old_value))
+				if old_value and old_value == new_value:
+					if debugQuery:
+						print("+ frame {}: still: {}".format(frame,new_value))
+					continue
+				if new_value == 'on':
 					off_on += 100
 				else:
 					on_off += 100
+				old_value = new_value
 			if frame >= frame2:
 				break
-	#if debugQuery:
-	#	print("query results: {}".format({"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }))
 	#return {"start": {"energy":start_energy, "value":start_value}, "end": {"energy":end_energy, "value":end_value}, "changed": start_value != end_value }
 	if not on_off and not off_on:
 		on = 0
@@ -304,6 +340,8 @@ def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,fra
 		"{}{}".format(prefix,onstring): on,
 		"{}{}".format(prefix,offstring): off,
 	}
+	if debugQuery:
+		print("RETVAL FOR FRAME {} to {}:\n{}".format(frame1,frame2,"\n".join(key + ": " + str(retval[key]) for key in retval)))
 	return retval
 
 def buildDictForActionPossibilities(fluent,frame,actions):
@@ -402,6 +440,7 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 	return retval
 
 def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = False):
+	debugQuery = False
 	exampleNameForDB, room = example.rsplit('_',1)
 	exampleNameForDB = exampleNameForDB.replace("_","")
 	m = hashlib.md5(exampleNameForDB)
@@ -448,7 +487,8 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 	#print("objects: {}".format(ojects))
 	#print("frames: {}".format(cutpoints))
 	insertion_object = {"name": source, "hash": kInsertionHash}
-	print minidom.parseString(fluent_and_action_xml).toprettyxml(indent="\t")
+	if debugQuery:
+		print minidom.parseString(fluent_and_action_xml).toprettyxml(indent="\t")
 	fluent_and_action_xml_xml = ET.fromstring(fluent_and_action_xml)
 	for oject in ojects:
 		prev_frame = cutpoints[0]
@@ -474,8 +514,41 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 
 ##########################
 
+def fluentXMLToString(elem):
+	# energy, fluent, new_value, old_value (optional)
+	frame = elem.attrib['frame']
+	value = elem.attrib['new_value']
+	if 'old_value' in elem.attrib:
+		value = elem.attrib['old_value'] + ' -> ' + value
+	fluent = elem.attrib['fluent']
+	energy = elem.attrib['energy']
+	return "{}: {} {} [{}]".format(frame,fluent,value,energy)
+
+def actionXMLToString(elem):
+	# action, energy, frame
+	frame = elem.attrib['frame']
+	action = elem.attrib['action']
+	energy = elem.attrib['energy']
+	return "{}: {} [{}]".format(frame,action,energy)
+
+def printXMLFluents(xml):
+	fluents = xml.findall('.//fluent_change')
+	print("--fluents")
+	print("\n".join(fluentXMLToString(elem) for elem in sorted(fluents, key=lambda elem: int(elem.attrib['frame']))))
+
+def printXMLActions(xml):
+	actions = xml.findall('.//event')
+	print("--actions")
+	print("\n".join(actionXMLToString(elem) for elem in sorted(actions, key=lambda elem: int(elem.attrib['frame']))))
+
+def printXMLActionsAndFluents(xml):
+	print("vvvvvvvvv")
+	printXMLFluents(xml)
+	printXMLActions(xml)
+	print("^^^^^^^^^")
 
 if __name__ == '__main__':
+	debugQuery = False
 	import argparse
 	kSummerDataPythonDir="results/CVPR2012_reverse_slidingwindow_action_detection_logspace";
 	parser = argparse.ArgumentParser()
@@ -537,6 +610,7 @@ if __name__ == '__main__':
 						if root['symbol'].startswith(fluent + "_"):
 							causal_forest.append(root)
 					causal_grammar_summerdata.causal_forest = causal_forest
+					print("SIMPLIFIED")
 				else:
 					causal_grammar_summerdata.causal_forest = causal_forest_orig
 			try:
@@ -555,21 +629,31 @@ if __name__ == '__main__':
 				continue
 			orig_xml = munge_parses_to_xml(fluent_parses,temporal_parses)
 			fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, True) # last true: suppress the xml output
-			print minidom.parseString(orig_xml).toprettyxml(indent="\t")
-			print minidom.parseString(fluent_and_action_xml).toprettyxml(indent="\t")
-			#print fluent_and_action_xml.toprettyxml(indent="\t")
+			if debugQuery:
+				print("_____ ORIG FLUENT AND ACTION PARSES _____")
+				#print minidom.parseString(orig_xml).toprettyxml(indent="\t")
+				printXMLActionsAndFluents(ET.fromstring(orig_xml))
+				print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+				print("_____ AFTER CAUSAL GRAMMAR _____")
+				#print minidom.parseString(fluent_and_action_xml).toprettyxml(indent="\t")
+				printXMLActionsAndFluents(ET.fromstring(fluent_and_action_xml))
+				print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+			print("------> causalgrammar <------")
 			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalgrammar', conn):
 				completed.append("{}-{}".format(example,'causalgrammar'))
 			else:
 				oject_failed.append("{}-{}".format(example,'causalgrammar'))
+			print("------> causalsmrt <------")
 			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalsmrt', conn):
 				completed.append("{}-{}".format(example,'causalsmrt'))
 			else:
 				oject_failed.append("{}-{}".format(example,'causalsmrt'))
+			print("------> origdata <------")
 			if uploadComputerResponseToDB(example, orig_xml, 'origdata', conn):
 				completed.append("{}-{}".format(example,'origdata'))
 			else:
 				oject_failed.append("{}-{}".format(example,'origdata'))
+			print("------> origsmrt <------")
 			if uploadComputerResponseToDB(example, orig_xml, 'origsmrt', conn):
 				completed.append("{}-{}".format(example,'origsmrt'))
 			else:

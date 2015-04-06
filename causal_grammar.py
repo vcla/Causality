@@ -856,11 +856,14 @@ def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 				print("Parse: {}".format(parse))
 				raise Exception("The tree does not have a previous fluent")
 			#print("{}".format(prev_value))
-			if prev_value[0] != fluent_value or not fluent in seen:
-				if not fluent in seen:
-					seen.append(fluent,)
-				else:
-					fluent_attributes['old_value'] = prev_value[0];
+			if prev_value[0] != fluent_value:
+				fluent_attributes['old_value'] = prev_value[0];
+			elif fluent in seen:
+				# if we've been seen and there's no change, don't include it
+				# TODO: is this okay even though it skips us getting actions from the "non"-parse?
+				continue
+			if not fluent in seen:
+				seen.append(fluent,)
 			fluent_parse = ET.SubElement(fluent_changes, "fluent_change", fluent_attributes)
 			#TODO: missing attributes id, object, time in fluent_change
 			# now let's see if there's an action associated with this fluent change and pop that in our bag
