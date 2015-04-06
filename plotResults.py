@@ -5,6 +5,7 @@ import os
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import pprint
+import xml_stuff
 
 #TODO: this really shouldn't require the database, should it? everything's already dumped to cvpr_db_results.... but kResultStorageFolder is unused! BAH! DOH! Yes. So ideally before this "python dealWithDBResults.py upanddown" to create those.
 
@@ -24,6 +25,7 @@ kActionPairings = {
 	"light":(["pressbutton_START","pressbutton_END"],),
 	#"trash":(["throwtrash_START","throwtrash_END"],["PICKUP TRASH]_START","[PICKUP TRASH]_END"],),
 }
+kTruthDir = "results/truth/"
 
 #TODO: how to manage more complicated fluents, such as cup_MORE_on, cup_MORE_off, cup_LESS_on, cup_LESS_off, TRASH_LESS_on, TRASH_LESS_OFF, trash_MORE_on, trash_MORE_off? these should each get a new line, simplest answer. but then our alternating rows thing DIES.
 #TODO: water and trash above
@@ -34,6 +36,7 @@ import causal_grammar_summerdata
 causal_forest = causal_grammar_summerdata.causal_forest
 
 def buildHeatmapForExample(exampleName, prefix, conn=False):
+	debugOn = False
 	parsedExampleName = exampleName.split('_')
 	# -------------------- STAGE 1: READ FROM DB --------------------------
 	# for db lookup, remove "room" at end, and munge _'s away
@@ -227,7 +230,174 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 		row.extend([str(x) for x in action_matrix])
 		csv_rows.append(",".join(row))
 
-	print("\n".join(csv_rows))
+	# -------------------- STAGE 3: READ CAUSALGRAMMAR RESULTS  --------------------------
+	fluent_and_action_xml_string = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, action_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, True) # last True: suppress the xml output
+	# <temporal><fluent_changes><fluent_change energy="17.6095287144" fluent="screen" frame="0" new_value="off" /><fluent_change energy="16.5108710247" fluent="screen" frame="328" new_value="on" old_value="off" /></fluent_changes></temporal>
+	fluent_and_action_xml = ET.fromstring(fluent_and_action_xml_string)
+	fluent_changes = sorted(fluent_and_action_xml.findall('.//fluent_change'), key=lambda elem: int(elem.attrib['frame']))
+	events = sorted(fluent_and_action_xml.findall('.//event'), key=lambda elem: int(elem.attrib['frame']))
+	last_frame = start_of_frames
+	fluent_matrix = []
+	fluents = False
+	last_probability = 0
+	for fluent in fluent_changes:
+		# prefix is, for example, 'screen', the root of the tree we are looking at
+		# ignoring energies at the moment because they are the sum of all the energies for this 'chain' as compared to other chains, and not for the individual nodes (oops TODO?)
+		if prefix == fluent.attrib['fluent']:
+			# xml_stuff.printXMLFluent(fluent)
+			frame = int(fluent.attrib['frame'])
+			new_value = fluent.attrib['new_value']
+			if 'old_value' in fluent.attrib:
+				fluents = True # this counts as having an answer if we needed one
+				old_value = fluent.attrib['old_value']
+				if old_value == "on":
+					last_probability = 1.
+				else:
+					last_probability = 0.
+			if new_value == "on":
+				probability = 1.
+			else:
+				probability = 0.
+			if frame <= start_of_frames:
+				# we're not there yet :)
+				last_probability = probability
+				fluents = True # and this cements our answer
+				continue
+			if int(frame) > end_of_frames:
+				# just wrap up our last value
+				frame = end_of_frames
+				frame_diff = end_of_frames - last_frame
+				result = [last_probability,]*frame_diff
+				fluent_matrix.extend(result)
+				last_frame = end_of_frames
+				break
+			frame_diff = frame - last_frame
+			last_frame = frame
+			if not fluents:
+				# let's fill in our previous state with the opposite to this one...
+				# because we take in our fluents as "changes" to the fluent!
+				# alternately, it might be fair to say 50/50 on this one...
+				last_probability = probability
+				result = [1-last_probability,]*frame_diff
+			else:
+				# we've seen something before, that's what we fill up to this frame
+				result = [last_probability,]*frame_diff
+				last_probability = probability
+			fluent_matrix.extend(result)
+			fluents = True
+	if not fluents:
+		# we've never seen anything! 50% all the way!
+		result = [0.5,]*(end_of_frames-start_of_frames)
+		fluent_matrix.extend(result)
+	elif last_frame < end_of_frames:
+		result = [last_probability,]*(end_of_frames-last_frame)
+		fluent_matrix.extend(result)
+	row = ['CAUSAL ' + prefix + " on",]
+	row.extend([str(x) for x in fluent_matrix])
+	csv_rows.append(",".join(row))
+
+	# <temporal><actions><event action="usecomputer_START" energy="33.4413967566" frame="658" /><event action="usecomputer_START" energy="33.4271617566" frame="1000" /><event action="usecomputer_START" energy="52.6460829824" frame="1025" /><event action="usecomputer_END" energy="52.2956748688" frame="1232" /></actions></temporal>
+	actionPairings = kActionPairings[prefix]
+	for actionPairing in actionPairings:
+		last_frame = start_of_frames
+		action_matrix = []
+		actions = False
+		last_probability = 0
+		for event in events:
+			result = []
+			# ignoring energies at the moment because they are the sum of all the energies for this 'chain' as compared to other chains, and not for the individual nodes (oops TODO?)
+			frame = int(event.attrib['frame'])
+			frame_diff = frame - last_frame
+			if actionPairing[0] == event.attrib["action"]:
+				if debugOn:
+					xml_stuff.printXMLAction(event)
+				last_probability = 1.
+				if frame <= start_of_frames:
+					if debugOn:
+						print("PRE-START, SETTING PREV_PROB: 1")
+					continue
+				if frame > end_of_frames:
+					frame = end_of_frames
+					frame_diff = frame - last_frame
+				result = [0.,]*frame_diff
+			elif actionPairing[1] == event.attrib["action"]:
+				if debugOn:
+					xml_stuff.printXMLAction(event)
+				last_probability = 0.
+				if frame <= start_of_frames:
+					if debugOn:
+						print("PRE-START, SETTING PREV_PROB: 0")
+					continue
+				if frame > end_of_frames:
+					frame = end_of_frames
+					frame_diff = frame - last_frame
+				result = [1.,]*frame_diff # we know start and stop are symmetric
+			if len(result) > 0:
+				actions = True
+				action_matrix.extend(result)
+				last_frame = frame
+			if frame >= end_of_frames:
+				break
+		if not actions:
+			# we've never seen anything! 0% all the way!
+			result = [last_probability,]*(end_of_frames - start_of_frames)
+			action_matrix.extend(result)
+		elif last_frame < end_of_frames:
+			if debugOn:
+				print("LAST FRAME BEFORE END OF FRAMES: filling {} from {} -> {}".format(last_probability,last_frame,end_of_frames))
+			result = [last_probability,]*(end_of_frames-last_frame)
+			action_matrix.extend(result)
+		row = ['CAUSAL' + " " + actionPairing[0].split("_")[0],]
+		row.extend([str(x) for x in action_matrix])
+		csv_rows.append(",".join(row))
+
+	# -------------------- STAGE 4: READ GROUND TRUTH --------------------------
+	#screen_1_lounge.csv:
+	#  192, 338, screen, OFF
+	#  339, 985, screen, ON
+	#  986, 1298, screen, OFF
+	#  284, 986, screen_act, usecomputer
+	truthcsv_name = os.path.join(kTruthDir,".".join((exampleName,"csv")))
+	if os.path.isdir(kTruthDir) and os.path.exists(truthcsv_name):
+		# first, fluents
+		result = [0.,] * (end_of_frames - start_of_frames)
+		with open(truthcsv_name, 'rb') as truthcsv_file:
+			truthcsv = csv.reader(truthcsv_file,skipinitialspace=True)
+			for line in truthcsv:
+				(start, end, key, value) = line
+				if key == prefix:
+					if value == "OFF":
+						continue
+					start = max(0,int(start) - start_of_frames)
+					end = min(int(end) - start_of_frames, end_of_frames - start_of_frames)
+					if end < 0:
+						continue
+					result[start:end] = [1.,] * (end - start)
+		row = ['TRUTH ' + prefix + ' on',]
+		row.extend([str(x) for x in result])
+		csv_rows.append(",".join(row))
+
+		# and then, actions!
+		actionPairings = kActionPairings[prefix]
+		prefix_act = "_".join((prefix,"act"))
+		for actionPairing in actionPairings:
+			result = [0.,] * (end_of_frames - start_of_frames)
+			with open(truthcsv_name, 'rb') as truthcsv_file:
+				truthcsv = csv.reader(truthcsv_file,skipinitialspace=True)
+				for line in truthcsv:
+					(start, end, key, value) = line
+					if key == prefix_act and actionPairing[0].startswith(value):
+						start = max(0,int(start) - start_of_frames)
+						end = min(int(end) - start_of_frames, end_of_frames - start_of_frames)
+						if end < 0:
+							continue
+						result[start:end] = [1.,] * (end - start)
+			row = ['TRUTH ' + actionPairing[0].split("_")[0],]
+			row.extend([str(x) for x in result])
+			csv_rows.append(",".join(row))
+
+	if not debugOn:
+		print("\n".join(csv_rows))
 
 video_clippoints = dict()
 with open(kHumanAnnotationClippoints, 'ra') as file:

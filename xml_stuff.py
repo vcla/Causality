@@ -68,3 +68,42 @@ def write_xml_for_parse_tree(completed_parse_tree):
 	#        </causal>
 	#    </interpretation>
 	pass
+
+def fluentXMLToString(elem):
+	# energy, fluent, new_value, old_value (optional)
+	frame = elem.attrib['frame']
+	value = elem.attrib['new_value']
+	if 'old_value' in elem.attrib:
+		value = elem.attrib['old_value'] + ' -> ' + value
+	fluent = elem.attrib['fluent']
+	energy = elem.attrib['energy']
+	return "{}: {} {} [{}]".format(frame,fluent,value,energy)
+
+def actionXMLToString(elem):
+	# action, energy, frame
+	frame = elem.attrib['frame']
+	action = elem.attrib['action']
+	energy = elem.attrib['energy']
+	return "{}: {} [{}]".format(frame,action,energy)
+
+def printXMLFluent(xml):
+	print(fluentXMLToString(xml))
+
+def printXMLFluents(xml):
+	fluents = xml.findall('.//fluent_change')
+	print("--fluents")
+	print("\n".join(fluentXMLToString(elem) for elem in sorted(fluents, key=lambda elem: int(elem.attrib['frame']))))
+
+def printXMLAction(xml):
+	print(actionXMLToString(xml))
+
+def printXMLActions(xml):
+	actions = xml.findall('.//event')
+	print("--actions")
+	print("\n".join(actionXMLToString(elem) for elem in sorted(actions, key=lambda elem: int(elem.attrib['frame']))))
+
+def printXMLActionsAndFluents(xml):
+	print("vvvvvvvvv")
+	printXMLFluents(xml)
+	printXMLActions(xml)
+	print("^^^^^^^^^")

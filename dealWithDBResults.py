@@ -185,7 +185,7 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 	debugQuery = True
 	if debugQuery:
 		print("SEARCHING {} between {} and {}".format(fluent,frame1,frame2))
-		printXMLFluents(xml)
+		xml_stuff.printXMLFluents(xml)
 	prefix = "{}_{}_".format(fluent,frame1)
 	onstring = onsoffs[0]
 	offstring = onsoffs[1]
@@ -290,7 +290,7 @@ def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,fra
 	debugQuery = True
 	if debugQuery:
 		print("SEARCHING DUMB {} between {} and {}".format(fluent,frame1,frame2))
-		printXMLFluents(xml)
+		xml_stuff.printXMLFluents(xml)
 	prefix = "{}_{}_".format(fluent,frame1)
 	onstring = onsoffs[0]
 	offstring = onsoffs[1]
@@ -514,38 +514,7 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 
 ##########################
 
-def fluentXMLToString(elem):
-	# energy, fluent, new_value, old_value (optional)
-	frame = elem.attrib['frame']
-	value = elem.attrib['new_value']
-	if 'old_value' in elem.attrib:
-		value = elem.attrib['old_value'] + ' -> ' + value
-	fluent = elem.attrib['fluent']
-	energy = elem.attrib['energy']
-	return "{}: {} {} [{}]".format(frame,fluent,value,energy)
-
-def actionXMLToString(elem):
-	# action, energy, frame
-	frame = elem.attrib['frame']
-	action = elem.attrib['action']
-	energy = elem.attrib['energy']
-	return "{}: {} [{}]".format(frame,action,energy)
-
-def printXMLFluents(xml):
-	fluents = xml.findall('.//fluent_change')
-	print("--fluents")
-	print("\n".join(fluentXMLToString(elem) for elem in sorted(fluents, key=lambda elem: int(elem.attrib['frame']))))
-
-def printXMLActions(xml):
-	actions = xml.findall('.//event')
-	print("--actions")
-	print("\n".join(actionXMLToString(elem) for elem in sorted(actions, key=lambda elem: int(elem.attrib['frame']))))
-
-def printXMLActionsAndFluents(xml):
-	print("vvvvvvvvv")
-	printXMLFluents(xml)
-	printXMLActions(xml)
-	print("^^^^^^^^^")
+import xml_stuff
 
 if __name__ == '__main__':
 	debugQuery = False
@@ -632,11 +601,11 @@ if __name__ == '__main__':
 			if debugQuery:
 				print("_____ ORIG FLUENT AND ACTION PARSES _____")
 				#print minidom.parseString(orig_xml).toprettyxml(indent="\t")
-				printXMLActionsAndFluents(ET.fromstring(orig_xml))
+				xml_stuff.printXMLActionsAndFluents(ET.fromstring(orig_xml))
 				print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 				print("_____ AFTER CAUSAL GRAMMAR _____")
 				#print minidom.parseString(fluent_and_action_xml).toprettyxml(indent="\t")
-				printXMLActionsAndFluents(ET.fromstring(fluent_and_action_xml))
+				xml_stuff.printXMLActionsAndFluents(ET.fromstring(fluent_and_action_xml))
 				print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 			print("------> causalgrammar <------")
 			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalgrammar', conn):
