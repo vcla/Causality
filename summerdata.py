@@ -41,13 +41,19 @@ if __name__ == '__main__':
 	for example in args.example:
 		try:
 			if args.simplify:
-				#TODO: does not work on door_13_light_3_roomname, for instance. could/should split
-				# prune causal forest to 'screen' events
-				#also doesn't work with phone ~ PHONE_ACTIVE ... fluent = "PHONE_ACTIVE"
+				#TODO: does not work with phone ~ PHONE_ACTIVE ... fluent = "PHONE_ACTIVE" ... need more universal munging or to make our data uniform throughout
 				causal_forest = []
-				fluent = example.split("_",1)[0]
+				splits = example.split("_")
+				fluents = splits[::2]
+				if len(splits) % 2:
+					fluents = fluents[:-1]
 				for root in causal_forest_orig:
-					if root['symbol'].startswith(fluent + "_"):
+					found = False
+					for fluent in fluents:
+						if root['symbol'].startswith(fluent + "_"):
+							found = True
+							break
+					if found:
 						causal_forest.append(root)
 				causal_grammar_summerdata.causal_forest = causal_forest
 			fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,kActionDetections)
