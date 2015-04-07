@@ -21,7 +21,7 @@ kShowLegend <- FALSE
 kAlternateColors <- TRUE
 
 if (length(args) == 0) {
-	kSourceCSV <- "/projects/inference-master/results/timelines/screen_1_lounge-screen.csv"
+	kSourceCSV <- "/projects/inference-master/results/timelines/light_9_screen_57_9404-screen.csv"
 } else {
 	kSourceCSV <- args[1]
 	doOutputPNG <- TRUE
@@ -37,9 +37,18 @@ filename <- paste(filename[[1]][1]," (",filename[[1]][2], ")" )
 # outputPNG="/projects/inference-master/output.png"
 
 # kColors = colorRampPalette(c('white','lightgreen','darkgreen'))(255)
-kColors = colorRampPalette(c('white', rgb(127,205,187,maxColorValue=255), rgb(44,127,184,maxColorValue=255)))(255)
+kColors = colorRampPalette(c(
+	'white', 
+	rgb(104,175,237,maxColorValue=255), 
+	rgb(44,127,184,maxColorValue=255)
+))(255)
+
 # kColorsAlt = colorRampPalette(c('white','purple'))(255)
-kColorsAlt = colorRampPalette(c('white', rgb(250,159,181,maxColorValue=255), rgb(197,27,138,maxColorValue=255)))(255)
+kColorsAlt = colorRampPalette( c(
+	rgb(197,27,138,maxColorValue=255),
+	rgb(250,159,181,maxColorValue=255), 
+	'white'
+))(255)
 
 doInstall <- TRUE  # Change to FALSE if you don't want packages installed.
 
@@ -64,10 +73,12 @@ firstframe = strtoi(substring(colnames(timeline)[1],2))
 
 if (kAlternateColors) {
 	rowsToColorDifferently = seq(0,dim(timeline)[1],2)
-	timeline_matrix <- timeline_matrix / 2.01
-	timeline_matrix[rowsToColorDifferently,] <- timeline_matrix[rowsToColorDifferently,] + 0.50005
-	colors <- append(kColors,kColorsAlt)
+	timeline_matrix[rowsToColorDifferently,] <- timeline_matrix[rowsToColorDifferently,] * -1.
+	minValue = abs(min(timeline_matrix, na.rm = TRUE)) # 0 <= minValue <= 1 -- this is our kColorsAlt bar
+	maxValue = max(timeline_matrix, na.rm = TRUE)      # 0 <= maxValue <= 1 -- this is our kColors bar
+	colors <- append(kColorsAlt[(length(kColorsAlt)*(1-minValue)):length(kColorsAlt)],kColors[1:(length(kColors)*maxValue)])
 } else {
+	#TODO: fix the scaling problem when we're not doing alternating colors. At this point, we need to look at both min and max...
 	colors <- kColors
 }
 columnsN = dim(timeline_matrix)[2]
@@ -101,10 +112,10 @@ if (doOutputPNG) {
 }
 
 timeline_heatmap <- myheatmap(
+	timeline_matrix, 
 	lmat = rbind(c(4,3),c(2,1)),
 	lwid = lwid,
 	lhei = lhei,
-	timeline_matrix, 
 	key=kShowLegend,
 	dendrogram="none",
 	scale="none",
@@ -120,13 +131,14 @@ timeline_heatmap <- myheatmap(
 	labCol=columnLabels,
 	density.info=kIncludeLegendHistogram,
 	notecol="red",
+	na.color="red",
 	cexRow=0.7, # make row text labels smaller
 	#cexCol=1.2,
 	xlab=filename,
 #	ylab="bar",
 #	main="main",
 	)
-title(filename)
-if (length(outputPNG) == 0) {
+#title(filename)
+if (doOutputPNG) {
 	par(op)
 }
