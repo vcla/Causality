@@ -221,7 +221,9 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 			result = [0.,]*(end_of_frames - start_of_frames)
 			action_matrix.extend(result)
 		elif key < end_of_frames:
-			result = [last_probability,]*(end_of_frames-key)
+			if debugOn:
+				print("LAST FRAME BEFORE END OF FRAMES: filling {} from {} -> {}".format(last_probability,last_frame,end_of_frames))
+			result = [last_probability,]*(end_of_frames-last_frame)
 			action_matrix.extend(result)
 		row = ['ORIG' + " " + actionPairing[0].split("_")[0],]
 		row.extend([str(x) for x in action_matrix])
