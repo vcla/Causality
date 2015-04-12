@@ -285,16 +285,37 @@ for example in PR:
 				PR_SUMMARY[fluent][computertype][subtype]['f1score'] = PR_SUMMARY[fluent][computertype][subtype]['f1score_sum'] / PR_SUMMARY[fluent][computertype][subtype]['N']
 				PR_SUMMARY[fluent][computertype][subtype]['precision'] = PR_SUMMARY[fluent][computertype][subtype]['precision_sum'] / PR_SUMMARY[fluent][computertype][subtype]['N']
 				PR_SUMMARY[fluent][computertype][subtype]['recall'] = PR_SUMMARY[fluent][computertype][subtype]['recall_sum'] / PR_SUMMARY[fluent][computertype][subtype]['N']
-		
-print("-\t-\t-\t-\t-\t-\t-\t-")
-print("-\t-\t-\t-\t-\t-\t-\t-")
 
-#pp.pprint(PR_SUMMARY)
+#TYPE,ORIGDATA,ORIGSMRT,CAUSAL,CAUSALSMRT
+#precision_all_fluents,0.324645099268,0.574553571429,0.324645099268,0.574553571429
+#recall_all_fluents,0.324645099268,0.574553571429,0.324645099268,0.574553571429
+#precision_all_actions,0.324645099268,0.574553571429,0.324645099268,0.574553571429
+#recall_all_actions,0.324645099268,0.574553571429,0.324645099268,0.574553571429
+
+print("**************CUT*****************")
+header = list(('TYPE',))
+for computertype in PR_SUMMARY[fluent]:
+	header.append(computertype)
+print(",".join(header))
+
 for fluent in PR_SUMMARY:
+	type_fluents = {
+		"precision": {
+			"fluents": list(("_".join(("precision",fluent,"fluents")),)),
+			"actions": list(("_".join(("precision",fluent,"actions")),)),
+		},
+		"recall": {
+			"fluents": list(("_".join(("recall",fluent,"fluents")),)),
+			"actions": list(("_".join(("recall",fluent,"actions")),)),
+		},
+	}
 	for computertype in PR_SUMMARY[fluent]:
 		#if computertype == "origsmrt":
 		#	continue
 		for foo in ["actions","fluents"]:
-			print("{} {} {}: P: {}, R: {}".format(computertype, fluent, foo, PR_SUMMARY[fluent][computertype][foo]["precision"], PR_SUMMARY[fluent][computertype][foo]["recall"]))
-#print exceptions
-	print("-\t-\t-\t-\t-\t-\t-\t-")
+			type_fluents['precision'][foo].append(str(PR_SUMMARY[fluent][computertype][foo]['precision']))
+			type_fluents['recall'][foo].append(str(PR_SUMMARY[fluent][computertype][foo]['recall']))
+	print(",".join(type_fluents['precision']["actions"]))
+	print(",".join(type_fluents['recall']["actions"]))
+	print(",".join(type_fluents['precision']['fluents']))
+	print(",".join(type_fluents['recall']['fluents']))
