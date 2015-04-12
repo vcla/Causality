@@ -14,9 +14,10 @@
 **** "fluent_and_action_xml" uploaded to db as 'causalgrammar' and 'causalsmrt'
 ***** in uploadComputerResponseToDB, if source.endswith('smrt'), buildDictForFluentBetweenFramesIntoResults is called, which does some very basic fixing of local inconsistencies (versus buildDictForDumbFluentBetweenFramesIntoResults)
 *** download:
-**** creates unified results/dvpr_db_results/*.csv for each user (human or algorithm)
+**** creates unified results/cvpr_db_results/*.csv for each user (human or algorithm)
 * analyze_results.R converts the cvpr_db_results/*.csv to a single cvpr_db_results.csv
 ** R --vanilla < analyze_results.R
+** plotAllResults.sh loops through each table/element in summerdata and generates timeline heatmaps for every agent (human, computer, source, ...)
 * and then on to actual analysis....
 
 'ANALYSIS
@@ -25,6 +26,8 @@
 * analyzeData-besthuman.py -- best human is the human that was most agreed with by all the other humans (Nov 8 2014)
 * analyzeData-nearesthuman.py -- nearest human is the one that was closest to a given computer algorithm (Nov 8 2014) ... this 
 * analyzeData-nearesthuman-pr.py -- "first pass on trying to do precision and recall against db data" (Nov 14 2014)
+* plotPR.R generates a set of precision/recall graphs from the output of analyzeData-nearesthuman-pr.py
+* plotPR.sh calls analyzeData-nearesthuman-pr.py and then plotPR.R to generate a set of precision/recall graphs
 
 evaluateCausalGrammer:
 * getFluentChangesForFluent (operates on causal_grammar.process_events_and_fluents xml)
@@ -33,11 +36,5 @@ evaluateCausalGrammer:
 * 108 videos -- cut up from "maybe 10" -- in SIX scenes (9406, 9404, 8145, lounge) -- 2 grammars (
 * and what if we ran computer-solver together on whole chain?
 
-GRAPH over time, bar chart,
-human a
-human b
-computer x // base fluents
-computer y // base k
-computer z
-
-DOOR, LIGHT, MONITOR, PHONE
+'TODO
+	DOOR, LIGHT, MONITOR, PHONE
