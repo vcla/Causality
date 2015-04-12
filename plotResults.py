@@ -23,6 +23,7 @@ kActionPairings = summerdata.actionPairings
 kOnsOffs = summerdata.onsoffs
 
 kTruthDir = "results/truth/"
+kImpulseDivision = 100 # "number of frames" divided by this gives a the full impulse width
 
 #TODO: how to manage more complicated fluents, such as cup_MORE_on, cup_MORE_off, cup_LESS_on, cup_LESS_off, TRASH_LESS_on, TRASH_LESS_OFF, trash_MORE_on, trash_MORE_off? these should each get a new line, simplest answer. but then our alternating rows thing DIES.
 #TODO: water and trash above
@@ -69,10 +70,11 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 	# SELECT name, screen_192_off_on, screen_192_on_off, screen_192_on, screen_192_off, screen_348_off_on, screen_348_on_off, screen_348_on, screen_348_off, screen_action_192_act_mousekeyboard, screen_action_192_act_no_mousekeyboard, screen_action_348_act_mousekeyboard, screen_action_348_act_no_mousekeyboard FROM cvpr2012_7f05529dec6a03d3a459fc2ee1969f7f WHERE screen_action_348_act_no_mousekeyboard IS NOT NULL
 	csv_rows = []
 	first = True
-	action_width = 20
 	frames_sorted = sorted(int(x) for x in videoCutpoints.cutpoints[exampleNameForCutpoints].keys())
 	start_of_frames = frames_sorted[0]
 	end_of_frames = int(videoCutpoints.cutpoints[exampleNameForCutpoints][str(frames_sorted[-1])])
+	impulse_width_2 = (end_of_frames - start_of_frames) / (kImpulseDivision / 2)# width / 2
+	action_width = impulse_width_2 * 2
 	for row in cursor:
 		fluent_matrix = []
 		action_matrix = []
@@ -154,43 +156,35 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 	# for screen_1_lounge, that's CVPR2012_fluent_result/screen_on_off_fluent_results.txt, CVPR2012_fluent_result/screen_off_on_fluent_results.txt, and results/CVPR2012_reverse_slidingwindow_action_detection_logspace/screen_1_lounge.py
 	# thankfully, import_summerdata uses parsingSummerActionAndFluentOutput's readFluentResults and readActionResults
 	fluent_parses, action_parses = causal_grammar.import_summerdata(exampleName, kSummerDataPythonDir)
-	last_frame = start_of_frames
-	fluent_matrix = []
-	fluents = False
-	last_probability = 0
-	for key in sorted(x for x in fluent_parses.keys() if x < end_of_frames):
+	# displaying fluent changes as _impulses_ around their detection,
+	# and 50% everywhere else
+	fluent_matrix = [0.5,]*(end_of_frames-start_of_frames)
+	fluent_matrix_len = len(fluent_matrix)
+	for frame in sorted(x for x in fluent_parses.keys() if x < end_of_frames):
 		# prefix is, for example, 'screen', the root of the tree we are looking at
-		if prefix in fluent_parses[key]:
-			energy = fluent_parses[key][prefix]
+		if prefix in fluent_parses[frame]:
+			energy = fluent_parses[frame][prefix]
 			probability = causal_grammar.energy_to_probability(energy)
-			frame_diff = key - last_frame
-			last_frame = key
-			if key == 0:
-				# we'll just set this here to be picked up by the next loop
-				last_probability = probability
-			else:
-				if not fluents:
-					# let's fill in our previous state with the opposite to this one...
-					# because we take in our fluents as "changes" to the fluent!
-					# alternately, it might be fair to say 50/50 on this one...
-					last_probability = probability
-					result = [1-last_probability,]*frame_diff
-				else:
-					# we've seen something before, that's what we fill up to this frame
-					result = [last_probability,]*frame_diff
-					last_probability = probability
-				fluent_matrix.extend(result)
-			fluents = True
-	if not fluents:
-		# we've never seen anything! 50% all the way!
-		result = [0.5,]*(end_of_frames-start_of_frames)
-		fluent_matrix.extend(result)
-	elif last_frame < end_of_frames:
-		result = [last_probability,]*(end_of_frames-last_frame)
-		fluent_matrix.extend(result)
+			offset_left = 0
+			if int(frame) - start_of_frames < impulse_width_2:
+				offset_left = start_of_frames - int(frame)
+			offset_right = 0
+			if int(frame) + impulse_width_2 > end_of_frames:
+				offset_right = end_of_frames - int(frame)
+			if debugOn and (offset_left != 0 or offset_right != 0):
+				print("OFFSETS: {} and {} at frame {}".format(offset_left, offset_right, frame))
+			result = [1-probability,] * (impulse_width_2 - offset_left) + [probability,] * (impulse_width_2 - offset_right)
+			start_replacement = int(frame) - start_of_frames - impulse_width_2 - offset_left
+			if debugOn:
+				print("START FRAME: {}; CURRENT FRAME: {}".format(start_of_frames,int(frame)))
+				print("REPLACING {} to {} with {}".format(start_replacement,start_replacement+len(result),result))
+			fluent_matrix[start_replacement:start_replacement+len(result)] = result
 	row = ['ORIG' + " " + prefix + " on",]
 	row.extend([str(x) for x in fluent_matrix])
 	csv_rows.append(",".join(row))
+	if len(fluent_matrix) != fluent_matrix_len:
+		print("ERROR: fluent_matrix grew in replacement")
+		raise SystemExit(0)
 
 	#{1016: {'usecomputer_END': {'energy': 0.0, 'agent': 'uuid1'}}, 733: {'usecomputer_END': {'energy': 0.0, 'agent': 'uuid1'}}, 388: {'usecomputer_END': {'energy': 0.0, 'agent': 'uuid1'}}, 389: {'usecomputer_START': {'energy': 0.0, 'agent': 'uuid1'}}, 582: {'usecomputer_START': {'energy': 0.001096, 'agent': 'uuid1'}}, 650: {'usecomputer_END': {'energy': 0.0, 'agent': 'uuid1'}}, 651: {'usecomputer_START': {'energy': 6e-06, 'agent': 'uuid1'}}, 525: {'usecomputer_END': {'energy': 3e-06, 'agent': 'uuid1'}}, 526: {'usecomputer_START': {'energy': -0.0, 'agent': 'uuid1'}}, 889: {'usecomputer_START': {'energy': 0.0, 'agent': 'uuid1'}}, 791: {'usecomputer_END': {'energy': -0.0, 'agent': 'uuid1'}}, 593: {'usecomputer_END': {'energy': 0.001096, 'agent': 'uuid1'}}, 594: {'usecomputer_START': {'en
 	actionPairings = kActionPairings[prefix]
@@ -199,28 +193,28 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 		action_matrix = []
 		actions = False
 		last_probability = 0
-		for key in sorted(x for x in action_parses.keys() if x < end_of_frames):
+		for frame in sorted(x for x in action_parses.keys() if x < end_of_frames):
 			# prefix is, for example, 'screen', the root of the tree we are looking at
-			if actionPairing[0] in action_parses[key]:
-				energy = action_parses[key][actionPairing[0]]['energy']
+			if actionPairing[0] in action_parses[frame]:
+				energy = action_parses[frame][actionPairing[0]]['energy']
 				last_probability = causal_grammar.energy_to_probability(energy)
-				frame_diff = key - last_frame
+				frame_diff = frame - last_frame
 				result = [0.,]*frame_diff
 				action_matrix.extend(result)
 				actions = True
-				last_frame = key
-			elif actionPairing[1] in action_parses[key]:
-				frame_diff = key - last_frame
+				last_frame = frame
+			elif actionPairing[1] in action_parses[frame]:
+				frame_diff = frame - last_frame
 				result = [last_probability,]*frame_diff # we know start and stop are symmetric
 				action_matrix.extend(result)
 				last_probability = 0
 				actions = True
-				last_frame = key
+				last_frame = frame
 		if not actions:
 			# we've never seen anything! 0% all the way!
 			result = [0.,]*(end_of_frames - start_of_frames)
 			action_matrix.extend(result)
-		elif key < end_of_frames:
+		elif frame < end_of_frames:
 			if debugOn:
 				print("LAST FRAME BEFORE END OF FRAMES: filling {} from {} -> {}".format(last_probability,last_frame,end_of_frames))
 			result = [last_probability,]*(end_of_frames-last_frame)

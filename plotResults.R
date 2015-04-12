@@ -21,7 +21,7 @@ kShowLegend <- FALSE
 kAlternateColors <- TRUE
 
 if (length(args) == 0) {
-	kSourceCSV <- "/projects/inference-master/results/timelines/light_9_screen_57_9404-screen.csv"
+	kSourceCSV <- "/projects/inference-master/results/timelines/light_8_screen_50_9404-screen.csv"
 } else {
 	kSourceCSV <- args[1]
 	doOutputPNG <- TRUE
@@ -43,12 +43,24 @@ kColors = colorRampPalette(c(
 	rgb(44,127,184,maxColorValue=255)
 ))(255)
 
+#yellow->green ramp from http://colorbrewer2.org/
+kColors = colorRampPalette(c(
+rgb(255,247,243,maxColorValue=255),rgb(253,224,221,maxColorValue=255),rgb(252,197,192,maxColorValue=255),rgb(250,159,181,maxColorValue=255),rgb(247,104,161,maxColorValue=255),rgb(221,52,151,maxColorValue=255),rgb(174,1,126,maxColorValue=255),rgb(122,1,119,maxColorValue=255),rgb(73,0,106,maxColorValue=255)
+))(255)
+
 # kColorsAlt = colorRampPalette(c('white','purple'))(255)
 kColorsAlt = colorRampPalette( c(
 	rgb(197,27,138,maxColorValue=255),
 	rgb(250,159,181,maxColorValue=255), 
 	'white'
 ))(255)
+
+#purple->pink->red ramp
+kColorsAlt = colorRampPalette(c(
+rgb(247,252,240,maxColorValue=255),rgb(224,243,219,maxColorValue=255),rgb(204,235,197,maxColorValue=255),rgb(168,221,181,maxColorValue=255),rgb(123,204,196,maxColorValue=255),rgb(78,179,211,maxColorValue=255),rgb(43,140,190,maxColorValue=255),rgb(8,104,172,maxColorValue=255),rgb(8,64,129,maxColorValue=255)
+))(255)
+
+kAlternateColors <- TRUE
 
 doInstall <- TRUE  # Change to FALSE if you don't want packages installed.
 
@@ -76,7 +88,15 @@ if (kAlternateColors) {
 	timeline_matrix[rowsToColorDifferently,] <- timeline_matrix[rowsToColorDifferently,] * -1.
 	minValue = abs(min(timeline_matrix, na.rm = TRUE)) # 0 <= minValue <= 1 -- this is our kColorsAlt bar
 	maxValue = max(timeline_matrix, na.rm = TRUE)      # 0 <= maxValue <= 1 -- this is our kColors bar
-	colors <- append(kColorsAlt[(length(kColorsAlt)*(1-minValue)):length(kColorsAlt)],kColors[1:(length(kColors)*maxValue)])
+	kColorsAlt <- rev(kColorsAlt[(length(kColorsAlt)*(1-minValue)):length(kColorsAlt)])
+	kColors <- kColors[1:(length(kColors)*maxValue)]
+	if (minValue == 0) {
+		kColorsAlt = c()
+	}
+	if (maxValue == 0) {
+		kColors = c()
+	}
+	colors <- append(kColorsAlt,kColors)
 } else {
 	#TODO: fix the scaling problem when we're not doing alternating colors. At this point, we need to look at both min and max...
 	colors <- kColors
