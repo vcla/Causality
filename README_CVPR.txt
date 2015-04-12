@@ -4,10 +4,10 @@
 * cvpr_db_results.csv (humans, source data, causalgrammar all merged -- see below)
 
 'WORKFLOW
-* dealWithDBResults.py
+* dealWithDBResults.py <-- requires CVPR2012_humanTestAnnotation.txt and CVPR2012_reverse_slidingwindow_action_detection_logspace/*
 ** python dealWithDBResults.py (upload|download|upanddown)
 *** upload: 
-**** runs causal_grammar.import_summerdata -- importing from CVPR2012_reverse_slidinwindow_action_detection_logspace - python files)
+**** runs causal_grammar.import_summerdata -- importing from CVPR2012_reverse_slidingwindow_action_detection_logspace/* - (python files)
 **** munge_parses_to_xml(fluent_parses, temporal_parses) -> "orig_xml" results
 **** causal_grammar.process_events_and_fluents --> "fluent_and_action_xml" results
 **** "orig_xml" uploaded to db as 'origdata' and 'origsmrt'
