@@ -20,9 +20,13 @@ kIncludeLegendHistogram <- "none"
 kShowLegend <- FALSE
 kAlternateColors <- TRUE
 kDrawFluentTrace <- TRUE
+#kFluentLinesegmentColor <- rgb(.5,.7,1.)
+kFluentLinesegmentShadowColor <- rgb(0,.4,0)
+#kFluentLinesegmentColor <- rgb(1,1,1)
+kFluentLinesegmentColor <- rgb(1,1,.7)
 
 if (length(args) == 0) {
-	kSourceCSV <- "/projects/inference-master/results/timelines/light_8_screen_50_9404-screen.csv"
+	kSourceCSV <- "/projects/inference-master/results/timelines/light/door_12_light_2_9406-light.csv"
 } else {
 	kSourceCSV <- args[1]
 	doOutputPNG <- TRUE
@@ -136,8 +140,8 @@ fluentLineSegments <- function(matrix, draw=TRUE, lwd=2, col=2, lty=1) {
 	if (!draw) {
 		return (FALSE)
 	}
-	on  <- 1.5 - lwd/30
-	off <- 0.5 + lwd/30
+	on  <- 1.5 - 2/30
+	off <- 0.5 + 2/30
 	rows <- dim(timeline_matrix)[1]
 	cols <- dim(timeline_matrix)[2]
 	thresh_matrix <- 0 + (abs(timeline_matrix[seq(1,rows,by=2),]) > 0.5)
@@ -148,19 +152,21 @@ fluentLineSegments <- function(matrix, draw=TRUE, lwd=2, col=2, lty=1) {
 	changevalues_from_set = c()
 	for (i in 0:thresh_rows) {
 		diffs <- c(0,rle(c(0,diff(thresh_matrix[thresh_rows - i, ]))))
-		changepoints_to = cumsum(diffs$lengths)[seq(1,length(diffs$lengths),2)]
+		changepoints_to = cumsum(diffs$lengths)
 		changepoints_from <- append(0,head(changepoints_to,-1))
-		changevalues = cumsum(diffs$values)[seq(1,length(diffs$values),2)] * (on-off) + off
+		initialvalue <- thresh_matrix[thresh_rows - i,][1] # 0: our first change will be 1; 1: our first change will be -1
+		changevalues = (cumsum(diffs$values) + initialvalue) * (on-off) + off
 		changepoints_from_set <- append(changepoints_from_set, changepoints_from)
 		changepoints_to_set <- append(changepoints_to_set, changepoints_to)
-		changevalues_from_set <- append(changevalues_from_set, changevalues + i * 2 + 1)
-		changevalues_to_set <- append(changevalues_to_set, changevalues + i * 2 + 1)
+		changevalues_from_set <- append(changevalues_from_set, changevalues + (i * 2) + 1)
+		changevalues_to_set <- append(changevalues_to_set, changevalues + (i * 2) + 1)
 		if (length(changepoints_to) > 1) {
-			changepoints_to <- head(changepoints_to,-1)
+			whichpoints <- which(diffs$values != 0)
+			changepoints_to <- changepoints_from[whichpoints]
 			changepoints_to_set <- append(changepoints_to_set, changepoints_to)
 			changepoints_from_set <- append(changepoints_from_set, changepoints_to)
-			offs <- rep(off  + i * 2 + 1, length(changepoints_to))
-			ons <- rep(on + i * 2 + 1, length(changepoints_to))
+			offs <- rep(off  + (i * 2) + 1, length(changepoints_to))
+			ons <- rep(on + (i * 2) + 1, length(changepoints_to))
 			changevalues_from_set <- append(changevalues_from_set, offs)
 			changevalues_to_set <- append(changevalues_to_set, ons)
 		}
@@ -194,7 +200,8 @@ timeline_heatmap <- myheatmap(
 	#cexCol=1.2,
 	xlab=filename,
 	add.expr=eval( {
-		fluentLineSegments(timeline_matrix,draw=kDrawFluentTrace,lwd=4,col=3)
+		fluentLineSegments(timeline_matrix,draw=kDrawFluentTrace,lwd=4,col=kFluentLinesegmentShadowColor);
+fluentLineSegments(timeline_matrix,draw=kDrawFluentTrace,lwd=2,col=kFluentLinesegmentColor)
 	}) 	
 #	ylab="bar",
 #	main="main",
