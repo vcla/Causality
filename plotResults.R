@@ -142,17 +142,30 @@ fluentLineSegments <- function(matrix, draw=TRUE, lwd=2, col=2, lty=1) {
 	cols <- dim(timeline_matrix)[2]
 	thresh_matrix <- 0 + (abs(timeline_matrix[seq(1,rows,by=2),]) > 0.5)
 	thresh_rows <- dim(thresh_matrix)[1]
+	changepoints_to_set = c()
+	changepoints_from_set = c()
+	changevalues_to_set = c()
+	changevalues_from_set = c()
 	for (i in 0:thresh_rows) {
 		diffs <- c(0,rle(c(0,diff(thresh_matrix[thresh_rows - i, ]))))
 		changepoints_to = cumsum(diffs$lengths)[seq(1,length(diffs$lengths),2)]
 		changepoints_from <- append(0,head(changepoints_to,-1))
 		changevalues = cumsum(diffs$values)[seq(1,length(diffs$values),2)] * (on-off) + off
-		segments(changepoints_from,changevalues + i*2+1 ,changepoints_to,changevalues + i*2 + 1 ,lwd=lwd,col=col,lty=lty);
+		changepoints_from_set <- append(changepoints_from_set, changepoints_from)
+		changepoints_to_set <- append(changepoints_to_set, changepoints_to)
+		changevalues_from_set <- append(changevalues_from_set, changevalues + i * 2 + 1)
+		changevalues_to_set <- append(changevalues_to_set, changevalues + i * 2 + 1)
 		if (length(changepoints_to) > 1) {
 			changepoints_to <- head(changepoints_to,-1)
-			segments(changepoints_to, off + i*2+1, changepoints_to, on + i*2 + 1 ,lwd=lwd,col=col,lty=lty);
+			changepoints_to_set <- append(changepoints_to_set, changepoints_to)
+			changepoints_from_set <- append(changepoints_from_set, changepoints_to)
+			offs <- rep(off  + i * 2 + 1, length(changepoints_to))
+			ons <- rep(on + i * 2 + 1, length(changepoints_to))
+			changevalues_from_set <- append(changevalues_from_set, offs)
+			changevalues_to_set <- append(changevalues_to_set, ons)
 		}
 	}
+	segments(changepoints_from_set, changevalues_from_set, changepoints_to_set, changevalues_to_set, lwd=lwd, col=col, lty=lty);
 	return (TRUE)
 }
 
