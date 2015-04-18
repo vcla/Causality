@@ -153,7 +153,8 @@ fluentLineSegments <- function(matrix, draw=TRUE, lwd=2, col=2, lty=1) {
 	for (i in 0:thresh_rows) {
 		diffs <- c(0,rle(c(0,diff(thresh_matrix[thresh_rows - i, ]))))
 		changepoints_to = cumsum(diffs$lengths)
-		changepoints_from <- append(0,head(changepoints_to,-1))
+		changepoints_from <- append(0,head(changepoints_to,-1)) + 0.5
+		changepoints_to <- changepoints_to + 0.5
 		initialvalue <- thresh_matrix[thresh_rows - i,][1] # 0: our first change will be 1; 1: our first change will be -1
 		changevalues = (cumsum(diffs$values) + initialvalue) * (on-off) + off
 		changepoints_from_set <- append(changepoints_from_set, changepoints_from)
