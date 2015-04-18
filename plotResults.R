@@ -19,6 +19,7 @@ doOutputPNG = FALSE
 kIncludeLegendHistogram <- "none"
 kShowLegend <- FALSE
 kAlternateColors <- TRUE
+kDrawFluentTrace <- TRUE
 
 if (length(args) == 0) {
 	kSourceCSV <- "/projects/inference-master/results/timelines/light_8_screen_50_9404-screen.csv"
@@ -131,6 +132,30 @@ if (doOutputPNG) {
 	graphics.off() # because we're breaking the plot/graphics object with margins or something
 }
 
+fluentLineSegments <- function(matrix, draw=TRUE, lwd=2, col=2, lty=1) {
+	if (!draw) {
+		return (FALSE)
+	}
+	on  <- 1.5 - lwd/30
+	off <- 0.5 + lwd/30
+	rows <- dim(timeline_matrix)[1]
+	cols <- dim(timeline_matrix)[2]
+	thresh_matrix <- 0 + (abs(timeline_matrix[seq(1,rows,by=2),]) > 0.5)
+	thresh_rows <- dim(thresh_matrix)[1]
+	for (i in 0:thresh_rows) {
+		diffs <- c(0,rle(c(0,diff(thresh_matrix[thresh_rows - i, ]))))
+		changepoints_to = cumsum(diffs$lengths)[seq(1,length(diffs$lengths),2)]
+		changepoints_from <- append(0,head(changepoints_to,-1))
+		changevalues = cumsum(diffs$values)[seq(1,length(diffs$values),2)] * (on-off) + off
+		segments(changepoints_from,changevalues + i*2+1 ,changepoints_to,changevalues + i*2 + 1 ,lwd=lwd,col=col,lty=lty);
+		if (length(changepoints_to) > 1) {
+			changepoints_to <- head(changepoints_to,-1)
+			segments(changepoints_to, off + i*2+1, changepoints_to, on + i*2 + 1 ,lwd=lwd,col=col,lty=lty);
+		}
+	}
+	return (TRUE)
+}
+
 timeline_heatmap <- myheatmap(
 	timeline_matrix, 
 	lmat = rbind(c(4,3),c(2,1)),
@@ -155,9 +180,12 @@ timeline_heatmap <- myheatmap(
 	cexRow=0.7, # make row text labels smaller
 	#cexCol=1.2,
 	xlab=filename,
+	add.expr=eval( {
+		fluentLineSegments(timeline_matrix,draw=kDrawFluentTrace,lwd=4,col=3)
+	}) 	
 #	ylab="bar",
 #	main="main",
-	)
+)
 #title(filename)
 if (doOutputPNG) {
 	par(op)
