@@ -5,11 +5,18 @@ import os
 import hashlib
 kCSVDir = 'results/cvpr_db_results' # from the 'export' option in dealWithDBResults.py
 kComputerTypes = ['causalgrammar', 'origsmrt', 'origdata', 'causalsmrt']
+kJustTheSummary = True
+kDebugOn = False
+kJustSMRT = True
+
+class MissingDataException(Exception):
+	pass
 
 def findDistanceBetweenTwoVectors(A, B, fields, fluent):
-	dist = 0
+	distance = {"action": 0, "fluent": 0}
+	fluent_action = "{}_action".format(fluent)
 	for i in range(len(A)):
-		if fields[i].startswith(fluent):
+		if fields[i].startswith(fluent) or fields[i].startswith(fluent_action):
 			Ai = A[i]
 			Bi = B[i]
 			try:
@@ -20,13 +27,17 @@ def findDistanceBetweenTwoVectors(A, B, fields, fluent):
 				Bi = int(Bi)
 			except ValueError:
 				Bi = 0
-			dist += abs(Ai - Bi)
-	return dist
+			diff = abs(Ai - Bi)
+			if fields[i].startswith(fluent_action):
+				distance['action'] += diff
+			else:
+				distance['fluent'] += diff
+	return distance
 
 ## for each file in our csvs directory, find the smallest "human" distance for each "computer" vector
-print("FILENAME\tFLUENT\tHASH\tORIGDATA\tORIGSMRT\tCAUSALGRAMMAR\tCAUSALSMRT\tORIGHUMANS\tSMRTHUMANS\tCAUSALHUMANS\tCAUSSMRTHUMANS")
+if not kJustTheSummary:
+	print("FILENAME\tFLUENT\tHASH\tORIGDATA\tORIGSMRT\tCAUSALGRAMMAR\tCAUSALSMRT\tORIGHUMANS\tSMRTHUMANS\tCAUSALHUMANS\tCAUSSMRTHUMANS")
 exceptions = []
-kAllFluentsConstant="all"
 fluentDiffSums = {}
 
 for filename in os.listdir (kCSVDir):
@@ -39,7 +50,6 @@ for filename in os.listdir (kCSVDir):
 				fluents = set()
 				for field in fields:
 					fluents.add(field.split("_",1)[0])
-				fluents.add("") # empty string ~ all fluents
 				lines = csv.readlines()
 				for fluent in fluents:
 					humans = {}
@@ -54,52 +64,83 @@ for filename in os.listdir (kCSVDir):
 						else:
 							humans[name] = values
 					if not humans:
-						raise Exception("NO HUMANS FOR {}".format(filename))
+						raise MissingDataException("NO HUMANS FOR {}".format(filename))
 					if not 'origdata' in computers:
-						raise Exception("NO ORIGDATA FOR {}".format(filename))
+						raise MissingDataException("NO ORIGDATA FOR {}".format(filename))
 					if not 'origsmrt' in computers:
-						raise Exception("NO ORIGSMRT FOR {}".format(filename))
+						raise MissingDataException("NO ORIGSMRT FOR {}".format(filename))
 					if not 'causalgrammar' in computers:
-						raise Exception("NO CAUSALGRAMMAR FOR {}".format(filename))
+						raise MissingDataException("NO CAUSALGRAMMAR FOR {}".format(filename))
 					if not 'causalsmrt' in computers:
-						raise Exception("NO CAUSALSMRT FOR {}".format(filename))
+						raise MissingDataException("NO CAUSALSMRT FOR {}".format(filename))
 					humansN = len(humans)
 					bestscores = {}
 					besthumans = {}
 					for computerType in kComputerTypes:
-						bestscores[computerType] = 0
+						bestscores[computerType] = {'sum':0, 'fluent': 0, 'action': 0}
 						besthumans[computerType] = []
 						for human in humans:
-							currentscore = findDistanceBetweenTwoVectors(computers[computerType],humans[human],fields,fluent)
-							if not besthumans[computerType] or currentscore < bestscores[computerType]:
+							score = findDistanceBetweenTwoVectors(computers[computerType],humans[human],fields,fluent)
+							score['sum'] = score['fluent'] + score['action']
+							if not besthumans[computerType] or score['sum'] < bestscores[computerType]['sum']:
 								besthumans[computerType] = [human]
-								bestscores[computerType] = currentscore
-							elif bestscores[computerType] == currentscore:
+								bestscores[computerType] = score
+							elif bestscores[computerType]['sum'] == score['sum']:
 								besthumans[computerType].append(human)
 					## FILENAME, FLUENT, HASH, ORIGDATA SCORE, ORIGSMRT SCORE, CAUSALGRAMMAR SCORE, ORIGDATA HUMANS, ORIGSMRT HUMANS, CAUSALGRAMMAR HUMANS
 					exampleName, room = filename.rsplit('.',1)
 					exampleNameForDB = exampleName.replace("_","")
 					fluent = fluent if fluent else kAllFluentsConstant
-					print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(filename,fluent,hashlib.md5(exampleNameForDB).hexdigest(),bestscores['origdata'], bestscores['origsmrt'], bestscores['causalgrammar'], bestscores['causalsmrt'], besthumans['origdata'], besthumans['origsmrt'], besthumans['causalgrammar'], besthumans['causalsmrt']))
+					if not kJustTheSummary:
+						print("\t".join((filename,fluent,hashlib.md5(exampleNameForDB).hexdigest(),str(bestscores['origdata']['sum']), str(bestscores['origsmrt']['sum']), str(bestscores['causalgrammar']['sum']), str(bestscores['causalsmrt']['sum']), ",".join(besthumans['origdata']), ",".join(besthumans['origsmrt']), ",".join(besthumans['causalgrammar']), ",".join(besthumans['causalsmrt']))))
 					# summing for later
 					if not fluent in fluentDiffSums:
-						fluentDiffSums[fluent] = {'origdata': [0, 0], 'origsmrt': [0, 0], 'causalgrammar': [0, 0], 'causalsmrt': [0, 0], '_count': 0}
+						fluentDiffSums[fluent] = dict()
+						for computer_type in kComputerTypes:
+							fluentDiffSums[fluent][computer_type] = {"action": 0, "fluent": 0}
+						fluentDiffSums[fluent]['_count'] = 0
 					fluentDiffSums[fluent]['_count'] += 1
 					for computer in kComputerTypes:
-						fluentDiffSums[fluent][computer][0] += bestscores[computer]
-						fluentDiffSums[fluent][computer][1] = "{} avg".format(fluentDiffSums[fluent][computer][0] / fluentDiffSums[fluent]['_count'])
-			except ValueError as hmm:
-				raise hmm
-			except Exception as foo:
+						fluentDiffSums[fluent][computer]["action"] += bestscores[computer]["action"]
+						fluentDiffSums[fluent][computer]["fluent"] += bestscores[computer]["fluent"]
+			except MissingDataException as foo:
 				exceptions.append(foo)
 
 #if not N:
 #	N = 1
 
-print("-\t-\t-\t-\t-\t-\t-\t-\t-\t-")
+#if not kJustTheSummary:
+#print("-\t-\t-\t-\t-\t-\t-\t-\t-\t-")
 #print("{}\t{}\t{}\t{}\t{}".format("AVERAGE",total_origdata_score / N,total_causalgrammar_score / N,"",""))
-import pprint
-pp = pprint.PrettyPrinter(depth=6)
-pp.pprint(fluentDiffSums)
-
-print exceptions
+if kJustTheSummary:
+	print(",".join(('fluent','N','computer','distA','distF','dist=','avgA','avgF','avg=')))
+	totals = {"_count":0}
+	for fluent in fluentDiffSums.keys():
+		for computer_type in kComputerTypes:
+			if kJustSMRT and not computer_type.endswith("smrt"):
+				fluentDiffSums[fluent].pop(computer_type,None)
+				continue
+			clipsN = fluentDiffSums[fluent]["_count"]
+			diff_action = fluentDiffSums[fluent][computer_type]["action"]
+			diff_fluent = fluentDiffSums[fluent][computer_type]["fluent"]
+			diff_total = diff_action + diff_fluent
+			fluentDiffSums[fluent][computer_type]["sum"] = diff_total
+			fluentDiffSums[fluent][computer_type]["action_avg"] = diff_action / clipsN
+			fluentDiffSums[fluent][computer_type]["fluent_avg"] = diff_fluent / clipsN
+			fluentDiffSums[fluent][computer_type]["sum_avg"] = diff_total / clipsN
+			print(",".join(str(x) for x in (fluent,clipsN,computer_type,diff_action,diff_fluent,diff_total,diff_action/clipsN,diff_fluent/clipsN,diff_total/clipsN)))
+			if not computer_type in totals:
+				totals[computer_type] = {"action_avg_sum": 0, 'fluent_avg_sum': 0}
+			totals[computer_type]["action_avg_sum"] += diff_action / clipsN
+			totals[computer_type]["fluent_avg_sum"] += diff_fluent / clipsN
+		totals["_count"] += 1
+	for computer_type in kComputerTypes:
+		if kJustSMRT and not computer_type.endswith("smrt"):
+			continue
+		diff_action = totals[computer_type]['action_avg_sum']
+		diff_fluent = totals[computer_type]['fluent_avg_sum']
+		diff_total = diff_action + diff_fluent
+		fluentsN = totals["_count"]
+		print(",".join(str(x) for x in ("SUM",fluentsN,computer_type,diff_action,diff_fluent,diff_total,diff_action/fluentsN,diff_fluent/fluentsN,diff_total/fluentsN)))
+if kDebugOn:
+	print exceptions
