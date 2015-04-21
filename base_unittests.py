@@ -347,6 +347,36 @@ class LightingTestCase2ndOf2Actions(unittest.TestCase):
 		action_occurrences += dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"A4",0,15)
 		assert (not action_occurrences), "should not have had action A1, A3, A4; n times action occurred: {}".format(action_occurrences)
 
+######################## NEW TEST CLASS: TWO ACTIONS, FIRST GETS LOST
+# the ideal result:  action 
+class TrampledMonitorAction(unittest.TestCase):
+
+	@classmethod
+	def setUpClass(cls):
+		import causal_grammar_summerdata
+		causal_forest = []
+		for root in causal_grammar_summerdata.causal_forest:
+			if root['symbol'].startswith('screen' + "_"):
+				causal_forest.append(root)
+		causal_forest_modified = causal_forest
+		fluents = {
+			550:  { "screen": 0.969968},
+		}
+		actions = {
+			528:  { "usecomputer_END": {"energy": 0, "agent": ("uuid4")} },
+			529:  { "usecomputer_START": {"energy": 0, "agent": ("uuid4")} },
+			558:  { "usecomputer_END": {"energy": 0, "agent": ("uuid4")} },
+			#559:  { "usecomputer_START": {"energy": 0.183661, "agent": ("uuid4")} },
+			#567:  { "usecomputer_END": {"energy": 0.183661, "agent": ("uuid4")} },
+		}
+		xml_string = causal_grammar.process_events_and_fluents(causal_forest_modified, fluents, actions, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,not kDebug) # !kDebug: suppress output
+		cls.root = ET.fromstring(xml_string)
+		if kDebug:
+			print(xml_string)
+
+	def testCorrectAction(self):
+		action_occurrences = dealWithDBResults.queryXMLForActionBetweenFrames(self.root,"usecomputer_END",528,558)
+		assert (action_occurrences == 1), "should have had action usecomputer_END; n times action occurred: {}".format(action_occurrences)
 
 # TODO: test "nonevent" does what i really want
 # TODO: make sure not averaging to calculate mismatched number of nodes -- need the probabilities to appropriately compensate for that
@@ -354,3 +384,5 @@ class LightingTestCase2ndOf2Actions(unittest.TestCase):
 
 if __name__ == "__main__":
 	unittest.main() # run all tests
+
+
