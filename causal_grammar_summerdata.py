@@ -63,65 +63,65 @@ abbreviated_summerdata_grammar = [
 			)
 		]
 	),
-	# cup MORE # TODO on updating db -- merge water_MORE with water_LESS for answering queries
-	("root", "fluent", "water_MORE_on", .4, False, [
+	# cup MORE # TODO on updating db -- merge cup_MORE with cup_LESS for answering queries
+	("root", "fluent", "cup_MORE_on", .4, False, [
 			# ON CAUSALLY (NEVER ON INERTIALLY)
 			("and", False, False, False, False, [
-					("leaf", "prev_fluent", "water_MORE_on", False, False, False),
+					("leaf", "prev_fluent", "cup_MORE_on", False, False, False),
 					("leaf", "event", "benddown_END", False, 1, False), # TODO (amy): maybe ONGOING?
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, False, False, [
-					("leaf", "prev_fluent", "water_MORE_off", False, False, False),
+					("leaf", "prev_fluent", "cup_MORE_off", False, False, False),
 					("leaf", "event", "benddown_END", False, 1, False) # TODO (amy): maybe ONGOING?
 				]
 			)
 		]
 	),
 	# cup MORE OFF (STAYS)
-	("root", "fluent", "water_MORE_off", .6, False, [
+	("root", "fluent", "cup_MORE_off", .6, False, [
 			# OFF INERTIALLY
 			("and", False, False, False, False, [
-					("leaf", "prev_fluent", "water_MORE_off", False, False, False),
+					("leaf", "prev_fluent", "cup_MORE_off", False, False, False),
 					("leaf", "nonevent", "benddown_END", False, 1, False), # TODO (amy): maybe ONGOING?
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, False, False, [
-					("leaf", "prev_fluent", "water_MORE_on", False, False, False),
+					("leaf", "prev_fluent", "cup_MORE_on", False, False, False),
 					("leaf", "nonevent", "benddown_END", False, 1, False), # TODO (amy): maybe ONGOING?
 				]
 			)
 		]
 	),
 	# cup LESS 
-	("root", "fluent", "water_LESS_on", .4, False, [
+	("root", "fluent", "cup_LESS_on", .4, False, [
 			# ON CAUSALLY (NEVER ON INERTIALLY)
 			("and", False, False, False, False, [
-					("leaf", "prev_fluent", "water_LESS_on", False, False, False),
+					("leaf", "prev_fluent", "cup_LESS_on", False, False, False),
 					("leaf", "event", "drink_END", False, 1, False), # TODO (amy): maybe ONGOING?
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, False, False, [
-					("leaf", "prev_fluent", "water_LESS_off", False, False, False),
+					("leaf", "prev_fluent", "cup_LESS_off", False, False, False),
 					("leaf", "event", "drink_END", False, 1, False) # TODO (amy): maybe ONGOING?
 				]
 			)
 		]
 	),
 	# cup LESS OFF (STAYS)
-	("root", "fluent", "water_LESS_off", .6, False, [
+	("root", "fluent", "cup_LESS_off", .6, False, [
 			# OFF INERTIALLY
 			("and", False, False, False, False, [
-					("leaf", "prev_fluent", "water_LESS_off", False, False, False),
+					("leaf", "prev_fluent", "cup_LESS_off", False, False, False),
 					("leaf", "nonevent", "drink_END", False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, False, False, [
-					("leaf", "prev_fluent", "water_LESS_on", False, False, False),
+					("leaf", "prev_fluent", "cup_LESS_on", False, False, False),
 					("leaf", "nonevent", "drink_END", False, 1, False),
 				]
 			)
