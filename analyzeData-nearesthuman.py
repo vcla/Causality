@@ -5,7 +5,7 @@ import os
 import hashlib
 kCSVDir = 'results/cvpr_db_results' # from the 'export' option in dealWithDBResults.py
 kComputerTypes = ['causalgrammar', 'origsmrt', 'origdata', 'causalsmrt']
-kJustTheSummary = True
+kJustTheSummary = False
 kDebugOn = False
 kJustSMRT = True
 
@@ -113,7 +113,9 @@ for filename in os.listdir (kCSVDir):
 #print("-\t-\t-\t-\t-\t-\t-\t-\t-\t-")
 #print("{}\t{}\t{}\t{}\t{}".format("AVERAGE",total_origdata_score / N,total_causalgrammar_score / N,"",""))
 if kJustTheSummary:
-	print(",".join(('fluent','N','computer','distA','distF','dist=','avgA','avgF','avg=')))
+	#print("&".join(('fluent','N','computer','distA','distF','dist=','avgA','avgF','avg=')))
+	print(" & ".join(('Object','Computer','N','Action','Fluent','All'))+'\\\\')
+	print("\\midrule")
 	totals = {"_count":0}
 	for fluent in fluentDiffSums.keys():
 		for computer_type in kComputerTypes:
@@ -128,19 +130,29 @@ if kJustTheSummary:
 			fluentDiffSums[fluent][computer_type]["action_avg"] = diff_action / clipsN
 			fluentDiffSums[fluent][computer_type]["fluent_avg"] = diff_fluent / clipsN
 			fluentDiffSums[fluent][computer_type]["sum_avg"] = diff_total / clipsN
-			print(",".join(str(x) for x in (fluent,clipsN,computer_type,diff_action,diff_fluent,diff_total,diff_action/clipsN,diff_fluent/clipsN,diff_total/clipsN)))
+			if computer_type.startswith('causal'):
+				computer_words = "Causal"
+			elif computer_type.startswith('orig'):
+				computer_words= "Detections"
+			#print("&".join(str(x) for x in (fluent,clipsN,computer_type,diff_action,diff_fluent,diff_total,diff_action/clipsN,diff_fluent/clipsN,diff_total/clipsN)))
+			print(" & ".join(str(x) for x in (fluent,computer_words,clipsN,diff_action/clipsN,diff_fluent/clipsN,diff_total/clipsN))+'\\\\')
 			if not computer_type in totals:
 				totals[computer_type] = {"action_avg_sum": 0, 'fluent_avg_sum': 0}
 			totals[computer_type]["action_avg_sum"] += diff_action / clipsN
 			totals[computer_type]["fluent_avg_sum"] += diff_fluent / clipsN
 		totals["_count"] += 1
 	for computer_type in kComputerTypes:
+		if computer_type.startswith('causal'):
+			computer_words = "Causal"
+		elif computer_type.startswith('orig'):
+			computer_words= "Detections"
 		if kJustSMRT and not computer_type.endswith("smrt"):
 			continue
 		diff_action = totals[computer_type]['action_avg_sum']
 		diff_fluent = totals[computer_type]['fluent_avg_sum']
 		diff_total = diff_action + diff_fluent
 		fluentsN = totals["_count"]
-		print(",".join(str(x) for x in ("SUM",fluentsN,computer_type,diff_action,diff_fluent,diff_total,diff_action/fluentsN,diff_fluent/fluentsN,diff_total/fluentsN)))
+		print("&".join(str(x) for x in ("SUM",fluentsN,computer_type,diff_action,diff_fluent,diff_total,diff_action/fluentsN,diff_fluent/fluentsN,diff_total/fluentsN)))
+		print(" & ".join(str(x) for x in ("ALL",computer_words,fluentsN,diff_action/fluentsN,diff_fluent/fluentsN,diff_total/fluentsN))+'\\\\')
 if kDebugOn:
 	print exceptions
