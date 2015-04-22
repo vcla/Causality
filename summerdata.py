@@ -7,7 +7,7 @@ onsoffs["thirst"] = ["thirsty", "not"]  #actions: act_drink, act_no_drink, act_d
 onsoffs["waterstream"] = ["water_on", "water_off"] #actions act_dispensed, act_no_dispense
 onsoffs["doorlock"] = ["locked", "unlocked"] # TODO: uhoh, the change is lock_unlocked/unlocked_lock. need to catch.  #actions act_knock, act_none
 # and these below here are the lovely 3-case answer...
-# onsoffs["trash"] = ["more", "less", "same"] # actions: act_benddown, act_no_benddown
+onsoffs["trash"] = ["on", "off"] # actions: act_benddown, act_no_benddown
 # onsoffs["water"] = ["more", "less", "same"]  # actions:  act_drink, act_no_drink, act_dispensed, act_no_dispense, 
 
 actionPairings = {
@@ -15,7 +15,7 @@ actionPairings = {
 	#"water":(["benddown_START","benddown_END"],["drink_START","drink_END"]),
 	"door":(["standing_START","standing_END"],),
 	"light":(["pressbutton_START","pressbutton_END"],),
-	#"trash":(["throwtrash_START","throwtrash_END"],["PICKUP TRASH]_START","[PICKUP TRASH]_END"],),
+	"trash":(["throwtrash_START","throwtrash_END"],),#["PICKUP TRASH]_START","[PICKUP TRASH]_END"],),
 }
 
 if __name__ == '__main__':
