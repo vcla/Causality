@@ -12,7 +12,7 @@ DBUSER = "amycvpr2012"
 DBHOST = "127.0.0.1" # forwarding 3306
 DBPASS = "rC2xfLQFDMUZqJxf"
 TBLPFX = "cvpr2012_"
-kKnownObjects = ["screen","door","light","phone","ringer"]
+kKnownObjects = ["screen","door","light","phone","ringer","trash"]
 kInsertionHash = "1234567890"
 
 globalDryRun = None # commandline argument
@@ -436,16 +436,33 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 	if oject == "ringer":
 		#nothing to do with this
 		return retval
+	if oject == "doorlock":
+		#nothing to do with this
+		return retval
 	#fluents
 	onsoffs = onsoffs[oject]
 	if oject in summerdata.actionPairings:
 		actionpairings = summerdata.actionPairings[oject]
 	else:
 		print("WARNING: missing actionpairing: {}".format(oject))
+	if oject == "trash":
+		tmpoject = "trash"
+		oject = "trash_MORE"
 	if dumb:
 		result = buildDictForDumbFluentBetweenFramesIntoResults(xml,oject,onsoffs,frame1,frame2)
 	else:
 		result = buildDictForFluentBetweenFramesIntoResults(xml,oject,onsoffs,frame1,frame2)
+	if oject == "trash_MORE":
+		resultkeys = result.keys()
+		tmpresult = result
+		result = {}
+		result[tmpoject + "_" + str(frame1) + "_less"] = 0
+		result[tmpoject + "_" + str(frame1) + "_more"] = 0
+		result[tmpoject + "_" + str(frame1) + "_same"] = 0
+		if source.startswith('causal'):
+			result[tmpoject + "_" + str(frame1) + "_more"] = tmpresult[oject + "_" + str(frame1) + "_off_on"] + tmpresult[oject + "_" + str(frame1) + "_on"]
+			result[tmpoject + "_" + str(frame1) + "_same"] = tmpresult[oject + "_" + str(frame1) + "_on_off"] + tmpresult[oject + "_" + str(frame1) + "_off"]
+		oject = "trash"
 	retval.update(result)
 	#actions
 	if oject == "door":
@@ -500,10 +517,11 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
 	elif oject == "thirst":
 		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
-	elif oject == "doorlock":
-		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
 	elif oject == "trash":
-		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
+		result = {"act_benddown": 0, "act_no_benddown": 0}
+		count = queryXMLForActionBetweenFrames(xml,"throwtrash_END",frame1,frame2)
+		if count:
+			result["act_benddown"] = 100 * count
 	else:
 		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
 	result = buildDictForActionPossibilities(oject,frame1,result)
