@@ -653,18 +653,9 @@ if __name__ == '__main__':
 		for example in examples:
 			print("---------\nEXAMPLE: {}\n-------".format(example))
 			if args.simplify:
-				if len(example.split("_")) == 3:
-					#TODO: does not work on door_13_light_3_roomname, for instance. could/should split
-					# prune causal forest to 'screen' events
-					causal_forest = []
-					fluent = example.split("_",1)[0]
-					for root in causal_forest_orig:
-						if root['symbol'].startswith(fluent + "_"):
-							causal_forest.append(root)
-					causal_grammar_summerdata.causal_forest = causal_forest
-					print("SIMPLIFIED")
-				else:
-					causal_grammar_summerdata.causal_forest = causal_forest_orig
+				causal_grammar_summerdata.causal_forest = causal_grammar.get_simplified_forest_for_example(causal_forest_orig, example)
+				print("... simplified to {}".format(", ".join(x['symbol'] for x in causal_grammar_summerdata.causal_forest)))
+				raise SystemExit(0)
 			try:
 				fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,kSummerDataPythonDir)
 				import pprint

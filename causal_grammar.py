@@ -23,6 +23,24 @@ kFluentStatusUnknown = 1
 kFluentStatusOn = 2
 kFluentStatusOff = 3
 
+def get_simplified_forest_for_example(forest, example):
+	splits = example.split("_")
+	fluents = splits[::2]
+	if len(splits) % 2:
+		fluents = fluents[:-1]
+	return get_simplified_forest_for_fluents(forest,fluents)
+
+def get_simplified_forest_for_fluents(forest, fluents):
+	#TODO: does not work with phone ~ PHONE_ACTIVE ... fluent = "PHONE_ACTIVE" ... need more universal munging or to make our data uniform throughout
+	simplified_forest = []
+	for root in forest:
+		found = False
+		for fluent in fluents:
+			if root['symbol'].startswith(fluent + "_"):
+				simplified_forest.append(root)
+				break
+	return simplified_forest
+
 def generate_causal_forest_from_abbreviated_forest(abbreviated_forest):
 	forest = []
 	for child in abbreviated_forest:

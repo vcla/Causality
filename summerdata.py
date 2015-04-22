@@ -42,27 +42,12 @@ if __name__ == '__main__':
 	parser.add_argument("example", nargs="+", action="store", help="specific example[s] to run, such as screen_1_lounge, light_5_9406, or door_11_9406")
 	args = parser.parse_args()
 
-	causal_forest_orig = causal_grammar_summerdata.causal_forest
-
 	import_failed = list()
+	causal_forest_orig = causal_grammar_summerdata.causal_forest
 	for example in args.example:
 		try:
 			if args.simplify:
-				#TODO: does not work with phone ~ PHONE_ACTIVE ... fluent = "PHONE_ACTIVE" ... need more universal munging or to make our data uniform throughout
-				causal_forest = []
-				splits = example.split("_")
-				fluents = splits[::2]
-				if len(splits) % 2:
-					fluents = fluents[:-1]
-				for root in causal_forest_orig:
-					found = False
-					for fluent in fluents:
-						if root['symbol'].startswith(fluent + "_"):
-							found = True
-							break
-					if found:
-						causal_forest.append(root)
-				causal_grammar_summerdata.causal_forest = causal_forest
+				causal_grammar_summerdata.causal_forest = causal_grammar.get_simplified_forest_for_example(causal_forest_orig, example)
 			fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,kActionDetections)
 			import pprint
 			pp = pprint.PrettyPrinter(indent=1)
