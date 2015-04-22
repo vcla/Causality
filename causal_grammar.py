@@ -28,6 +28,13 @@ def get_simplified_forest_for_example(forest, example):
 	fluents = splits[::2]
 	if len(splits) % 2:
 		fluents = fluents[:-1]
+	#TODO: pulling in "fluent_extensions" is a hack needed for summerdata, we should figure out how to generalize or remove.... (water/waterstream root nodes specified at the "file name" level also want their "thirst_*" and "cup_*" fluents to be pulled in, don't oversimplify!)
+	import summerdata
+	more_fluents = []
+	for fluent in fluents:
+		if fluent in summerdata.fluent_extensions:
+			more_fluents = more_fluents + summerdata.fluent_extensions[fluent]
+	fluents = set(fluents + more_fluents) #set to make terms distinct just in case
 	return get_simplified_forest_for_fluents(forest,fluents)
 
 def get_simplified_forest_for_fluents(forest, fluents):

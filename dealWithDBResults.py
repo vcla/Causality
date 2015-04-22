@@ -12,7 +12,7 @@ DBUSER = "amycvpr2012"
 DBHOST = "127.0.0.1" # forwarding 3306
 DBPASS = "rC2xfLQFDMUZqJxf"
 TBLPFX = "cvpr2012_"
-kKnownObjects = ["screen","door","light","phone","ringer","trash"]
+kKnownObjects = ["screen","door","light","phone","ringer","trash","dispense","thirst","waterstream","cup","water"]
 kInsertionHash = "1234567890"
 
 globalDryRun = None # commandline argument
@@ -430,7 +430,7 @@ def buildDictForFluentChangePossibilities(fluent,frame,onstring,offstring,prev,n
 def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 	# get actions and fluents for the oject
 	retval = {}
-	onsoffs = summerdata.onsoffs
+	onsoffs = summerdata.onsoffs # dispense, thirst, waterstream, cup
 	if not oject in onsoffs.keys():
 		raise ValueError("unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
 	if oject == "ringer":
@@ -445,14 +445,24 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 		actionpairings = summerdata.actionPairings[oject]
 	else:
 		print("WARNING: missing actionpairing: {}".format(oject))
+	oject2 = False
+	tmpoject = None
 	if oject == "trash":
 		tmpoject = "trash"
 		oject = "trash_MORE"
+	elif oject == "cup":
+		tmpoject = oject
+		oject = "_".join((tmpoject,"MORE"))
+		oject2 = "_".join((tmpoject,"LESS"))
 	if dumb:
 		result = buildDictForDumbFluentBetweenFramesIntoResults(xml,oject,onsoffs,frame1,frame2)
+		if oject2:
+			result2 = buildDictForDumbFluentBetweenFramesIntoResults(xml,oject2,onsoffs,frame1,frame2)
 	else:
 		result = buildDictForFluentBetweenFramesIntoResults(xml,oject,onsoffs,frame1,frame2)
-	if oject == "trash_MORE":
+		if oject2:
+			result2 = buildDictForFluentBetweenFramesIntoResults(xml,oject2,onsoffs,frame1,frame2)
+	if tmpoject == "trash":
 		resultkeys = result.keys()
 		tmpresult = result
 		result = {}
@@ -462,8 +472,30 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 		if source.startswith('causal'):
 			result[tmpoject + "_" + str(frame1) + "_more"] = tmpresult[oject + "_" + str(frame1) + "_off_on"] + tmpresult[oject + "_" + str(frame1) + "_on"]
 			result[tmpoject + "_" + str(frame1) + "_same"] = tmpresult[oject + "_" + str(frame1) + "_on_off"] + tmpresult[oject + "_" + str(frame1) + "_off"]
-		oject = "trash"
-	retval.update(result)
+		oject = tmpoject
+	elif oject == "waterstream":
+		# we only did "on" and "off" with waterstream
+		for key in result.keys():
+			if key.endswith("water_on_water_off") or key.endswith("water_off_water_on"):
+				result.pop(key,None)
+	elif tmpoject == "cup":
+		#turn "off", "on_off", "on", "off_on" into "_same", "_less", "_more"
+		MORE_off = result["_".join((oject,str(frame1),"off"))]
+		MORE_onoff = result["_".join((oject,str(frame1),"on","off"))]
+		MORE_offon = result["_".join((oject,str(frame1),"off","on"))]
+		MORE_on = result["_".join((oject,str(frame1),"on"))]
+		LESS_off = result2["_".join((oject2,str(frame1),"off"))]
+		LESS_onoff = result2["_".join((oject2,str(frame1),"on","off"))]
+		LESS_offon = result2["_".join((oject2,str(frame1),"off","on"))]
+		LESS_on = result2["_".join((oject2,str(frame1),"on"))]
+		oject = tmpoject
+		result = {
+			"_".join((oject,str(frame1),"more")): MORE_on + MORE_offon,
+			"_".join((oject,str(frame1),"less")): LESS_on + LESS_offon,
+			"_".join((oject,str(frame1),"same")): max(0,100-(MORE_on+MORE_offon)-(LESS_on+LESS_offon)),
+		}
+	if oject != "water": # just ... don't even ... yeah.
+		retval.update(result)
 	#actions
 	if oject == "door":
 		result = {"act_opened":0, "act_closed":0, "act_not_opened_closed":0}
@@ -511,20 +543,42 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 			result['act_received_call'] = 100 * count
 		else:
 			result['act_no_call'] = 100
-	elif oject == "water":
-		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
-	elif oject == "waterstream":
-		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
+	elif oject == "cup": # (water)
+		result = [] # the action for this frame will be handled by thirst
+		pass
 	elif oject == "thirst":
-		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
+		result = [] # nope nope nope not here
+		pass
+	elif oject == "water":
+		result = {"act_drink": 0, "act_no_drink": 0}
+		count = queryXMLForActionBetweenFrames(xml,"drink_START",frame1,frame2)
+		if count:
+			result["act_drink"] = 100 * count
+		else:
+			result["act_no_drink"] = 100
+	elif oject == "waterstream":
+		result = {"act_dispensed": 0, "act_no_dispense": 0}
+		count = queryXMLForActionBetweenFrames(xml,"benddown_START",frame1,frame2)
+		if count:
+			result["act_dispensed"] = 100 * count
+		else:
+			result["act_no_dispense"] = 100
 	elif oject == "trash":
 		result = {"act_benddown": 0, "act_no_benddown": 0}
 		count = queryXMLForActionBetweenFrames(xml,"throwtrash_END",frame1,frame2)
 		if count:
 			result["act_benddown"] = 100 * count
+		else:
+			result["act_no_benddown"] = 100
 	else:
 		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
 	result = buildDictForActionPossibilities(oject,frame1,result)
+	if oject == "waterstream":
+		# more kludging for irregular names
+		result_tmp = {}
+		for key in result.keys():
+			result_tmp[key.replace("waterstream_action","dispense")] = result[key]
+		result = result_tmp
 	print("retval: {}".format(retval))
 	print("result: {}".format(result))
 	retval.update(result)
@@ -567,6 +621,8 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 				oject, frame, tmp, rest = singleColumn[0].split("_",3)
 			if frame == "action":
 				frame = tmp
+			if oject == "dispense":
+				continue
 			ojects.append(oject,)
 			cutpoints.append(int(frame))
 	ojects = list(set(ojects))
@@ -584,6 +640,7 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 		difference = set(ojects).difference(known_ojects)
 		print("skipping {} due to unknown: {}".format(example,", ".join(difference)))
 		return
+	print("WORKING ON------{}".format(ojects))
 	# for each of our objects, figure out what we think went on at each cutpoint
 	#print("objects: {}".format(ojects))
 	#print("frames: {}".format(cutpoints))
@@ -597,7 +654,7 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 			#print("{} - {}".format(oject, frame))
 			insertion_object.update(queryXMLForAnswersBetweenFrames(fluent_and_action_xml_xml,oject,prev_frame,frame,source,not source.endswith('smrt')))
 			prev_frame = frame
-	# print("INSERT: {}".format(insertion_object))
+	print("INSERT: {}".format(insertion_object))
 	# http://stackoverflow.com/a/9336427/856925
 	for key in insertion_object.keys():
 		if type(insertion_object[key]) is str:
@@ -673,7 +730,6 @@ if __name__ == '__main__':
 			if args.simplify:
 				causal_grammar_summerdata.causal_forest = causal_grammar.get_simplified_forest_for_example(causal_forest_orig, example)
 				print("... simplified to {}".format(", ".join(x['symbol'] for x in causal_grammar_summerdata.causal_forest)))
-				raise SystemExit(0)
 			try:
 				fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,kSummerDataPythonDir)
 				import pprint

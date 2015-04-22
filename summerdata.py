@@ -5,18 +5,35 @@ onsoffs = { "door": ["open","closed"], "light": ["on","off"], "screen": ["on","o
 # filling in these, assuming they're the DB on/off values
 onsoffs["thirst"] = ["thirsty", "not"]  #actions: act_drink, act_no_drink, act_dispensed, act_no_dispense (maybe)
 onsoffs["waterstream"] = ["water_on", "water_off"] #actions act_dispensed, act_no_dispense
+onsoffs["water"] = ["water_on", "water_off"] # FAKE WRONG BROKEN
 onsoffs["doorlock"] = ["locked", "unlocked"] # TODO: uhoh, the change is lock_unlocked/unlocked_lock. need to catch.  #actions act_knock, act_none
 # and these below here are the lovely 3-case answer...
 onsoffs["trash"] = ["on", "off"] # actions: act_benddown, act_no_benddown
-# onsoffs["water"] = ["more", "less", "same"]  # actions:  act_drink, act_no_drink, act_dispensed, act_no_dispense, 
+onsoffs["cup"] = ["on","off"] # gleep; do we not need cup_MORE, cup_LESS? actions: act_drin, act_no_drink, act_dispensed, act_no_dispense...???
 
 actionPairings = {
 	"screen":(["usecomputer_START","usecomputer_END"],),
-	#"water":(["benddown_START","benddown_END"],["drink_START","drink_END"]),
+	"cup":(["benddown_START","benddown_END"],["drink_START","drink_END"]),
+	"waterstream":(["benddown_START","benddown_END"],["drink_START","drink_END"]),
 	"door":(["standing_START","standing_END"],),
 	"light":(["pressbutton_START","pressbutton_END"],),
 	"trash":(["throwtrash_START","throwtrash_END"],),#["PICKUP TRASH]_START","[PICKUP TRASH]_END"],),
 }
+
+#water ~ wateraction_#_act_drink, wateraction_#_act_no_drink
+#water ~ thirst_#_thirsty, thirst_#_not
+#water ~ cup_#_less, cup_#_more, cup_#_same
+#waterstream ~ waterstream_#_water_on, waterstream_#_water_off
+#waterstream ~ thirst_#_thirsty, thirst_#_not
+#waterstream ~ dispense_#_act_dispensed, dispense_#_act_no_dispense
+#waterstream ~ cup_#_less, cup_#_more, cup_#_same
+
+# for "file name"-level fluents, what other fluents are important to consider?
+fluent_extensions = {
+	"water": ["thirst","cup",], # thirst_on, thirst_off
+	"waterstream": ["thirst","cup",], # thirst_on, thirst_off
+}
+
 
 if __name__ == '__main__':
 	import causal_grammar
