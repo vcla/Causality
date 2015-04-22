@@ -427,7 +427,7 @@ def buildDictForFluentChangePossibilities(fluent,frame,onstring,offstring,prev,n
 		"{}{}".format(prefix,offstring): off,
 	}
 	
-def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
+def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 	# get actions and fluents for the oject
 	retval = {}
 	onsoffs = summerdata.onsoffs
@@ -450,17 +450,27 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 	#actions
 	if oject == "door":
 		result = {"act_opened":0, "act_closed":0, "act_not_opened_closed":0}
-		count = queryXMLForActionBetweenFrames(xml,"standing_START",frame1,frame2)
-		noaction = True
-		if count:
-			noaction = False
-			result['act_opened'] = 100 * count
-		count = queryXMLForActionBetweenFrames(xml,"standing_END",frame1,frame2)
-		if count:
-			noaction = False
-			result['act_closed'] = 100 * count
-		if noaction:
-			result['act_not_opened_closed'] = 100
+		if source.startswith('orig'):
+			result = {"act_opened":0, "act_closed":0, "act_not_opened_closed":0}
+			count = queryXMLForActionBetweenFrames(xml,"standing_START",frame1,frame2)
+			noaction = True
+			if count:
+				noaction = False
+				result['act_opened'] = 100 * count
+			count = queryXMLForActionBetweenFrames(xml,"standing_END",frame1,frame2)
+			if count:
+				noaction = False
+				result['act_closed'] = 100 * count
+			if noaction:
+				result['act_not_opened_closed'] = 100
+		else:
+			# causal grammar answers mirror the fluent change
+			result['act_closed'] = retval[oject+'_'+str(frame1)+'_'+'open_closed']
+			result['act_opened'] = retval[oject+'_'+str(frame1)+'_'+'closed_open']
+			result['act_not_opened_closed'] = retval[oject+'_'+str(frame1)+'_'+'closed'] + retval[oject+'_'+str(frame1)+'_'+'open'] 
+			# JUST GOT AN IDEA OF QUERYING FOR ANY INSTANCE OF STANDING -- BUT SINCE WE'RE WINNING ON ACTIONS, MAYBE NOT RIGHT NOW
+		#print("retval: {}".format(retval))
+		#print("result: {}".format(result))
 	elif oject == "light":
 		result = {"act_pushbutton":0, "act_no_pushbutton":0}
 		count = queryXMLForActionBetweenFrames(xml,"pressbutton_START",frame1,frame2)
@@ -484,9 +494,21 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,dumb=False):
 			result['act_received_call'] = 100 * count
 		else:
 			result['act_no_call'] = 100
+	elif oject == "water":
+		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
+	elif oject == "waterstream":
+		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
+	elif oject == "thirst":
+		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
+	elif oject == "doorlock":
+		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
+	elif oject == "trash":
+		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
 	else:
 		raise ValueError("Unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
 	result = buildDictForActionPossibilities(oject,frame1,result)
+	print("retval: {}".format(retval))
+	print("result: {}".format(result))
 	retval.update(result)
 	return retval
 
@@ -555,7 +577,7 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 		prev_frame = cutpoints[0]
 		for frame in cutpoints[1:]:
 			#print("{} - {}".format(oject, frame))
-			insertion_object.update(queryXMLForAnswersBetweenFrames(fluent_and_action_xml_xml,oject,prev_frame,frame,not source.endswith('smrt')))
+			insertion_object.update(queryXMLForAnswersBetweenFrames(fluent_and_action_xml_xml,oject,prev_frame,frame,source,not source.endswith('smrt')))
 			prev_frame = frame
 	# print("INSERT: {}".format(insertion_object))
 	# http://stackoverflow.com/a/9336427/856925

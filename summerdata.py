@@ -1,7 +1,14 @@
 # dict keys are frame numbers
 # frames are only reported when a fluent changes, and only for the fluent(s) that changed; fluents are considered to be on or off ("light" is treated as "light_on", and then "light_off" is calculated from that internally, for instance)
 
-onsoffs = { "door": ["open","closed"], "light": ["on","off"], "screen": ["on","off"], "phone": ["active","off"], "ringer": ["ring","no_ring"] }
+onsoffs = { "door": ["open","closed"], "light": ["on","off"], "screen": ["on","off"], "phone": ["active","off"], "ringer": ["ring","no_ring"] }  #ringer actions: act_received_call, act_no_call <- mean "used phone" or "not".
+# filling in these, assuming they're the DB on/off values
+onsoffs["thirst"] = ["thirsty", "not"]  #actions: act_drink, act_no_drink, act_dispensed, act_no_dispense (maybe)
+onsoffs["waterstream"] = ["water_on", "water_off"] #actions act_dispensed, act_no_dispense
+onsoffs["doorlock"] = ["locked", "unlocked"] # TODO: uhoh, the change is lock_unlocked/unlocked_lock. need to catch.  #actions act_knock, act_none
+# and these below here are the lovely 3-case answer...
+# onsoffs["trash"] = ["more", "less", "same"] # actions: act_benddown, act_no_benddown
+# onsoffs["water"] = ["more", "less", "same"]  # actions:  act_drink, act_no_drink, act_dispensed, act_no_dispense, 
 
 actionPairings = {
 	"screen":(["usecomputer_START","usecomputer_END"],),

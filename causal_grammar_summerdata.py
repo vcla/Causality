@@ -41,7 +41,7 @@ abbreviated_summerdata_grammar = [
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "thirst_off", False, False, False),
 					# node_type, symbol_type, symbol, probability, timeout, children
-					("leaf", "jump", "become_thirsty", lambda t1, t2: weibull(t1,t2,600,1.5), False, False, "thirst_off"), # TODO: add "jump" for node type -- must be paired with "timer" node on other side
+					#("leaf", "jump", "become_thirsty", lambda t1, t2: weibull(t1,t2,600,1.5), False, False, "thirst_off"), # TODO: add "jump" for node type -- must be paired with "timer" node on other side
 				]
 			),
 		],
@@ -51,7 +51,7 @@ abbreviated_summerdata_grammar = [
 			# OFF INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "thirst_off", False, False, False),
-					("leaf", "timer", "become_thirsty", lambda t1, t2: weibull(t1,t2,600,1.5), False, False, "thirst_on"), # TODO: does this need a new node symbol?
+					#("leaf", "timer", "become_thirsty", lambda t1, t2: weibull(t1,t2,600,1.5), False, False, "thirst_on"), # TODO: does this need a new node symbol?
 					# TODO: add "timer" for node type.  where do i put the probability on the duration? put it in hte probability slot? also: how to handle unknown time when the scene starts this way?
 				]
 			),
