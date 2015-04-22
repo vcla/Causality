@@ -5,7 +5,6 @@ import os
 import hashlib
 kCSVDir = 'results/cvpr_db_results' # from the 'export' option in dealWithDBResults.py
 kComputerTypes = ['causalgrammar', 'origsmrt', 'origdata', 'causalsmrt']
-kJustTheSummary = False
 kDebugOn = False
 kJustSMRT = True
 
@@ -34,6 +33,16 @@ def findDistanceBetweenTwoVectors(A, B, fields, fluent):
 				distance['fluent'] += diff
 	return distance
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("-s","--summary", action="store_true", required=False, help="just print the summary results")
+parser.add_argument("-e", "--example", action="append", required=False, dest='examples_only', help="specific example[s] to run, such as screen_1, light_5, or door_11")
+parser.add_argument("-d","--debug", action="store_true", required=False, help="print out extra debug info")
+args = parser.parse_args()
+
+kJustTheSummary = args.summary
+kDebugOn = args.debug
+
 ## for each file in our csvs directory, find the smallest "human" distance for each "computer" vector
 if not kJustTheSummary:
 	print("FILENAME\tFLUENT\tHASH\tORIGDATA\tORIGSMRT\tCAUSALGRAMMAR\tCAUSALSMRT\tORIGHUMANS\tSMRTHUMANS\tCAUSALHUMANS\tCAUSSMRTHUMANS")
@@ -41,6 +50,14 @@ exceptions = []
 fluentDiffSums = {}
 
 for filename in os.listdir (kCSVDir):
+	if args.examples_only:
+		found = False
+		for example in args.examples_only:
+			if filename.startswith(example):
+				found = True
+				break
+		if not found:
+			continue
 	if filename.endswith(".csv"):
 		with open(os.path.join(kCSVDir,filename),"r") as csv:
 			try:
@@ -156,3 +173,4 @@ if kJustTheSummary:
 		print(" & ".join(str(x) for x in ("ALL",computer_words,fluentsN,diff_action/fluentsN,diff_fluent/fluentsN,diff_total/fluentsN))+'\\\\')
 if kDebugOn:
 	print exceptions
+
