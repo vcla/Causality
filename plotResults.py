@@ -395,13 +395,17 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 		print("\n".join(csv_rows))
 
 import sys
-if len(sys.argv) > 1:
+if len(sys.argv) == 1:
+	example = 'screen_1_lounge'
+	key = 'screen'
+elif len(sys.argv) == 3:
 	example = sys.argv[1]
 	key = sys.argv[2]
 else:
-	example = 'screen_1_lounge'
-	key = 'screen'
-if key in kActionPairings.keys():
-	buildHeatmapForExample(example,key)
-else:
-	raise SystemExit("'{}' not handled; we only know: {}".format(key,", ".join(kActionPairings.keys())))
+	key = False
+	print("requires 0 or 2 arguments: example, key")
+if key:
+	if key in kActionPairings.keys():
+		buildHeatmapForExample(example,key)
+	else:
+		raise SystemExit("'{}' not handled; we only know: {}".format(key,", ".join(kActionPairings.keys())))
