@@ -45,7 +45,7 @@ kDebugOn = args.debug
 
 ## for each file in our csvs directory, find the smallest "human" distance for each "computer" vector
 if not kJustTheSummary:
-	print("FILENAME\tFLUENT\tHASH\tORIGDATA\tORIGSMRT\tCAUSALGRAMMAR\tCAUSALSMRT\tORIGHUMANS\tSMRTHUMANS\tCAUSALHUMANS\tCAUSSMRTHUMANS")
+	print("FILENAME\tFLUENT\tHASH\tORIGDATA [action]\t[fluent]\tORIGSMRT [action]\t[fluent]\tCAUSALGRAMMAR [action]\t[fluent]\tCAUSALSMRT [action]\t[fluent]\tORIGHUMANS\tSMRTHUMANS\tCAUSALHUMANS\tCAUSSMRTHUMANS")
 exceptions = []
 fluentDiffSums = {}
 
@@ -109,7 +109,16 @@ for filename in os.listdir (kCSVDir):
 					exampleNameForDB = exampleName.replace("_","")
 					fluent = fluent if fluent else kAllFluentsConstant
 					if not kJustTheSummary:
-						print("\t".join((filename,fluent,hashlib.md5(exampleNameForDB).hexdigest(),str(bestscores['origdata']['sum']), str(bestscores['origsmrt']['sum']), str(bestscores['causalgrammar']['sum']), str(bestscores['causalsmrt']['sum']), ",".join(besthumans['origdata']), ",".join(besthumans['origsmrt']), ",".join(besthumans['causalgrammar']), ",".join(besthumans['causalsmrt']))))
+						print("\t".join((filename,fluent,hashlib.md5(exampleNameForDB).hexdigest(),
+							str(bestscores['origdata']['action']), 
+							str(bestscores['origdata']['fluent']), 
+							str(bestscores['origsmrt']['action']), 
+							str(bestscores['origsmrt']['fluent']), 
+							str(bestscores['causalgrammar']['action']), 
+							str(bestscores['causalgrammar']['fluent']), 
+							str(bestscores['causalsmrt']['action']), 
+							str(bestscores['causalsmrt']['fluent']), 
+							",".join(besthumans['origdata']), ",".join(besthumans['origsmrt']), ",".join(besthumans['causalgrammar']), ",".join(besthumans['causalsmrt']))))
 					# summing for later
 					if not fluent in fluentDiffSums:
 						fluentDiffSums[fluent] = dict()
