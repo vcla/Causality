@@ -38,10 +38,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-s","--summary", action="store_true", required=False, help="just print the summary results")
 parser.add_argument("-e", "--example", action="append", required=False, dest='examples_only', help="specific example[s] to run, such as screen_1, light_5, or door_11")
 parser.add_argument("-d","--debug", action="store_true", required=False, help="print out extra debug info")
+parser.add_argument("-t","--latex", action="store_true", required=False, help="print out summary as LaTeX")
 args = parser.parse_args()
 
 kJustTheSummary = args.summary
 kDebugOn = args.debug
+kLaTeXSummary = args.latex
 
 ## for each file in our csvs directory, find the smallest "human" distance for each "computer" vector
 if not kJustTheSummary:
@@ -139,9 +141,11 @@ for filename in os.listdir (kCSVDir):
 #print("-\t-\t-\t-\t-\t-\t-\t-\t-\t-")
 #print("{}\t{}\t{}\t{}\t{}".format("AVERAGE",total_origdata_score / N,total_causalgrammar_score / N,"",""))
 if kJustTheSummary:
-	#print("&".join(('fluent','N','computer','distA','distF','dist=','avgA','avgF','avg=')))
-	print(" & ".join(('Object','Computer','Action','Fluent','All'))+' \\\\')
-	print("\\midrule")
+	if kLaTeXSummary:
+		print(" & ".join(('Object','Computer','Action','Fluent','All'))+' \\\\')
+		print("\\midrule")
+	else:
+		print("\t".join(('fluent','N','computer','distA','distF',u'dist\u2211','avgA','avgF',u'avg\u2211')))
 	totals = {"_count":0}
 	for fluent in fluentDiffSums.keys():
 		for computer_type in kComputerTypes:
@@ -160,8 +164,10 @@ if kJustTheSummary:
 				computer_words = "Causal"
 			elif computer_type.startswith('orig'):
 				computer_words= "Detections"
-			#print("&".join(str(x) for x in (fluent,clipsN,computer_type,diff_action,diff_fluent,diff_total,diff_action/clipsN,diff_fluent/clipsN,diff_total/clipsN)))
-			print(" & ".join(str(x) for x in (fluent,computer_words,diff_action/clipsN,diff_fluent/clipsN,diff_total/clipsN))+' \\\\')
+			if kLaTeXSummary:
+				print(" & ".join(str(x) for x in (fluent,computer_words,diff_action/clipsN,diff_fluent/clipsN,diff_total/clipsN))+' \\\\')
+			else:
+				print("\t".join(str(x) for x in (fluent,clipsN,computer_type,diff_action,diff_fluent,diff_total,diff_action/clipsN,diff_fluent/clipsN,diff_total/clipsN)))
 			if not computer_type in totals:
 				totals[computer_type] = {"action_avg_sum": 0, 'fluent_avg_sum': 0}
 			totals[computer_type]["action_avg_sum"] += diff_action / clipsN
@@ -178,8 +184,10 @@ if kJustTheSummary:
 		diff_fluent = totals[computer_type]['fluent_avg_sum']
 		diff_total = diff_action + diff_fluent
 		fluentsN = totals["_count"]
-		#print("&".join(str(x) for x in ("SUM",fluentsN,computer_type,diff_action,diff_fluent,diff_total,diff_action/fluentsN,diff_fluent/fluentsN,diff_total/fluentsN)))
-		print(" & ".join(str(x) for x in ("ALL",computer_words,diff_action/fluentsN,diff_fluent/fluentsN,diff_total/fluentsN))+' \\\\')
+		if kLaTeXSummary:
+			print(" & ".join(str(x) for x in ("ALL",computer_words,diff_action/fluentsN,diff_fluent/fluentsN,diff_total/fluentsN))+' \\\\')
+		else:
+			print("\t".join(str(x) for x in ("SUM",fluentsN,computer_type,diff_action,diff_fluent,diff_total,diff_action/fluentsN,diff_fluent/fluentsN,diff_total/fluentsN)))
 if kDebugOn:
 	print exceptions
 
