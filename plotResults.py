@@ -8,6 +8,7 @@ import pprint
 import xml_stuff
 import videoCutpoints
 import summerdata
+from causal_grammar import TYPE_ACTION, TYPE_FLUENT
 
 #TODO: this really shouldn't require the database, should it? everything's already dumped to cvpr_db_results.... but kResultStorageFolder is unused! BAH! DOH! Yes. So ideally before this "python dealWithDBResults.py upanddown" to create those.
 
@@ -89,7 +90,7 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 		xindex = 1
 		while xindex < len(row):
 			(root, actiontest, rest) = headers[xindex].split("_",2)
-			if actiontest == "action":
+			if actiontest == TYPE_ACTION:
 				actions = True
 				# a yes action at this point means we "trigger" it for 1 frame in the middle of our framecount, give or take
 				(start_frame, _, action) = rest.split("_") # assumes "act" before "act_no"; assumes only "act" and "act_no"; TODO: what else exists in the database???
@@ -303,7 +304,7 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 			# ignoring energies at the moment because they are the sum of all the energies for this 'chain' as compared to other chains, and not for the individual nodes (oops TODO?)
 			frame = int(event.attrib['frame'])
 			frame_diff = frame - last_frame
-			if actionPairing[0] == event.attrib["action"]:
+			if actionPairing[0] == event.attrib[TYPE_ACTION]:
 				if debugOn:
 					xml_stuff.printXMLAction(event)
 				last_probability = 1.
@@ -315,7 +316,7 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 					frame = end_of_frames
 					frame_diff = frame - last_frame
 				result = [0.,]*frame_diff
-			elif actionPairing[1] == event.attrib["action"]:
+			elif actionPairing[1] == event.attrib[TYPE_ACTION]:
 				if debugOn:
 					xml_stuff.printXMLAction(event)
 				last_probability = 0.

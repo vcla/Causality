@@ -8,6 +8,9 @@ import math # for log, etc
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
+TYPE_FLUENT = "fluent"
+TYPE_ACTION = "action"
+
 kUnknownEnergy = 8#0.7 # TODO: may want to tune
 kUnlikelyEnergy = 10.0 # TODO: may want to tune
 kZeroProbabilityEnergy = 10.0 # TODO: may want to tune: 10.0 = very low

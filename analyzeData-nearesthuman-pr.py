@@ -9,6 +9,8 @@ import hashlib
 kCSVDir = 'results/cvpr_db_results' # from the 'export' option in dealWithDBResults.py
 kComputerTypes = ['origdata', 'origsmrt', 'causalgrammar', 'causalsmrt' ]
 
+raise Exception("switch kFluentToFieldMapping to use summerdata groupings")
+raise Exception("also use causalgrammar import TYPE_FLUENT, TYPE_ACTION")
 # note that "negative" action must be the last one specified for proper P/R and there must be only one "no action"
 kFluentToFieldMapping = {
 		#door_95_closed_open door_95_open_closed door_95_open door_95_closed

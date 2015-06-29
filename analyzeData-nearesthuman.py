@@ -3,19 +3,29 @@
 
 import os
 import hashlib
+from causal_grammar import TYPE_FLUENT, TYPE_ACTION
+from summerdata import getPrefixType, getMasterFluentsForPrefix, getFluentsForMasterFluent, getActionsForMasterFluent
+from summerdata import groupings
 kCSVDir = 'results/cvpr_db_results' # from the 'export' option in dealWithDBResults.py
 kComputerTypes = ['causalgrammar', 'origsmrt', 'origdata', 'causalsmrt']
 kDebugOn = False
 kJustSMRT = True
+import re
+kPrefixMatch = r'([a-zA-Z_]+)_[0-9]+_'
 
 class MissingDataException(Exception):
 	pass
 
+def getPrefixForColumnName(column_name):
+	return re.match(kPrefixMatch,column_name).group(1)
+
 def findDistanceBetweenTwoVectors(A, B, fields, fluent):
-	distance = {"action": 0, "fluent": 0}
-	fluent_action = "{}_action".format(fluent)
+	distance = {TYPE_ACTION: 0, TYPE_FLUENT: 0}
+	fluent_actions = getActionsForMasterFluent(groupings, fluent)
+	fluent_fluents = getFluentsForMasterFluent(groupings, fluent)
 	for i in range(len(A)):
-		if fields[i].startswith(fluent) or fields[i].startswith(fluent_action):
+		prefix = getPrefixForColumnName(fields[i])
+		if prefix in fluent_actions or prefix in fluent_fluents:
 			Ai = A[i]
 			Bi = B[i]
 			try:
@@ -27,10 +37,10 @@ def findDistanceBetweenTwoVectors(A, B, fields, fluent):
 			except ValueError:
 				Bi = 0
 			diff = abs(Ai - Bi)
-			if fields[i].startswith(fluent_action):
-				distance['action'] += diff
+			if prefix in fluent_actions:
+				distance[TYPE_ACTION] += diff
 			else:
-				distance['fluent'] += diff
+				distance[TYPE_FLUENT] += diff
 	return distance
 
 import argparse
@@ -66,9 +76,15 @@ for filename in os.listdir (kCSVDir):
 				header = csv.readline()
 				_, fields = header.rstrip().split(",",1)
 				fields = fields.rsplit(",",2)[0].split(",")
-				fluents = set()
+				prefixes = set()
+				# step 1 -- loop through all fields to get all of the unique prefixes
 				for field in fields:
-					fluents.add(field.split("_",1)[0])
+					prefixes.add(getPrefixForColumnName(field))
+				fluents = set()
+				# step 2 -- turn the reduced set of prefixes into master (aka "reportable") fluents
+				for prefix in prefixes:
+					for fluent in getMasterFluentsForPrefix(groupings, prefix):
+						fluents.add(fluent)
 				lines = csv.readlines()
 				for fluent in fluents:
 					humans = {}
@@ -96,11 +112,11 @@ for filename in os.listdir (kCSVDir):
 					bestscores = {}
 					besthumans = {}
 					for computerType in kComputerTypes:
-						bestscores[computerType] = {'sum':0, 'fluent': 0, 'action': 0}
+						bestscores[computerType] = {'sum':0, TYPE_FLUENT: 0, TYPE_ACTION: 0}
 						besthumans[computerType] = []
 						for human in humans:
 							score = findDistanceBetweenTwoVectors(computers[computerType],humans[human],fields,fluent)
-							score['sum'] = score['fluent'] + score['action']
+							score['sum'] = score[TYPE_FLUENT] + score[TYPE_ACTION]
 							if not besthumans[computerType] or score['sum'] < bestscores[computerType]['sum']:
 								besthumans[computerType] = [human]
 								bestscores[computerType] = score
@@ -112,25 +128,25 @@ for filename in os.listdir (kCSVDir):
 					fluent = fluent if fluent else kAllFluentsConstant
 					if not kJustTheSummary:
 						print("\t".join((filename,fluent,hashlib.md5(exampleNameForDB).hexdigest(),
-							str(bestscores['origdata']['action']), 
-							str(bestscores['origdata']['fluent']), 
-							str(bestscores['origsmrt']['action']), 
-							str(bestscores['origsmrt']['fluent']), 
-							str(bestscores['causalgrammar']['action']), 
-							str(bestscores['causalgrammar']['fluent']), 
-							str(bestscores['causalsmrt']['action']), 
-							str(bestscores['causalsmrt']['fluent']), 
+							str(bestscores['origdata'][TYPE_ACTION]), 
+							str(bestscores['origdata'][TYPE_FLUENT]), 
+							str(bestscores['origsmrt'][TYPE_ACTION]), 
+							str(bestscores['origsmrt'][TYPE_FLUENT]), 
+							str(bestscores['causalgrammar'][TYPE_ACTION]), 
+							str(bestscores['causalgrammar'][TYPE_FLUENT]), 
+							str(bestscores['causalsmrt'][TYPE_ACTION]), 
+							str(bestscores['causalsmrt'][TYPE_FLUENT]), 
 							",".join(besthumans['origdata']), ",".join(besthumans['origsmrt']), ",".join(besthumans['causalgrammar']), ",".join(besthumans['causalsmrt']))))
 					# summing for later
 					if not fluent in fluentDiffSums:
 						fluentDiffSums[fluent] = dict()
 						for computer_type in kComputerTypes:
-							fluentDiffSums[fluent][computer_type] = {"action": 0, "fluent": 0}
+							fluentDiffSums[fluent][computer_type] = {TYPE_ACTION: 0, TYPE_FLUENT: 0}
 						fluentDiffSums[fluent]['_count'] = 0
 					fluentDiffSums[fluent]['_count'] += 1
 					for computer in kComputerTypes:
-						fluentDiffSums[fluent][computer]["action"] += bestscores[computer]["action"]
-						fluentDiffSums[fluent][computer]["fluent"] += bestscores[computer]["fluent"]
+						fluentDiffSums[fluent][computer][TYPE_ACTION] += bestscores[computer][TYPE_ACTION]
+						fluentDiffSums[fluent][computer][TYPE_FLUENT] += bestscores[computer][TYPE_FLUENT]
 			except MissingDataException as foo:
 				exceptions.append(foo)
 
@@ -153,8 +169,8 @@ if kJustTheSummary:
 				fluentDiffSums[fluent].pop(computer_type,None)
 				continue
 			clipsN = fluentDiffSums[fluent]["_count"]
-			diff_action = fluentDiffSums[fluent][computer_type]["action"]
-			diff_fluent = fluentDiffSums[fluent][computer_type]["fluent"]
+			diff_action = fluentDiffSums[fluent][computer_type][TYPE_ACTION]
+			diff_fluent = fluentDiffSums[fluent][computer_type][TYPE_FLUENT]
 			diff_total = diff_action + diff_fluent
 			fluentDiffSums[fluent][computer_type]["sum"] = diff_total
 			fluentDiffSums[fluent][computer_type]["action_avg"] = diff_action / clipsN

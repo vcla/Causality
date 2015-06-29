@@ -1,11 +1,104 @@
 # dict keys are frame numbers
 # frames are only reported when a fluent changes, and only for the fluent(s) that changed; fluents are considered to be on or off ("light" is treated as "light_on", and then "light_off" is calculated from that internally, for instance)
 
+
+#TODO this is essentially redundant data and SHOULD come from causal_grammar_summerdata.py TODO
+#TODO let's try to replace onsoffs (and actionPairings) with a more robust framework...yay...
+
+groupings = dict()
+from causal_grammar import TYPE_FLUENT, TYPE_ACTION
+
+# note that "negative" action must be the last one sepecified for proper P/R and there must be only one "no action"
+# TODO: above note taken from analyzeData-nearesthuman-pr.py which still needs to be refactored appropriately
+def addGrouping(groupings, fluent, related_fluents, related_actions):
+	groupings[fluent] = {
+		TYPE_FLUENT : related_fluents,
+		TYPE_ACTION : related_actions,
+	}
+
+addGrouping(groupings, 'thirst',
+		{ 'thirst' : ["not_thirsty","thirsty_not","thirsty","not",] },
+		{ 'water_action' : ["act_drink","act_no_drink",], },
+)
+
+addGrouping(groupings, 'cup',
+		{ 'cup' : ["more","less","same",], },
+	{
+		'water_action' : ["act_drink","act_no_drink",],    # this. this is why we can't have nice things.
+		'dispense' : ["act_dispensed","act_no_dispense",], # also, this. even more, this.
+	},
+)
+
+addGrouping(groupings, 'waterstream',
+		{ 'waterstream' : ["water_on","water_off",], },
+	{
+		'water_action' : ["act_drink","act_no_drink",],
+		'dispense' : ["act_dispensed","act_no_dispense",],
+	},
+)
+
+addGrouping(groupings, 'door',
+		{ 'door' : ["closed_open","open_closed","open","closed",], },
+		{ 'door_action' : ["act_opened","act_closed","act_not_opened_closed",], },
+)
+
+addGrouping(groupings, 'doorlock',
+		{ 'doorlock' : ["lock_unlocked","unlocked_lock","locked","unlocked",], },
+		{ 'doorlock_action' : ["act_knock","act_none",],},
+)
+
+addGrouping(groupings, 'phone',
+		{ 'phone' : ["off_active","active_off","active","off",], 'ringer': ['ring', 'no_ring'], },
+		{ 'phone_action' : ["act_received_call","act_no_call",], },
+)
+
+addGrouping(groupings, 'trash',
+		{ 'trash' : ["more", "less", "same", ], },
+		{ 'trash_action' : ['act_benddown', 'act_no_benddown', ], },
+)
+
+addGrouping(groupings, 'screen',
+		{ 'screen' : ["off_on", "on_off", "on", "off", ], },
+		{ 'screen_action' : ['act_mousekeyboard', 'act_no_mousekeyboard', ], },
+)
+
+addGrouping(groupings, 'elevator',
+		{ 'elevator' : ["closed_open", "open_closed", "open", "closed", ], },
+		{ 'elevator_action' : ['act_pushbutton', 'act_no_pushbutton', ], },
+)
+
+addGrouping(groupings, 'light',
+		{ 'light' : ["off_on", "on_off", "on", "off", ], },
+		{ 'light_action' : ['act_pushbutton', 'act_no_pushbutton', ], },
+)
+
+def getActionsForMasterFluent(groupings, fluent):
+	return groupings[fluent][TYPE_ACTION].keys()
+
+def getFluentsForMasterFluent(groupings, fluent):
+	return groupings[fluent][TYPE_FLUENT].keys()
+
+def getMasterFluentsForPrefix(groupings, prefix):
+	return [i for i in groupings if prefix in groupings[i][TYPE_FLUENT] or prefix in groupings[i][TYPE_ACTION]]
+
+def getPrefixType(groupings, prefix):
+	if [i for i in groupings if prefix in groupings[i][TYPE_FLUENT]]:
+		return TYPE_FLUENT
+	if [i for i in groupings if prefix in groupings[i][TYPE_ACTION]]:
+		return TYPE_ACTION
+	raise Exception("prefix not found in groupings: {}".format(prefix))
+
+"""
+onsoffs are used by:
+	dealWithDBResults ~ buildDictForFluentBetweenFramesIntoResults
+	plotResults ~ buildHeatmapForExample STAGE 3 READ CAUSALGRAMMAR RESULTS, seeing if our value changed or stayed the same
+actionPairings are used by:
+	the same two culprits.
+"""
 onsoffs = { "door": ["open","closed"], "light": ["on","off"], "screen": ["on","off"], "phone": ["active","off"], "ringer": ["ring","no_ring"] }  #ringer actions: act_received_call, act_no_call <- mean "used phone" or "not".
 # filling in these, assuming they're the DB on/off values
 onsoffs["thirst"] = ["thirsty", "not"]  #actions: act_drink, act_no_drink, act_dispensed, act_no_dispense (maybe)
 onsoffs["waterstream"] = ["water_on", "water_off"] #actions act_dispensed, act_no_dispense
-onsoffs["water"] = ["water_on", "water_off"] # FAKE WRONG BROKEN
 onsoffs["doorlock"] = ["locked", "unlocked"] # TODO: uhoh, the change is lock_unlocked/unlocked_lock. need to catch.  #actions act_knock, act_none
 # and these below here are the lovely 3-case answer...
 onsoffs["trash"] = ["on", "off"] # actions: act_benddown, act_no_benddown
@@ -77,3 +170,4 @@ if __name__ == '__main__':
 		fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, False) # last true: suppress the xml output
 	if len(import_failed):
 		print("FAILED IMPORTING: {}".format(", ".join(import_failed)))
+	print groupings
