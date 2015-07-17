@@ -672,9 +672,8 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 
 ##########################
 
-import xml_stuff
-
 if __name__ == '__main__':
+	import xml_stuff
 	debugQuery = False
 	import argparse
 	kSummerDataPythonDir="results/CVPR2012_reverse_slidingwindow_action_detection_logspace";

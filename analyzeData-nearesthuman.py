@@ -125,7 +125,6 @@ for filename in os.listdir (kCSVDir):
 					## FILENAME, FLUENT, HASH, ORIGDATA SCORE, ORIGSMRT SCORE, CAUSALGRAMMAR SCORE, ORIGDATA HUMANS, ORIGSMRT HUMANS, CAUSALGRAMMAR HUMANS
 					exampleName, room = filename.rsplit('.',1)
 					exampleNameForDB = exampleName.replace("_","")
-					fluent = fluent if fluent else kAllFluentsConstant
 					if not kJustTheSummary:
 						print("\t".join((filename,fluent,hashlib.md5(exampleNameForDB).hexdigest(),
 							str(bestscores['origdata'][TYPE_ACTION]), 
