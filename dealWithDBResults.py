@@ -327,7 +327,7 @@ def buildDictForFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2)
 # doesn't look back to see what the value was BEFORE the frame range
 # THERE IS A DISTINCT LACK OF CHECKING THINGS TO BE SURE HERE
 def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,frame2):
-	debugQuery = True
+	debugQuery = False
 	if debugQuery:
 		print("SEARCHING DUMB {} between {} and {}".format(fluent,frame1,frame2))
 		xml_stuff.printXMLFluents(xml)

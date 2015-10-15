@@ -6,7 +6,7 @@
 #TODO let's try to replace onsoffs (and actionPairings) with a more robust framework...yay...
 
 groupings = dict()
-from causal_grammar import TYPE_FLUENT, TYPE_ACTION
+from causal_grammar import TYPE_FLUENT, TYPE_ACTION, kNonActionPenaltyEnergy
 
 # note that "negative" action must be the last one sepecified for proper P/R and there must be only one "no action"
 # TODO: above note taken from analyzeData-nearesthuman-pr.py which still needs to be refactored appropriately

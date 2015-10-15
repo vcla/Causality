@@ -8,6 +8,7 @@ import math # for log, etc
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import os
+import copy
 
 TYPE_FLUENT = "fluent"
 TYPE_ACTION = "action"
@@ -246,6 +247,7 @@ def filter_changes(changes, keys_in_grammar):
 	for x in [x for x in changes.keys() if x not in keys_for_filtering]:
 		changes.pop(x)
 
+# returns a forest where each option is a different parse. the parses have the same format as trees (but or-nodes now only have one option selected).
 def generate_parses(causal_tree):
 	node_type = causal_tree["node_type"]
 	if "children" not in causal_tree:
@@ -404,6 +406,7 @@ def print_previous_energies(fluent_hash):
 	print("PREV FLUENT: {}".format(fluent_energies))
 
 # sets any events that haven't triggered within their timeout number of frames to kUnlikelyEnergy
+# TODO: fix this to work on active_parses instead of event_hash
 def clear_outdated_events(event_hash, event_timeouts, frame):
 	for event in event_hash:
 		if event_hash[event]["energy"] != kUnlikelyEnergy and frame - event_hash[event]["frame"] > event_timeouts[event]:
@@ -412,6 +415,9 @@ def clear_outdated_events(event_hash, event_timeouts, frame):
 			event_hash[event]["energy"] = kUnlikelyEnergy
 			event_hash[event]["agent"] = False
 
+# at all times there is a list of "currently active" parses, which includes a chain back to the beginning
+# of events of the "best choice of transition" from each event (action, fluent, or timeout) to each previous
+# COMPLETING a parse tree TODO wut? appends the frame
 def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions, source):
 	# we have a winner! let's show them what they've won, bob!
 	energy = calculate_energy(active_parse_tree, fluent_hash, event_hash)
@@ -525,16 +531,16 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 						# raise Exception("TODO, EH??")
 						parse_ids_completed.append(other_parse['id'])
 						complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frames[symbol], completions, 'timeout alt')
+	clear_outdated_events(event_hash, event_timeouts, frame)
 
 def process_events_and_fluents(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy, suppress_output = False):
 	clever = True # clever (modified viterbi algorithm) or brute force (all possible parses)
-	results_for_xml_output = []
-	fluent_parse_index = 0
-	action_parse_index = 0
 	initial_conditions = False
+	#TODO: initial condition stuff is suspect, investigate if/when these are in our source data. should probably never have assumed initial conditions and instead set everything to 50% likelihood
 	if "initial" in fluent_parses:
 		initial_conditions = fluent_parses["initial"]
 		del fluent_parses["initial"]
+	# do these for our local function, because we want these for figuring out which ones overlap
 	fluent_parse_frames = sorted(fluent_parses, key=fluent_parses.get)
 	fluent_parse_frames.sort()
 	action_parse_frames = sorted(action_parses, key=action_parses.get)
@@ -583,12 +589,12 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 
 	# build lookups by fluent and event -- the parse_array will be all of the parses,
 	# while the parse_id_hash* will list, for each fluent and event respectively, all of the
-	# parses associated with it
+	# parses associated with it; these parses are flattened per generate_parses (they are implicitly
+	# selected on OR nodes, so they depend only on one set of all things being true)
 	parse_array = []
 	parse_id_hash_by_fluent = {}
 	parse_id_hash_by_event = {}
 	parseid_generator = sequence_generator()
-	# TODO: what exactly are the generated parses used for? I have forgotten...
 	for causal_tree in causal_forest:
 		causal_tree["parses"] = generate_parses(causal_tree)
 		for parse in causal_tree["parses"]:
@@ -606,30 +612,85 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 					parse_id_hash_by_fluent[key].append(parse_id)
 				else:
 					parse_id_hash_by_fluent[key] = [parse_id,]
-	# loop through the parses, getting the "next frame a change happens in"; if a change happens
-	# in both fluents and events at the same time, they will be handled sequentially,
-	# the fluent first
-	# TODO: since we complete 'actions' when we look at fluents, if they happen in the same frame
-	# we should probably handling actions first
-	active_parse_trees = {}
 	completions = {}
 	import pprint
 	pp = pprint.PrettyPrinter(depth=6)
+	# "complete" the initial parses, which is to say "make the energies for all of our initial state possibilities"
 	for parse in parse_array:
 		complete_parse_tree(parse, fluent_hash, event_hash, 0, completions, 'initial')
-	pp.pprint(active_parse_trees)
-	pp.pprint("----")
-	pp.pprint(fluent_hash)
-	pp.pprint(event_hash)
-	pp.pprint("----")
+	if not suppress_output:
+		print("PARSE_ARRAY")
+		pp.pprint(parse_array)
+		pp.pprint("----")
+		print("COMPLETIONS AFTER INITIAL")
+		pp.pprint(completions)
+		pp.pprint("----")
+		print("FLUENT_HASH")
+		pp.pprint(fluent_hash)
+		print("EVENT_HASH")
+		pp.pprint(event_hash)
+		pp.pprint("----")
+	# loop through the parses, getting the "next frame a change happens in"; if a change happens
+	# in both fluents and events at the same time, they will be handled sequentially,
+	# the fluent first
+	# TODO: create every combination that removes overlapping fluents and overlapping actions....
+
+	#print "-=-=-=-=-=-=-= fluent parses -=-=-=-=-=-=-="
+	#print fluent_parses
+	# {8: {'light': 0.10536051565782628}, 6: {'light': 0.5108256237659907}}
+	#print "-=-=-=-=-=-=-= event parses -=-=-=-=-=-=-="
+	#print action_parses
+	# {5: {'A1': {'energy': 0.10536051565782628, 'agent': 'uuid4'}}}
+	#print "-=-=-=-=-=-=-= ...........  -=-=-=-=-=-=-="
+
+	chains = ((fluent_parses, action_parses, ),)
+	non_overlapping_chains = list()
+	for chain in chains:
+		
+		
+		non_overlapping_chains.append(chain,)
+	results_for_xml_output = list()
+	for chain in non_overlapping_chains:
+		print chain
+		result = _without_overlaps(chain[0], chain[1], parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
+		results_for_xml_output.append(copy.deepcopy(result))
+	results_for_xml_output = sorted(results_for_xml_output, key = lambda(k): k[0][0][1])
+	doc = build_xml_output_for_chain(results_for_xml_output[0],parse_array,suppress_output) # for lowest energy chain
+	if not suppress_output:
+		print("RESULTS_FOR_XML_OUTPUT (sorted):")
+		for result in results_for_xml_output:
+			print result
+		print("BEST RESULT as XML::")
+		print("{}".format(minidom.parseString(ET.tostring(doc,method='xml',encoding='utf-8')).toprettyxml(encoding="utf-8",indent="\t")))
+	print "----------------------------------------------------"
+	return ET.tostring(doc,encoding="utf-8",method="xml")
+
+#def _without_overlaps(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy, suppress_output = False):
+def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, fluent_hash, event_timeouts, reporting_threshold_energy, completions, fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever):
+	results_for_xml_output = []
+	#fluent_parse_frames
+	#action_parse_frames
+	#fluent_and_event_keys_we_care_about
+	#event_hash
+	#fluent_hash
+	#event_timeouts
+	active_parse_trees = {}
+	fluent_parse_frames = sorted(fluent_parses)
+	action_parse_frames = sorted(action_parses)
+
+	fluent_parse_index = 0
+	action_parse_index = 0
+	# TODO: since we complete 'actions' when we look at fluents, if they happen in the same frame
+	# we should probably handling actions first
 	while fluent_parse_index < len(fluent_parses) or action_parse_index < len(action_parses):
 		fluents_complete = fluent_parse_index >= len(fluent_parses)
 		action_complete = action_parse_index >= len(action_parses)
+		# if we're not done with our fluents and either we're done with our actions OR next fluent frame is <= next action frame
 		if not fluents_complete and (action_complete or fluent_parse_frames[fluent_parse_index] <= action_parse_frames[action_parse_index]):
 			frame = fluent_parse_frames[fluent_parse_index]
 			# print("CHECKING FLUENT FRAME: {}".format(frame))
+			# before we do anything with our new fluent information, complete any actions-that-need-timing out!
 			complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy, completions)
-			clear_outdated_events(event_hash, event_timeouts, frame)
 			changes = fluent_parses[frame]
 			filter_changes(changes, fluent_and_event_keys_we_care_about['fluents'])
 			fluent_parse_index += 1
@@ -691,7 +752,6 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		else:
 			frame = action_parse_frames[action_parse_index]
 			complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame, reporting_threshold_energy, completions)
-			clear_outdated_events(event_hash, event_timeouts, frame)
 			changes = action_parses[frame]
 			filter_changes(changes, fluent_and_event_keys_we_care_about['events'])
 			action_parse_index += 1
@@ -727,8 +787,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		"""
 	# clean up
 	complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame+999999, reporting_threshold_energy, completions)
-	clear_outdated_events(event_hash, event_timeouts, frame+999999)
-	if False:
+	if not suppress_output and False:
 		import pprint
 		pp = pprint.PrettyPrinter(depth=6)
 		print "=-==-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--="
@@ -866,10 +925,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				print('\n'.join(map(str,chain_results)))
 				hr()
 				hr()
-	doc = build_xml_output_for_chain(results_for_xml_output,parse_array,suppress_output) # for lowest energy chain
-	if not suppress_output:
-		print("{}".format(minidom.parseString(ET.tostring(doc,method='xml',encoding='utf-8')).toprettyxml(encoding="utf-8",indent="\t")))
-	return ET.tostring(doc,encoding="utf-8",method="xml")
+	return results_for_xml_output
 
 def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 	temporal = ET.Element('temporal')

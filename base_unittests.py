@@ -66,6 +66,7 @@ class LightingTestCaseSecondOfTwoFluents(unittest.TestCase):
 
 	def testFluentTrueChangeState(self):
 		light_8 = self.root.findall("./fluent_changes/fluent_change[@frame='8']")
+		assert len(light_8) > 0, "should have decided light changed to on at 8; no change detected"
 		assert light_8[0].attrib['new_value'] == 'on', "should have decided light changed to on at 8; was: {}".format(light_8[0].attrib['new_value'])
 
 	def testFluentMisdetectedChangeState(self):
@@ -80,8 +81,8 @@ class LightingTestCaseSecondOfTwoFluents(unittest.TestCase):
 	def testFluentTooEarlyToo(self):
 		frame = 7
 		# only returns valid results for changed-on or changed-off, not stayed-on, stayed-off
-		fluentDict = dealWithDBResults.buildDictForDumbFluentBetweenFramesIntoResults(self.root, "light", ('light_on','light_off'), 0, frame)
-		assert not fluentDict['light_0_light_on_light_off'] and not fluentDict['light_0_light_off_light_on'], "should have had no light status change before {}".format(frame)
+		fluentDict = dealWithDBResults.buildDictForDumbFluentBetweenFramesIntoResults(self.root, "light", ('light_on','light_off'), 1, frame)
+		assert not fluentDict['light_1_light_on_light_off'] and not fluentDict['light_1_light_off_light_on'], "should have had no light status change before {}".format(frame)
 
 	def testFluentTooLate(self):
 		frame = 9

@@ -1,4 +1,6 @@
 STATUS: this document is out of date, but still contains much that is true.
+TODO: actions should remain "available" for branches where they're not-yet-selected
+TODO: when building the XML, individual nodes should have their own energy, not the energy of the whole chain
 
 current development is on unit tests using pyunit: base_unittests.py
 
