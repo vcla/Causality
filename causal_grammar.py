@@ -9,6 +9,31 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import os
 import copy
+from collections import defaultdict
+
+"""some helper functions"""
+def powerset(iterable):
+    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+    s = list(iterable)
+    return itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(len(s)+1))
+
+def flatten(listOfLists):
+    "Flatten one level of nesting"
+    return itertools.chain.from_iterable(listOfLists)
+
+def split_fluents_into_windows(fluents):
+    splits = list()
+    kFluentOverlap = 10
+    cluster = list()
+    prev_frame = -kFluentOverlap
+    for frame in sorted(fluents):
+        if kFluentOverlap < (frame - prev_frame):
+            splits.append(cluster)
+            cluster = list()
+        prev_frame = frame
+        cluster.append(frame)
+    splits.append(cluster)
+    return splits[1:]
 
 TYPE_FLUENT = "fluent"
 TYPE_ACTION = "action"
@@ -216,18 +241,18 @@ def get_event_timeouts(forest):
 	return events
 
 def get_fluent_and_event_keys_we_care_about(forest):
-	fluents = []
-	events = []
+	fluents = set()
+	events = set()
 	for tree in forest:
 		if "children" in tree:
 			child_keys = get_fluent_and_event_keys_we_care_about(tree["children"])
-			fluents += child_keys['fluents']
-			events += child_keys['events']
+			fluents.update(child_keys['fluents'])
+			events.update(child_keys['events'])
 		if "symbol_type" in tree:
 			if tree["symbol_type"] in ("fluent","prev_fluent"):
-				fluents.append(tree["symbol"])
+				fluents.add(tree["symbol"])
 			elif tree["symbol_type"] in ("event","nonevent"):
-				events.append(tree["symbol"])
+				events.add(tree["symbol"])
 	return { "fluents": fluents, "events": events }
 
 # filters "changes" for just the fluents and events we care about
@@ -643,23 +668,65 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	# {5: {'A1': {'energy': 0.10536051565782628, 'agent': 'uuid4'}}}
 	#print "-=-=-=-=-=-=-= ...........  -=-=-=-=-=-=-="
 
-	chains = ((fluent_parses, action_parses, ),)
-	non_overlapping_chains = list()
-	for chain in chains:
-		
-		
-		non_overlapping_chains.append(chain,)
+	print "FLUENT AND EVENT KEYS WE CARE ABOUT: {}".format(fluent_and_event_keys_we_care_about)
+	# ONLY MIXING UP FLUENT PARSES AS A STARTER. ACITON PARSES WOULD MEAN MORE INTERACTIONS, MORE COMPLEXITY
+	# SEE inference-overlappingevents jupyter file to make sense of below
+	fluents_to_recombine = defaultdict(set)
+	for frame in fluent_parses:
+		for fluent in fluent_parses[frame]:
+			fluents_to_recombine[fluent].add(frame)
+	powersets = dict()
+	for fluent in fluents_to_recombine:
+		frames_to_recombine = fluents_to_recombine[fluent]
+		splits = split_fluents_into_windows(frames_to_recombine)
+		if not suppress_output:
+			print("GOT SPLITS {} for {}".format(splits, fluent))
+		split_combinations = list()
+		for item in splits:
+			split_combinations.append(list(powerset(item))[1:])
+		all_combos = split_combinations[0]
+		for i in range(1,len(split_combinations)):
+			all_combos = list(list(flatten(x)) for x in itertools.product(all_combos, split_combinations[i]))
+		powersets[fluent] = all_combos
+	powerset_counts = map(lambda x: (x,len(powersets[x]),),powersets.keys())
+	if not suppress_output:
+		print("powersets: {}".format(powersets))
+		print("powerset counts: {}".format(powerset_counts))
+	powerset_count_split_combinations = map(lambda x: range(0,x[1]),powerset_counts)
+	if len(powerset_count_split_combinations) > 1:
+		merge_combinations = list(itertools.product(powerset_count_split_combinations[0], powerset_count_split_combinations[1]))
+		for item in powerset_count_split_combinations[2:]:
+			merge_combinations = list(itertools.product(merge_combinations, item))
+			merge_combinations = list(list(flatten(x)) for x in map(lambda x: (x[0],(x[1],)),merge_combinations))
+	else:
+		merge_combinations = powerset_count_split_combinations[0]
+	if not suppress_output:
+		print("MERGE_COMBINATIONS: {}".format(merge_combinations))
 	results_for_xml_output = list()
-	for chain in non_overlapping_chains:
-		print chain
-		result = _without_overlaps(chain[0], chain[1], parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
+	for combination in merge_combinations:
+		if not suppress_output:
+			print("RUNNING COMBINATION: {}".format(combination))
+			if type(combination) == type(1):
+				combination = (combination, )
+		parses_to_recombine = dict(map(lambda x:(x[0][0],powersets[x[0][0]][x[1]]),zip(powerset_counts,combination)))
+		recombined_parses = defaultdict(dict)
+		#print parses_to_recombine ~ {'door': [175, 191, 272], 'light': (227,), 'screen': [147, 175]}
+		if not suppress_output:
+			print("parses to recombine: {}".format(parses_to_recombine))
+		for fluent in parses_to_recombine:
+			for frame in parses_to_recombine[fluent]:
+				recombined_parses[frame][fluent] = fluent_parses[frame][fluent]
+		result = _without_overlaps(recombined_parses, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
 		results_for_xml_output.append(copy.deepcopy(result))
 	results_for_xml_output = sorted(results_for_xml_output, key = lambda(k): k[0][0][1])
-	doc = build_xml_output_for_chain(results_for_xml_output[0],parse_array,suppress_output) # for lowest energy chain
 	if not suppress_output:
 		print("RESULTS_FOR_XML_OUTPUT (sorted):")
+	doc = build_xml_output_for_chain(results_for_xml_output[0],parse_array,suppress_output) # for lowest energy chain
+	if not suppress_output:
 		for result in results_for_xml_output:
 			print result
+		print("BEST RESULT ::")
+		print(results_for_xml_output[0])
 		print("BEST RESULT as XML::")
 		print("{}".format(minidom.parseString(ET.tostring(doc,method='xml',encoding='utf-8')).toprettyxml(encoding="utf-8",indent="\t")))
 	print "----------------------------------------------------"
