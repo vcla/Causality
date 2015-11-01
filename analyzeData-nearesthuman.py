@@ -43,6 +43,27 @@ def findDistanceBetweenTwoVectors(A, B, fields, fluent):
 				distance[TYPE_FLUENT] += diff
 	return distance
 
+def printLaTeXSummary(dictToPrint):
+	causalLine = "Causal"
+	detectionsLine = "Detection"
+	headerLine = "Object"
+	tableTransposed = "Object & Detection & Causal \\\\ \n \\midrule \n"
+	for singleFluent in dictToPrint:
+		headerLine += " & " + singleFluent
+		winningLine = min(dictToPrint[singleFluent], key=dictToPrint[singleFluent].get)
+		dictToPrint[singleFluent][winningLine] = "\\textbf{" + str(dictToPrint[singleFluent][winningLine]) + "}"
+		causalLine += " & " + str(dictToPrint[singleFluent]["causalsmrt"])
+		detectionsLine += " & " + str(dictToPrint[singleFluent]["origsmrt"])
+		tableTransposed += "{} & {} & {} \\\\ \n".format(singleFluent, str(dictToPrint[singleFluent]["origsmrt"]), str(dictToPrint[singleFluent]["causalsmrt"]))
+	causalLine += ' \\\\'
+	headerLine += ' \\\\'
+	detectionsLine += ' \\\\'
+	print headerLine
+	print "\\midrule"
+	print detectionsLine
+	print causalLine
+	print tableTransposed
+
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-s","--summary", action="store_true", required=False, help="just print the summary results")
@@ -157,8 +178,8 @@ for filename in os.listdir (kCSVDir):
 #print("{}\t{}\t{}\t{}\t{}".format("AVERAGE",total_origdata_score / N,total_causalgrammar_score / N,"",""))
 if kJustTheSummary:
 	if kLaTeXSummary:
-		print(" & ".join(('Object','Computer','Action','Fluent','All'))+' \\\\')
-		print("\\midrule")
+		actionSummary = {}
+		fluentSummary = {}
 	else:
 		print("\t".join(('fluent','N','computer','distA','distF',u'dist\u2211','avgA','avgF',u'avg\u2211')))
 	totals = {"_count":0}
@@ -180,7 +201,11 @@ if kJustTheSummary:
 			elif computer_type.startswith('orig'):
 				computer_words= "Detections"
 			if kLaTeXSummary:
-				print(" & ".join(str(x) for x in (fluent,computer_words,diff_action/clipsN,diff_fluent/clipsN,diff_total/clipsN))+' \\\\')
+				if fluent not in actionSummary:
+					actionSummary[fluent] = {}
+					fluentSummary[fluent] = {}
+				actionSummary[fluent][computer_type] = diff_action/clipsN
+				fluentSummary[fluent][computer_type] = diff_fluent/clipsN
 			else:
 				print("\t".join(str(x) for x in (fluent,clipsN,computer_type,diff_action,diff_fluent,diff_total,diff_action/clipsN,diff_fluent/clipsN,diff_total/clipsN)))
 			if not computer_type in totals:
@@ -200,9 +225,14 @@ if kJustTheSummary:
 		diff_total = diff_action + diff_fluent
 		fluentsN = totals["_count"]
 		if kLaTeXSummary:
-			print(" & ".join(str(x) for x in ("ALL",computer_words,diff_action/fluentsN,diff_fluent/fluentsN,diff_total/fluentsN))+' \\\\')
+			pass
+			# TODO: put in totals/All
 		else:
 			print("\t".join(str(x) for x in ("SUM",fluentsN,computer_type,diff_action,diff_fluent,diff_total,diff_action/fluentsN,diff_fluent/fluentsN,diff_total/fluentsN)))
+	if kLaTeXSummary:
+		print "ACTION"
+		printLaTeXSummary(actionSummary)
+		print "FLUENT"
+		printLaTeXSummary(fluentSummary)
 if kDebugOn:
 	print exceptions
-
