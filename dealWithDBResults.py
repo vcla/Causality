@@ -432,7 +432,7 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 	retval = {}
 	onsoffs = summerdata.onsoffs # dispense, thirst, waterstream, cup
 	if not oject in onsoffs.keys():
-		raise ValueError("unknown object type in queryXMLForAnswersBetweenFrames: {}".format(oject))
+		raise ValueError("unknown object type in queryXMLForAnswersBetweenFrames: {} not found in {}".format(oject, onsoffs.keys()))
 	if oject == "ringer":
 		#nothing to do with this
 		return retval

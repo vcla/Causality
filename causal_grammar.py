@@ -668,7 +668,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	# {5: {'A1': {'energy': 0.10536051565782628, 'agent': 'uuid4'}}}
 	#print "-=-=-=-=-=-=-= ...........  -=-=-=-=-=-=-="
 
-	print "FLUENT AND EVENT KEYS WE CARE ABOUT: {}".format(fluent_and_event_keys_we_care_about)
+	if not suppress_output:
+		print "FLUENT AND EVENT KEYS WE CARE ABOUT: {}".format(fluent_and_event_keys_we_care_about)
 	# ONLY MIXING UP FLUENT PARSES AS A STARTER. ACITON PARSES WOULD MEAN MORE INTERACTIONS, MORE COMPLEXITY
 	# SEE inference-overlappingevents jupyter file to make sense of below
 	fluents_to_recombine = defaultdict(set)
@@ -698,25 +699,34 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		for item in powerset_count_split_combinations[2:]:
 			merge_combinations = list(itertools.product(merge_combinations, item))
 			merge_combinations = list(list(flatten(x)) for x in map(lambda x: (x[0],(x[1],)),merge_combinations))
-	else:
+	elif len(powerset_count_split_combinations) > 0:
 		merge_combinations = powerset_count_split_combinations[0]
+	else:
+		merge_combinations = []
 	if not suppress_output:
 		print("MERGE_COMBINATIONS: {}".format(merge_combinations))
 	results_for_xml_output = list()
-	for combination in merge_combinations:
-		if not suppress_output:
-			print("RUNNING COMBINATION: {}".format(combination))
+	if len(merge_combinations) == 0:
+		result = _without_overlaps(dict(), action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
+		results_for_xml_output.append(copy.deepcopy(result))
+	else:
+		for combination in merge_combinations:
+			if not suppress_output:
+				print("RUNNING COMBINATION: {}".format(combination))
 			if type(combination) == type(1):
 				combination = (combination, )
-		parses_to_recombine = dict(map(lambda x:(x[0][0],powersets[x[0][0]][x[1]]),zip(powerset_counts,combination)))
-		recombined_parses = defaultdict(dict)
-		#print parses_to_recombine ~ {'door': [175, 191, 272], 'light': (227,), 'screen': [147, 175]}
-		if not suppress_output:
-			print("parses to recombine: {}".format(parses_to_recombine))
-		for fluent in parses_to_recombine:
-			for frame in parses_to_recombine[fluent]:
-				recombined_parses[frame][fluent] = fluent_parses[frame][fluent]
-		result = _without_overlaps(recombined_parses, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
+			#print("ZIPPING: powerset_counts: {}".format(powerset_counts))
+			#print("ZIPPING: powersets: {}".format(powersets))
+			#print("COMBINATION: {}".format(combination))
+			parses_to_recombine = dict(map(lambda x:(x[0][0],powersets[x[0][0]][x[1]]),zip(powerset_counts,combination)))
+			recombined_parses = defaultdict(dict)
+			#print parses_to_recombine ~ {'door': [175, 191, 272], 'light': (227,), 'screen': [147, 175]}
+			if not suppress_output:
+				print("parses to recombine: {}".format(parses_to_recombine))
+			for fluent in parses_to_recombine:
+				for frame in parses_to_recombine[fluent]:
+					recombined_parses[frame][fluent] = fluent_parses[frame][fluent]
+			result = _without_overlaps(recombined_parses, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
 		results_for_xml_output.append(copy.deepcopy(result))
 	results_for_xml_output = sorted(results_for_xml_output, key = lambda(k): k[0][0][1])
 	if not suppress_output:
@@ -729,7 +739,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		print(results_for_xml_output[0])
 		print("BEST RESULT as XML::")
 		print("{}".format(minidom.parseString(ET.tostring(doc,method='xml',encoding='utf-8')).toprettyxml(encoding="utf-8",indent="\t")))
-	print "----------------------------------------------------"
+		print "----------------------------------------------------"
 	return ET.tostring(doc,encoding="utf-8",method="xml")
 
 #def _without_overlaps(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy, suppress_output = False):

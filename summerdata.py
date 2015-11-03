@@ -21,6 +21,7 @@ addGrouping(groupings, 'thirst',
 		{ 'water_action' : ["act_drink","act_no_drink",], },
 )
 
+# TODO: maybe this is why we think we need 'cup' toplevel instead of 'water' (or vice-versa)???
 addGrouping(groupings, 'cup',
 		{ 'cup' : ["more","less","same",], },
 	{
@@ -102,6 +103,8 @@ onsoffs["waterstream"] = ["water_on", "water_off"] #actions act_dispensed, act_n
 onsoffs["doorlock"] = ["locked", "unlocked"] # TODO: uhoh, the change is lock_unlocked/unlocked_lock. need to catch.  #actions act_knock, act_none
 # and these below here are the lovely 3-case answer...
 onsoffs["trash"] = ["on", "off"] # actions: act_benddown, act_no_benddown
+#TODO: should not have/need both 'cup' and 'water' as top-levels. something here is wrong!
+onsoffs["water"] = ["on","off"] # gleep; do we not need cup_MORE, cup_LESS? actions: act_drin, act_no_drink, act_dispensed, act_no_dispense...???
 onsoffs["cup"] = ["on","off"] # gleep; do we not need cup_MORE, cup_LESS? actions: act_drin, act_no_drink, act_dispensed, act_no_dispense...???
 
 actionPairings = {
