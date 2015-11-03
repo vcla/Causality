@@ -1,323 +1,222 @@
 #GOAL: for each video clip, find the best human and report how far off the causalgrammar and origdata are from them
 #QUESTION: how should these costs aggregate across video clips?
 
-import pprint
-pp = pprint.PrettyPrinter(depth=6)
+#NOTE: 'besthuman' is really 'nearesthuman' in this one.
 
+import json
+import pprint as pp
 import os
 import hashlib
+from collections import defaultdict
+from causal_grammar import TYPE_FLUENT, TYPE_ACTION
+from summerdata import getPrefixType, getMasterFluentsForPrefix, getFluentsForMasterFluent, getActionsForMasterFluent
+from summerdata import groupings
 kCSVDir = 'results/cvpr_db_results' # from the 'export' option in dealWithDBResults.py
-kComputerTypes = ['origdata', 'origsmrt', 'causalgrammar', 'causalsmrt' ]
+kComputerTypes = ['causalgrammar', 'origsmrt', 'origdata', 'causalsmrt']
+#kComputerTypes = ['causalgrammar', 'origdata']
+kDebugOn = False
+import re
+kPrefixMatch = r'([a-zA-Z_]+)_([0-9]+)_(.*)'
 
-raise Exception("switch kFluentToFieldMapping to use summerdata groupings")
-raise Exception("also use causalgrammar import TYPE_FLUENT, TYPE_ACTION")
-# note that "negative" action must be the last one specified for proper P/R and there must be only one "no action"
-kFluentToFieldMapping = {
-		#door_95_closed_open door_95_open_closed door_95_open door_95_closed
-		#door_action_1_act_opened door_action_1_act_closed door_action_1_act_not_opened_closed
-	"door": { "fluents": ["open","closed","open_closed","closed_open"], "actions": ["act_opened","act_closed","act_not_opened_closed"] },
-		#light_95_off_on light_95_on_off light_95_on light_95_off
-		#light_action_1_act_pushbutton light_action_1_act_no_pushbutton
-	"light": { "fluents": ["on","off","on_off","off_on"], "actions": ["act_pushbutton","act_nopushbutton"] },
-		#phone_2300_active phone_2300_off phone_2498_off_active phone_2498_active_off
-		#phone_action_2300_act_received_call phone_action_2300_act_no_call
-	"phone": { "fluents": ["active","off","off_active","active_off"], "actions": ["act_received_call","act_no_call"] },
-		#ringer_2498_ring ringer_2498_no_ring
-	"ringer": {"fluents": ["ring","no_ring"], "actions": [] },
-		#screen_2300_off_on screen_2300_on_off screen_2300_on screen_2300_off
-		#screen_action_1784_act_mousekeyboard screen_action_1784_act_no_mousekeyboard
-	"screen": {"fluents": ["off_on","on_off","on","off"], "actions": ["act_mousekeyboard","act_no_mousekeyboard"]},
-}
+class MissingDataException(Exception):
+	pass
 
-def findDistanceBetweenTwoVectors(A, B, fields, fluent):
-	dist = 0
+def test_hit(computer, human, field_lookup, field_group):
+	diff = 0
+	key = field_group.keys()[0]
+	As = list()
+	Bs = list()
+	for value in field_group[key]:
+		column = field_lookup["_".join((key[0], key[1], value,))]
+		Ai = computer[column]
+		Bi = human[column]
+		try:
+			Ai = int(Ai)
+		except ValueError:
+			Ai = 0
+		try:
+			Bi = int(Bi)
+		except ValueError:
+			Bi = 0
+		As.append(Ai)
+		Bs.append(Bi)
+	sumAs = sum(As) / 100.
+	sumBs = sum(Bs) / 100.
+	try:
+		As = [a / sumAs for a in As] # normalizing to 100
+		Bs = [b / sumBs for b in Bs] # normalizing to 100
+	except ZeroDivisionError:
+		raise MissingDataException("no data for {}".format(key))
+	diff = sum([abs(z[0]-z[1]) for z in zip(As,Bs)])
+	return (diff / len(field_group[key])) < 25
+
+def splitColumnName(column_name):
+	m = re.match(kPrefixMatch,column_name)
+	return [m.group(1), m.group(2), m.group(3), ]
+
+def getPrefixForColumnName(column_name):
+	return re.match(kPrefixMatch,column_name).group(1)
+
+def isFluent(fieldname):
+	return not isAction(fieldname)
+
+def isAction(fieldname):
+	raise Exception("test {} is action".format(fieldname))
+
+def findDistanceBetweenTwoVectors(A, B):
+	distance = 0
 	for i in range(len(A)):
-		if fields[i].startswith(fluent):
-			Ai = A[i]
-			Bi = B[i]
-			try:
-				Ai = int(Ai)
-			except ValueError:
-				Ai = 0
-			try:
-				Bi = int(Bi)
-			except ValueError:
-				Bi = 0
-			dist += abs(Ai - Bi)
-	return dist
+		Ai = A[i]
+		Bi = B[i]
+		try:
+			Ai = int(Ai)
+		except ValueError:
+			Ai = 0
+		try:
+			Bi = int(Bi)
+		except ValueError:
+			Bi = 0
+		diff = abs(Ai - Bi)
+		distance += diff
+	return distance
 
-def pr_from_hitsandmisses(hitsandmisses):
-	# coming in as actions: TP, FP, TN, FN and fluents: TP, FP, TN, FN
-	retval = {
-		"actions": {},
-		"fluents": {}
-	}
-	for key in retval:
-		TP = float(hitsandmisses[key]["TP"])
-		FP = float(hitsandmisses[key]["FP"])
-		TN = float(hitsandmisses[key]["TN"])
-		FN = float(hitsandmisses[key]["FN"])
-		if TP + FP > 0:
-			retval[key]["precision"] = TP / (TP + FP)
-		else:
-			retval[key]["precision"] = 0
-		if TP + FN > 0:
-			retval[key]["recall"] =  TP / (TP + FN)
-		else:
-			retval[key]["recall"] =  0
-		if TP + FP + FN > 0:
-			retval[key]["f1score"] = 2 * TP / (2 * TP + FP + FN)
-		else:
-			retval[key]["f1score"] = 0
-	return retval
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("-s","--summary", action="store_true", required=False, help="just print the summary results")
+parser.add_argument("-e", "--example", action="append", required=False, dest='examples_only', help="specific example[s] to run, such as screen_1, light_5, or door_11")
+parser.add_argument("-d","--debug", action="store_true", required=False, help="print out extra debug info")
+parser.add_argument("-t","--latex", action="store_true", required=False, help="print out summary as LaTeX")
+args = parser.parse_args()
 
-def getHitsAndMisses(truth, test, fields, filterfluent):
-	retval = {
-		"actions": {"TP":0,"FP":0,"TN":0,"FN":0},
-		"fluents": {"TP":0,"FP":0,"TN":0,"FN":0}
-	}
-	keyframes = set()
-	for field in fields:
-		fluent, frame, _ = field.split("_",2)
-		if frame == "action":
-			fluent, _, frame, _ = field.split("_",3)
-		keyframes.add(frame)
-	truth_lookup = {}
-	test_lookup = {}
-	for i in range(len(fields)):
-		field = fields[i]
-		truth_lookup[field] = truth[i]
-		test_lookup[field] = test[i]
-	for frame in keyframes:
-		for fluent in kFluentToFieldMapping:
-			if not filterfluent or filterfluent == fluent:
-				fluent_options = kFluentToFieldMapping[fluent]['fluents']
-				action_options = kFluentToFieldMapping[fluent]['actions']
-				real_value = ""
-				#FLUENTS
-				for option in fluent_options:
-					column = "{}_{}_{}".format(fluent,frame,option)
-					if not column in truth_lookup:
-						continue
-					if int(truth_lookup[column]) > 50:
-						real_value = option
-						break
-				for option in fluent_options:
-					column = "{}_{}_{}".format(fluent,frame,option)
-					if not column in truth_lookup:
-						continue
-					testvalue = 0 if test_lookup[column] == '' else int(test_lookup[column])
-					truthvalue = 0 if truth_lookup[column] == '' else int(truth_lookup[column])
-					if option == real_value:
-						if testvalue <= 50:
-							retval["fluents"]["FN"] += 1
-						else:
-							retval["fluents"]["TP"] += 1
-							if testvalue > 100:
-								# + 49 to deal with not-rounding and that we're using 50 as threshold for yea/nay
-								retval["fluents"]["FP"] += int(((testvalue-100)+49) / 100)
-					else:
-						if testvalue > 50:
-							# + 49 to deal with not-rounding and that we're using 50 as threshold for yea/nay
-							retval["fluents"]["FP"] += int((testvalue+49) / 100)
-				#ACTIONS
-				last_option = action_options[-1:]
-				for option in action_options:
-					#phone_action_2300_act_received_call phone_action_2300_act_no_call
-					column = "{}_action_{}_{}".format(fluent,frame,option)
-					if not column in truth_lookup:
-						continue
-					testvalue = 0 if test_lookup[column] == '' else int(test_lookup[column])
-					truthvalue = 0 if truth_lookup[column] == '' else int(truth_lookup[column])
-					truth_on = truthvalue > 50
-					test_on = testvalue > 50
-					if option != last_option:
-						if truth_on and test_on:
-							# + 49 to deal with not-rounding and that we're using 50 as threshold for yea/nay
-							retval["actions"]["TP"] += 1
-							if testvalue > 100:
-								retval["actions"]["FP"] += int(((testvalue-100)+49) / 100)
-						elif truth_on and not test_on:
-							retval["actions"]["FN"] += 1
-						elif not truth_on and test_on:
-							retval["actions"]["FP"] += int((testvalue+49) / 100)
-						else:
-							# truth_off and test_off: so far so good
-							pass
-					else: # option == last_option, which is "no action", so things are a little different
-						if truth_on and test_on:
-							retval["actions"]["TN"] += 1
-						elif truth_on and not test_on:
-							pass # this should have been handled elsewhere
-						elif not truth_on and test_on:
-							# 'negative' detections really don't make any sense stacking-wise....
-							retval["actions"]["FN"] += 1
-						else:
-							#truth_off and test_off: good, handled elsewhere
-							pass
-	return retval
-
+kJustTheSummary = args.summary
+kDebugOn = args.debug
+kLaTeXSummary = args.latex
 
 ## for each file in our csvs directory, find the smallest "human" distance for each "computer" vector
-print("FILENAME\tFLUENT\tHASH\tORIGDATA\tORIGSMRT\tCAUSALGRAMMAR\tCAUSALSMRT\tORIGHUMANS\tSMRTHUMANS\tCAUSALHUMANS\tCAUSSMRTHUMANS")
+if not kJustTheSummary:
+	print("\t".join(("TODO",)))
 exceptions = []
-kAllFluentsConstant="all"
-fluentDiffSums = {}
-PR = {}
 
+overall_hitrates = dict()
 for filename in os.listdir (kCSVDir):
+	if args.examples_only:
+		found = False
+		for example in args.examples_only:
+			if filename.startswith(example):
+				found = True
+				break
+		if not found:
+			continue
 	if filename.endswith(".csv"):
 		with open(os.path.join(kCSVDir,filename),"r") as csv:
 			try:
+				# should probably have used a csv dictreader here for simplicity but that's okay....
+				if args.debug:
+					print("\n\n\nREADING {}\n=========\n".format(filename))
 				header = csv.readline()
-				_, fields = header.rstrip().split(",",1)
-				fields = fields.rsplit(",",2)[0].split(",")
-				fluents = set()
+				_, fields = header.rstrip().split(",",1) # chop "name" from the beginning
+				fields = fields.rsplit(",",2)[0].split(",") # chop "stamp" and "hash" from the end
+				field_groups = defaultdict(list)
+				# step 1 -- loop through all fields to get all of the unique prefixes
+				field_lookup = dict()
+				i = 0
 				for field in fields:
-					fluent = field.split("_",1)[0]
-					if fluent not in ("ringer",):
-						fluents.add(fluent)
-				fluents.add("") # empty string ~ all fluents
+					prefix, frame, selection = splitColumnName(field)
+					field_groups[(prefix, frame, )].append(selection)
+					field_lookup[field] = i
+					i += 1
 				lines = csv.readlines()
-				example = filename[:-3]
-				PR[example] = {}
-				for fluent in fluents:
-					humans = {}
-					computers = {}
-					PR[example][fluent if fluent else "all"] = {}
-					for line in lines:
-						# first column is name; last two columns are timestamp and ... a hash? of ... something?
-						# changing it to a map of name -> values, dropping timestamp and hash
-						name, values = line.rstrip().split(",",1)
-						values = values.rsplit(",",2)[0].split(",")
-						if name in kComputerTypes:
-							computers[name] = values
+				humans = {}
+				computers = {}
+				for line in lines:
+					# first column is name; last two columns are timestamp and ... a hash? of ... something?
+					# changing it to a map of name -> values, dropping timestamp and hash
+					name, values = line.rstrip().split(",",1)
+					values = values.rsplit(",",2)[0].split(",")
+					if name in kComputerTypes:
+						computers[name] = values
+					else:
+						humans[name] = values
+				if not humans:
+					raise MissingDataException("NO HUMANS FOR {}".format(filename))
+				if not 'origdata' in computers:
+					raise MissingDataException("NO ORIGDATA FOR {}".format(filename))
+				if not 'origsmrt' in computers:
+					raise MissingDataException("NO ORIGSMRT FOR {}".format(filename))
+				if not 'causalgrammar' in computers:
+					raise MissingDataException("NO CAUSALGRAMMAR FOR {}".format(filename))
+				if not 'causalsmrt' in computers:
+					raise MissingDataException("NO CAUSALSMRT FOR {}".format(filename))
+				humansN = len(humans)
+				bestdistance = {}
+				besthumans = {}
+				for computerType in kComputerTypes:
+					bestdistance[computerType] = 0
+					besthumans[computerType] = []
+					for human in humans:
+						score = findDistanceBetweenTwoVectors(computers[computerType],humans[human])
+						if not besthumans[computerType] or score < bestdistance[computerType]:
+							besthumans[computerType] = [human]
+							bestdistance[computerType] = score
+						elif bestdistance[computerType] == score:
+							besthumans[computerType].append(human)
+				clip_hits = defaultdict(lambda: defaultdict(int))
+				clip_misses = defaultdict(lambda: defaultdict(int))
+				clip_hitrate = defaultdict(dict)
+				# clip_fluent_pr = defaultdict(lambda: defaultdict(int))
+				# clip_action_pr = defaultdict(lambda: defaultdict(int))
+				for computerType in kComputerTypes:
+					computer = computers[computerType]
+					human = humans[besthumans[computerType][0]] # TODO: for now we will always take the "first" of the best humans. in the future, maybe we want to average the human beliefs? should that always give us an equal or better score?
+					for field_group in field_groups:
+						try:
+							hit = test_hit(computer, human, field_lookup, {field_group: field_groups[field_group]}) # there has to be a better way to do this than this silly re-dicting, right?
+						except MissingDataException as bar:
+							# skip this questionable column
+							exceptions.append([filename, computerType, bar,])
+							continue
+						# adding 0 just to ensure the field exists in both hits and misses, to make reading/debugging the data easier
+						if hit:
+							clip_hits[computerType][field_group[0]] += 1
+							clip_misses[computerType][field_group[0]] += 0
 						else:
-							humans[name] = values
-					if not humans:
-						raise Exception("NO HUMANS FOR {}".format(filename))
-					if not 'origdata' in computers:
-						raise Exception("NO ORIGDATA FOR {}".format(filename))
-					if not 'origsmrt' in computers:
-						raise Exception("NO ORIGSMRT FOR {}".format(filename))
-					if not 'causalgrammar' in computers:
-						raise Exception("NO CAUSALGRAMMAR FOR {}".format(filename))
-					if not 'causalsmrt' in computers:
-						raise Exception("NO CAUSALSMRT FOR {}".format(filename))
-					humansN = len(humans)
-					bestscores = {}
-					besthumans = {}
-					hitsandmisses = {}
-					for computerType in kComputerTypes:
-						bestscores[computerType] = 0
-						besthumans[computerType] = []
-						for human in humans:
-							currentscore = findDistanceBetweenTwoVectors(computers[computerType],humans[human],fields,fluent)
-							if not besthumans[computerType] or currentscore < bestscores[computerType]:
-								besthumans[computerType] = [human]
-								bestscores[computerType] = currentscore
-								hitsandmisses[computerType] = getHitsAndMisses(humans[human], computers[computerType], fields, fluent)
-								PR[example][fluent if fluent else "all"][computerType] = pr_from_hitsandmisses(hitsandmisses[computerType])
-							elif bestscores[computerType] == currentscore:
-								besthumans[computerType].append(human)
-					## FILENAME, FLUENT, HASH, ORIGDATA SCORE, ORIGSMRT SCORE, CAUSALGRAMMAR SCORE, ORIGDATA HUMANS, ORIGSMRT HUMANS, CAUSALGRAMMAR HUMANS
-					exampleName, room = filename.rsplit('.',1)
-					exampleNameForDB = exampleName.replace("_","")
-					fluent = fluent if fluent else kAllFluentsConstant
-					print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(filename,fluent,hashlib.md5(exampleNameForDB).hexdigest(),bestscores['origdata'], bestscores['origsmrt'], bestscores['causalgrammar'], bestscores['causalsmrt'], besthumans['origdata'], besthumans['origsmrt'], besthumans['causalgrammar'], besthumans['causalsmrt']))
-					print("HITS AND MISSES: ")
-					pp.pprint(hitsandmisses)
-					# summing for later
-					if not fluent in fluentDiffSums:
-						fluentDiffSums[fluent] = {'origdata': [0, 0], 'origsmrt': [0, 0], 'causalgrammar': [0, 0], 'causalsmrt': [0, 0], '_count': 0}
-					fluentDiffSums[fluent]['_count'] += 1
-					for computer in kComputerTypes:
-						fluentDiffSums[fluent][computer][0] += bestscores[computer]
-						fluentDiffSums[fluent][computer][1] = "{} avg".format(fluentDiffSums[fluent][computer][0] / fluentDiffSums[fluent]['_count'])
-			except KeyError as hmm:
-				import traceback
-				print traceback.format_exc()
-			except ValueError as hmm:
-				import traceback
-				print traceback.format_exc()
-			except NameError as hmm:
-				import traceback
-				print traceback.format_exc()
-			except ZeroDivisionError as hmm:
-				import traceback
-				print traceback.format_exc()
-			except TypeError as hmm:
-				import traceback
-				print traceback.format_exc()
-			except Exception as foo:
+							clip_hits[computerType][field_group[0]] += 0
+							clip_misses[computerType][field_group[0]] += 1
+					for key in clip_hits[computerType]:
+						clip_hitrate[computerType][key] = float(clip_hits[computerType][key]) / (clip_hits[computerType][key] + clip_misses[computerType][key])
+				overall_hitrates[filename] = clip_hitrate
+			except MissingDataException as foo:
 				exceptions.append(foo)
 
-#if not N:
-#	N = 1
+# pp.pprint(json.dumps(overall_hitrates))
+# now we sum/average our hitrates per prefix (fluent or action)
+prefix_hitsum = defaultdict(lambda: defaultdict(int))
+prefix_hitN = defaultdict(lambda: defaultdict(int))
+prefix_hitrate = defaultdict(lambda: defaultdict(int))
+for filename in overall_hitrates:
+	for computer in overall_hitrates[filename]:
+		for prefix in overall_hitrates[filename][computer]:
+			prefix_hitsum[prefix][computer] += overall_hitrates[filename][computer][prefix]
+			prefix_hitN[prefix][computer] += 1
+for prefix in prefix_hitsum:
+	for computer in prefix_hitsum[prefix]:
+		prefix_hitrate[prefix][computer] = prefix_hitsum[prefix][computer] / prefix_hitN[prefix][computer]
 
-print("-\t-\t-\t-\t-\t-\t-\t-")
-#print("{}\t{}\t{}\t{}\t{}".format("AVERAGE",total_origdata_score / N,total_causalgrammar_score / N,"",""))
-pp.pprint(fluentDiffSums)
+# now we print out our carefully crafted table :)
+print("\t".join(("prefix","N","computer","hitrate",)))
+summary = defaultdict(float)
+summary_N = defaultdict(int)
+for prefix in prefix_hitsum:
+	for computer in prefix_hitsum[prefix]:
+		if computer in ["causalsmrt", "origsmrt", ]:
+			continue
+		if not args.summary:
+			print("\t".join((prefix, str(prefix_hitN[prefix][computer]), computer, "{:.2f}".format(prefix_hitrate[prefix][computer]),)))
+		summary[computer] += prefix_hitrate[prefix][computer]
+		summary_N[computer] += 1
 
-pp.pprint(PR)
+for computer in summary:
+	print("\t".join(("SUM",str(summary_N[computer]), computer, "{:.2f}".format(summary[computer] / summary_N[computer], ))))
 
-PR_SUMMARY = {}
-"""
- 'screen_9_phone_7.': {'all': {'causalgrammar': {'actions': {'f1score': 0.2222222222222222,
-                                                             'precision': 0.2,
-                                                             'recall': 0.25},
-                                                 'fluents': {'f1score': 0.2,
-                                                             'precision': 0.25,
-                                                             'recall': 0.16666666666666666}},
-"""
-for example in PR:
-	for fluent in PR[example]:
-		if not fluent in PR_SUMMARY:
-			PR_SUMMARY[fluent] = {}
-		for computertype in PR[example][fluent]:
-			if not computertype in PR_SUMMARY[fluent]:
-				PR_SUMMARY[fluent][computertype] = {}
-			for subtype in PR[example][fluent][computertype]:
-				if not subtype in PR_SUMMARY[fluent][computertype]:
-					PR_SUMMARY[fluent][computertype][subtype] = {'f1score_sum':0, 'precision_sum':0, 'recall_sum':0, 'N': 0, 'f1score':0, 'precision':0, 'recall':0 }
-				PR_SUMMARY[fluent][computertype][subtype]['f1score_sum'] += PR[example][fluent][computertype][subtype]['f1score']
-				PR_SUMMARY[fluent][computertype][subtype]['precision_sum'] += PR[example][fluent][computertype][subtype]['precision']
-				PR_SUMMARY[fluent][computertype][subtype]['recall_sum'] += PR[example][fluent][computertype][subtype]['recall']
-				PR_SUMMARY[fluent][computertype][subtype]['N'] += 1
-				PR_SUMMARY[fluent][computertype][subtype]['f1score'] = PR_SUMMARY[fluent][computertype][subtype]['f1score_sum'] / PR_SUMMARY[fluent][computertype][subtype]['N']
-				PR_SUMMARY[fluent][computertype][subtype]['precision'] = PR_SUMMARY[fluent][computertype][subtype]['precision_sum'] / PR_SUMMARY[fluent][computertype][subtype]['N']
-				PR_SUMMARY[fluent][computertype][subtype]['recall'] = PR_SUMMARY[fluent][computertype][subtype]['recall_sum'] / PR_SUMMARY[fluent][computertype][subtype]['N']
-
-#TYPE,ORIGDATA,ORIGSMRT,CAUSAL,CAUSALSMRT
-#precision_all_fluents,0.324645099268,0.574553571429,0.324645099268,0.574553571429
-#recall_all_fluents,0.324645099268,0.574553571429,0.324645099268,0.574553571429
-#precision_all_actions,0.324645099268,0.574553571429,0.324645099268,0.574553571429
-#recall_all_actions,0.324645099268,0.574553571429,0.324645099268,0.574553571429
-
-print("**************CUT*****************")
-header = list(('TYPE',))
-for computertype in PR_SUMMARY[fluent]:
-	header.append(computertype)
-print(",".join(header))
-
-for fluent in PR_SUMMARY:
-	type_fluents = {
-		"precision": {
-			"fluents": list(("_".join(("precision",fluent,"fluents")),)),
-			"actions": list(("_".join(("precision",fluent,"actions")),)),
-		},
-		"recall": {
-			"fluents": list(("_".join(("recall",fluent,"fluents")),)),
-			"actions": list(("_".join(("recall",fluent,"actions")),)),
-		},
-	}
-	for computertype in PR_SUMMARY[fluent]:
-		#if computertype == "origsmrt":
-		#	continue
-		for foo in ["actions","fluents"]:
-			type_fluents['precision'][foo].append(str(PR_SUMMARY[fluent][computertype][foo]['precision']))
-			type_fluents['recall'][foo].append(str(PR_SUMMARY[fluent][computertype][foo]['recall']))
-	print(",".join(type_fluents['precision']["actions"]))
-	print(",".join(type_fluents['recall']["actions"]))
-	print(",".join(type_fluents['precision']['fluents']))
-	print(",".join(type_fluents['recall']['fluents']))
+if kDebugOn:
+	print exceptions
