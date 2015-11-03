@@ -668,7 +668,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	# {5: {'A1': {'energy': 0.10536051565782628, 'agent': 'uuid4'}}}
 	#print "-=-=-=-=-=-=-= ...........  -=-=-=-=-=-=-="
 
-	print "FLUENT AND EVENT KEYS WE CARE ABOUT: {}".format(fluent_and_event_keys_we_care_about)
+	if not suppress_output:
+		print "FLUENT AND EVENT KEYS WE CARE ABOUT: {}".format(fluent_and_event_keys_we_care_about)
 	# ONLY MIXING UP FLUENT PARSES AS A STARTER. ACITON PARSES WOULD MEAN MORE INTERACTIONS, MORE COMPLEXITY
 	# SEE inference-overlappingevents jupyter file to make sense of below
 	fluents_to_recombine = defaultdict(set)
@@ -734,7 +735,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		print(results_for_xml_output[0])
 		print("BEST RESULT as XML::")
 		print("{}".format(minidom.parseString(ET.tostring(doc,method='xml',encoding='utf-8')).toprettyxml(encoding="utf-8",indent="\t")))
-	print "----------------------------------------------------"
+		print "----------------------------------------------------"
 	return ET.tostring(doc,encoding="utf-8",method="xml")
 
 #def _without_overlaps(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy, suppress_output = False):
