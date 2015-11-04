@@ -558,7 +558,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 						complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frames[symbol], completions, 'timeout alt')
 	clear_outdated_events(event_hash, event_timeouts, frame)
 
-def process_events_and_fluents(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy, suppress_output = False):
+def process_events_and_fluents(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy, suppress_output = False, handle_overlapping_events = False):
 	clever = True # clever (modified viterbi algorithm) or brute force (all possible parses)
 	initial_conditions = False
 	#TODO: initial condition stuff is suspect, investigate if/when these are in our source data. should probably never have assumed initial conditions and instead set everything to 50% likelihood
@@ -672,57 +672,58 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		print "FLUENT AND EVENT KEYS WE CARE ABOUT: {}".format(fluent_and_event_keys_we_care_about)
 	# ONLY MIXING UP FLUENT PARSES AS A STARTER. ACITON PARSES WOULD MEAN MORE INTERACTIONS, MORE COMPLEXITY
 	# SEE inference-overlappingevents jupyter file to make sense of below
-	fluents_to_recombine = defaultdict(set)
-	for frame in fluent_parses:
-		for fluent in fluent_parses[frame]:
-			fluents_to_recombine[fluent].add(frame)
-	powersets = dict()
-	for fluent in fluents_to_recombine:
-		frames_to_recombine = fluents_to_recombine[fluent]
-		splits = split_fluents_into_windows(frames_to_recombine)
-		if not suppress_output:
-			print("GOT SPLITS {} for {}".format(splits, fluent))
-		split_combinations = list()
-		for item in splits:
-			split_combinations.append(list(powerset(item))[1:])
-		all_combos = split_combinations[0]
-		for i in range(1,len(split_combinations)):
-			all_combos = list(list(flatten(x)) for x in itertools.product(all_combos, split_combinations[i]))
-		powersets[fluent] = all_combos
-	powerset_counts = map(lambda x: (x,len(powersets[x]),),powersets.keys())
-	if not suppress_output:
-		print("powersets: {}".format(powersets))
-		print("powerset counts: {}".format(powerset_counts))
-	powerset_count_split_combinations = map(lambda x: range(0,x[1]),powerset_counts)
-	if len(powerset_count_split_combinations) > 1:
-		merge_combinations = list(itertools.product(powerset_count_split_combinations[0], powerset_count_split_combinations[1]))
-		for item in powerset_count_split_combinations[2:]:
-			merge_combinations = list(itertools.product(merge_combinations, item))
-			merge_combinations = list(list(flatten(x)) for x in map(lambda x: (x[0],(x[1],)),merge_combinations))
-	elif not powerset_count_split_combinations:
-		merge_combinations = list()
-	else:
-		merge_combinations = powerset_count_split_combinations[0]
-	if not suppress_output:
-		print("MERGE_COMBINATIONS: {}".format(merge_combinations))
 	results_for_xml_output = list()
-	for combination in merge_combinations:
+	if handle_overlapping_events:
+		fluents_to_recombine = defaultdict(set)
+		for frame in fluent_parses:
+			for fluent in fluent_parses[frame]:
+				fluents_to_recombine[fluent].add(frame)
+		powersets = dict()
+		for fluent in fluents_to_recombine:
+			frames_to_recombine = fluents_to_recombine[fluent]
+			splits = split_fluents_into_windows(frames_to_recombine)
+			if not suppress_output:
+				print("GOT SPLITS {} for {}".format(splits, fluent))
+			split_combinations = list()
+			for item in splits:
+				split_combinations.append(list(powerset(item))[1:])
+			all_combos = split_combinations[0]
+			for i in range(1,len(split_combinations)):
+				all_combos = list(list(flatten(x)) for x in itertools.product(all_combos, split_combinations[i]))
+			powersets[fluent] = all_combos
+		powerset_counts = map(lambda x: (x,len(powersets[x]),),powersets.keys())
 		if not suppress_output:
-			print("RUNNING COMBINATION: {}".format(combination))
-		if type(combination) == type(1):
-			combination = (combination, )
-		parses_to_recombine = dict(map(lambda x:(x[0][0],powersets[x[0][0]][x[1]]),zip(powerset_counts,combination)))
-		recombined_parses = defaultdict(dict)
-		#print parses_to_recombine ~ {'door': [175, 191, 272], 'light': (227,), 'screen': [147, 175]}
+			print("powersets: {}".format(powersets))
+			print("powerset counts: {}".format(powerset_counts))
+		powerset_count_split_combinations = map(lambda x: range(0,x[1]),powerset_counts)
+		if len(powerset_count_split_combinations) > 1:
+			merge_combinations = list(itertools.product(powerset_count_split_combinations[0], powerset_count_split_combinations[1]))
+			for item in powerset_count_split_combinations[2:]:
+				merge_combinations = list(itertools.product(merge_combinations, item))
+				merge_combinations = list(list(flatten(x)) for x in map(lambda x: (x[0],(x[1],)),merge_combinations))
+		elif not powerset_count_split_combinations:
+			merge_combinations = list()
+		else:
+			merge_combinations = powerset_count_split_combinations[0]
 		if not suppress_output:
-			print("parses to recombine: {}".format(parses_to_recombine))
-		for fluent in parses_to_recombine:
-			for frame in parses_to_recombine[fluent]:
-				recombined_parses[frame][fluent] = fluent_parses[frame][fluent]
-		result = _without_overlaps(recombined_parses, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
-		results_for_xml_output.append(copy.deepcopy(result))
-	if not merge_combinations:
-		result = _without_overlaps(merge_combinations, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
+			print("MERGE_COMBINATIONS: {}".format(merge_combinations))
+		for combination in merge_combinations:
+			if not suppress_output:
+				print("RUNNING COMBINATION: {}".format(combination))
+			if type(combination) == type(1):
+				combination = (combination, )
+			parses_to_recombine = dict(map(lambda x:(x[0][0],powersets[x[0][0]][x[1]]),zip(powerset_counts,combination)))
+			recombined_parses = defaultdict(dict)
+			#print parses_to_recombine ~ {'door': [175, 191, 272], 'light': (227,), 'screen': [147, 175]}
+			if not suppress_output:
+				print("parses to recombine: {}".format(parses_to_recombine))
+			for fluent in parses_to_recombine:
+				for frame in parses_to_recombine[fluent]:
+					recombined_parses[frame][fluent] = fluent_parses[frame][fluent]
+			result = _without_overlaps(recombined_parses, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
+			results_for_xml_output.append(copy.deepcopy(result))
+	if not handle_overlapping_events or not merge_combinations:
+		result = _without_overlaps([], action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
 		results_for_xml_output.append(copy.deepcopy(result))
 	results_for_xml_output = sorted(results_for_xml_output, key = lambda(k): k[0][0][1])
 	if not suppress_output:
@@ -753,6 +754,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 
 	fluent_parse_index = 0
 	action_parse_index = 0
+	frame = -1 # UnboundLocalErorr: local variable 'frame' referenced before assignment in complete_outdated_parses call below. TODO: this should not happen because we only come in here when we have frames. What does that mean!?
 	# TODO: since we complete 'actions' when we look at fluents, if they happen in the same frame
 	# we should probably handling actions first
 	while fluent_parse_index < len(fluent_parses) or action_parse_index < len(action_parses):
