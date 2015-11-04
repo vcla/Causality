@@ -698,6 +698,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		for item in powerset_count_split_combinations[2:]:
 			merge_combinations = list(itertools.product(merge_combinations, item))
 			merge_combinations = list(list(flatten(x)) for x in map(lambda x: (x[0],(x[1],)),merge_combinations))
+	elif not powerset_count_split_combinations:
+		merge_combinations = list()
 	else:
 		merge_combinations = powerset_count_split_combinations[0]
 	if not suppress_output:
@@ -717,6 +719,9 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 			for frame in parses_to_recombine[fluent]:
 				recombined_parses[frame][fluent] = fluent_parses[frame][fluent]
 		result = _without_overlaps(recombined_parses, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
+		results_for_xml_output.append(copy.deepcopy(result))
+	if not merge_combinations:
+		result = _without_overlaps(merge_combinations, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
 		results_for_xml_output.append(copy.deepcopy(result))
 	results_for_xml_output = sorted(results_for_xml_output, key = lambda(k): k[0][0][1])
 	if not suppress_output:
