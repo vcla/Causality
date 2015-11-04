@@ -706,8 +706,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	for combination in merge_combinations:
 		if not suppress_output:
 			print("RUNNING COMBINATION: {}".format(combination))
-			if type(combination) == type(1):
-				combination = (combination, )
+		if type(combination) == type(1):
+			combination = (combination, )
 		parses_to_recombine = dict(map(lambda x:(x[0][0],powersets[x[0][0]][x[1]]),zip(powerset_counts,combination)))
 		recombined_parses = defaultdict(dict)
 		#print parses_to_recombine ~ {'door': [175, 191, 272], 'light': (227,), 'screen': [147, 175]}
