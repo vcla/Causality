@@ -26,6 +26,8 @@ def test_hit(computer, human, field_lookup, field_group):
 	key = field_group.keys()[0]
 	As = list()
 	Bs = list()
+	AsD = list()
+	BsD = list()
 	for value in field_group[key]:
 		column = field_lookup["_".join((key[0], key[1], value,))]
 		Ai = computer[column]
@@ -40,13 +42,19 @@ def test_hit(computer, human, field_lookup, field_group):
 			Bi = 0
 		As.append(Ai)
 		Bs.append(Bi)
+		AsD.append(computer[column])
+		BsD.append(human[column])
+	if sum(As) == 0:
+		As = [100, ] * len(Bs)
+	if sum(Bs) == 0:
+		Bs = [100, ] * len(Bs)
 	sumAs = sum(As) / 100.
 	sumBs = sum(Bs) / 100.
 	try:
 		As = [a / sumAs for a in As] # normalizing to 100
 		Bs = [b / sumBs for b in Bs] # normalizing to 100
 	except ZeroDivisionError:
-		raise MissingDataException("no data for {}".format(key))
+		raise MissingDataException("no data for {}: computer {} vs human {} FROM computer {} vs human {}".format(key, As, Bs, AsD, BsD))
 	diff = sum([abs(z[0]-z[1]) for z in zip(As,Bs)])
 	return (diff / len(field_group[key])) < 25
 
@@ -61,7 +69,8 @@ def isFluent(fieldname):
 	return not isAction(fieldname)
 
 def isAction(fieldname):
-	raise Exception("test {} is action".format(fieldname))
+	prefix, frame, selection = splitColumnName(field)
+	return selection.startswith("act_")
 
 def findDistanceBetweenTwoVectors(A, B):
 	distance = 0
@@ -92,12 +101,14 @@ kJustTheSummary = args.summary
 kDebugOn = args.debug
 kLaTeXSummary = args.latex
 
-## for each file in our csvs directory, find the smallest "human" distance for each "computer" vector
-if not kJustTheSummary:
-	print("\t".join(("TODO",)))
 exceptions = []
 
+## for storing which field prefixes are actions and which are fluents
+type_actions = set()
+type_fluents = set()
+
 overall_hitrates = dict()
+## for each file in our csvs directory, find the smallest "human" distance for each "computer" vector
 for filename in os.listdir (kCSVDir):
 	if args.examples_only:
 		found = False
@@ -122,6 +133,10 @@ for filename in os.listdir (kCSVDir):
 				i = 0
 				for field in fields:
 					prefix, frame, selection = splitColumnName(field)
+					if isFluent(field):
+						type_fluents.add(prefix)
+					else:
+						type_actions.add(prefix)
 					field_groups[(prefix, frame, )].append(selection)
 					field_lookup[field] = i
 					i += 1
@@ -173,6 +188,7 @@ for filename in os.listdir (kCSVDir):
 							hit = test_hit(computer, human, field_lookup, {field_group: field_groups[field_group]}) # there has to be a better way to do this than this silly re-dicting, right?
 						except MissingDataException as bar:
 							# skip this questionable column
+							print("MISSING DATA {}".format([filename, computerType, bar,]))
 							exceptions.append([filename, computerType, bar,])
 							continue
 						# adding 0 just to ensure the field exists in both hits and misses, to make reading/debugging the data easier
@@ -195,6 +211,8 @@ prefix_hitN = defaultdict(lambda: defaultdict(int))
 prefix_hitrate = defaultdict(lambda: defaultdict(int))
 for filename in overall_hitrates:
 	for computer in overall_hitrates[filename]:
+		if computer in ["causalsmrt", "origsmrt", ]:
+			continue
 		for prefix in overall_hitrates[filename][computer]:
 			prefix_hitsum[prefix][computer] += overall_hitrates[filename][computer][prefix]
 			prefix_hitN[prefix][computer] += 1
@@ -206,17 +224,34 @@ for prefix in prefix_hitsum:
 print("\t".join(("prefix","N","computer","hitrate",)))
 summary = defaultdict(float)
 summary_N = defaultdict(int)
+sum_fluents = defaultdict(float)
+sum_fluents_N = defaultdict(int)
+sum_actions = defaultdict(float)
+sum_actions_N = defaultdict(int)
 for prefix in prefix_hitsum:
 	for computer in prefix_hitsum[prefix]:
 		if computer in ["causalsmrt", "origsmrt", ]:
 			continue
 		if not args.summary:
 			print("\t".join((prefix, str(prefix_hitN[prefix][computer]), computer, "{:.2f}".format(prefix_hitrate[prefix][computer]),)))
-		summary[computer] += prefix_hitrate[prefix][computer]
+		hitrate = prefix_hitrate[prefix][computer]
+		summary[computer] += hitrate
 		summary_N[computer] += 1
+		if prefix in type_fluents:
+			sum_fluents[computer] += hitrate
+			sum_fluents_N[computer] += 1
+		else:
+			sum_actions[computer] += hitrate
+			sum_actions_N[computer] += 1
+
+for computer in summary:
+	print("\t".join(("FLUENTS",str(sum_fluents_N[computer]), computer, "{:.2f}".format(sum_fluents[computer] / sum_fluents_N[computer], ))))
+
+for computer in summary:
+	print("\t".join(("ACTIONS",str(sum_actions_N[computer]), computer, "{:.2f}".format(sum_actions[computer] / sum_actions_N[computer], ))))
 
 for computer in summary:
 	print("\t".join(("SUM",str(summary_N[computer]), computer, "{:.2f}".format(summary[computer] / summary_N[computer], ))))
 
 if kDebugOn:
-	print exceptions
+	pp.pprint(exceptions)
