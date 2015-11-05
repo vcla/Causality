@@ -95,6 +95,7 @@ parser.add_argument("-s","--summary", action="store_true", required=False, help=
 parser.add_argument("-e", "--example", action="append", required=False, dest='examples_only', help="specific example[s] to run, such as screen_1, light_5, or door_11")
 parser.add_argument("-d","--debug", action="store_true", required=False, help="print out extra debug info")
 parser.add_argument("-t","--latex", action="store_true", required=False, help="print out summary as LaTeX")
+parser.add_argument("-m","--smart", action="store_true", required=False, help="include 'smart' computers")
 args = parser.parse_args()
 
 kJustTheSummary = args.summary
@@ -211,7 +212,7 @@ prefix_hitN = defaultdict(lambda: defaultdict(int))
 prefix_hitrate = defaultdict(lambda: defaultdict(int))
 for filename in overall_hitrates:
 	for computer in overall_hitrates[filename]:
-		if computer in ["causalsmrt", "origsmrt", ]:
+		if not args.smart and computer in ["causalsmrt", "origsmrt", ]:
 			continue
 		for prefix in overall_hitrates[filename][computer]:
 			prefix_hitsum[prefix][computer] += overall_hitrates[filename][computer][prefix]
@@ -230,7 +231,7 @@ sum_actions = defaultdict(float)
 sum_actions_N = defaultdict(int)
 for prefix in prefix_hitsum:
 	for computer in prefix_hitsum[prefix]:
-		if computer in ["causalsmrt", "origsmrt", ]:
+		if not args.smart and computer in ["causalsmrt", "origsmrt", ]:
 			continue
 		if not args.summary:
 			print("\t".join((prefix, str(prefix_hitN[prefix][computer]), computer, "{:.2f}".format(prefix_hitrate[prefix][computer]),)))
