@@ -55,8 +55,8 @@ def test_hit(computer, human, field_lookup, field_group):
 		Bs = [b / sumBs for b in Bs] # normalizing to 100
 	except ZeroDivisionError:
 		raise MissingDataException("no data for {}: computer {} vs human {} FROM computer {} vs human {}".format(key, As, Bs, AsD, BsD))
-	diff = sum([abs(z[0]-z[1]) for z in zip(As,Bs)])
-	return (diff / len(field_group[key])) < 25
+	diff = sum([abs(z[0]-z[1]) for z in zip(As,Bs)]) / len(field_group[key])
+	return diff < 25
 
 def splitColumnName(column_name):
 	m = re.match(kPrefixMatch,column_name)
@@ -182,6 +182,8 @@ for filename in os.listdir (kCSVDir):
 				# clip_fluent_pr = defaultdict(lambda: defaultdict(int))
 				# clip_action_pr = defaultdict(lambda: defaultdict(int))
 				for computerType in kComputerTypes:
+					if not args.smart and computerType in ["causalsmrt", "origsmrt", ]:
+						continue
 					computer = computers[computerType]
 					human = humans[besthumans[computerType][0]] # TODO: for now we will always take the "first" of the best humans. in the future, maybe we want to average the human beliefs? should that always give us an equal or better score?
 					for field_group in field_groups:
