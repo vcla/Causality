@@ -89,6 +89,47 @@ def findDistanceBetweenTwoVectors(A, B):
 		distance += diff
 	return distance
 
+def emboldenWinningLine(fluentResult, winningValue):
+	returnLine = " & "
+	if fluentResult == winningValue:
+		returnLine += "\\textbf{" + str(fluentResult) + "}"
+	else:
+		returnLine += str(fluentResult)
+	return returnLine
+
+def printLaTeXSummary(dictToPrint):
+	#print dictToPrint
+	causalLine = "Causal"
+	detectionsLine = "Detection"
+	headerLine = "Object"
+	#tableTransposed = "Object & Detection & Causal \\\\ \n \\midrule \n"
+	for singleFluent in dictToPrint:
+		if dictToPrint[singleFluent]:
+			winningLine = max(dictToPrint[singleFluent], key=dictToPrint[singleFluent].get)
+			winningValue = dictToPrint[singleFluent][winningLine]
+			if singleFluent == "total":
+				winningTotalValue = winningValue
+			else:
+				headerLine += " & " + singleFluent
+				causalLine += emboldenWinningLine(dictToPrint[singleFluent]["causalgrammar"], winningValue)
+				detectionsLine += emboldenWinningLine(dictToPrint[singleFluent]["origdata"], winningValue)
+				#tableTransposed += "{} & {} & {} \\\\ \n".format(singleFluent, str(dictToPrint[singleFluent]["origsmrt"]), str(dictToPrint[singleFluent]["causalsmrt"]))
+		else:
+			headerLine += " & " + singleFluent
+			causalLine += " & N/A "
+			detectionsLine += " & N/A "
+	causalLine += emboldenWinningLine(dictToPrint["total"]["causalgrammar"], winningTotalValue)
+	detectionsLine += emboldenWinningLine(dictToPrint["total"]["origdata"], winningTotalValue)
+	headerLine += " & Average"
+	causalLine += ' \\\\'
+	headerLine += ' \\\\'
+	detectionsLine += ' \\\\'
+	print headerLine
+	print "\\midrule"
+	print detectionsLine
+	print causalLine
+
+
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-s","--summary", action="store_true", required=False, help="just print the summary results")
@@ -226,6 +267,9 @@ for prefix in prefix_hitsum:
 # now we print out our carefully crafted table :)
 print("\t".join(("prefix","N","computer","hitrate",)))
 summary = defaultdict(float)
+if kLaTeXSummary:
+	actionSummary = {"total": {}}
+	fluentSummary = {"total": {}}
 summary_N = defaultdict(int)
 sum_fluents = defaultdict(float)
 sum_fluents_N = defaultdict(int)
@@ -237,6 +281,25 @@ for prefix in prefix_hitsum:
 			continue
 		if not args.summary:
 			print("\t".join((prefix, str(prefix_hitN[prefix][computer]), computer, "{:.2f}".format(prefix_hitrate[prefix][computer]),)))
+			if kLaTeXSummary:
+				#print "----------------------"
+				latexPrefix = prefix.split('_')[0]
+				if latexPrefix in ['water']:
+					latexPrefix = 'cup'
+				elif latexPrefix in ['dispense']:
+					latexPrefix = 'waterstream'
+				if latexPrefix not in actionSummary:
+					actionSummary[latexPrefix] = {}
+					fluentSummary[latexPrefix] = {}
+				#print "{} {} {}".format(latexPrefix, computer, prefix_hitrate[prefix][computer])
+				if prefix in type_fluents:
+					fluentSummary[latexPrefix][computer] = "{:.2f}".format(prefix_hitrate[prefix][computer])
+					#print "FLUENT"
+					#print fluentSummary
+				else:
+					actionSummary[latexPrefix][computer] = "{:.2f}".format(prefix_hitrate[prefix][computer])
+					#print "ACTION"
+					#print fluentSummary
 		hitrate = prefix_hitrate[prefix][computer]
 		summary[computer] += hitrate
 		summary_N[computer] += 1
@@ -248,13 +311,23 @@ for prefix in prefix_hitsum:
 			sum_actions_N[computer] += 1
 
 for computer in summary:
+	if kLaTeXSummary:
+		fluentSummary["total"][computer] = "{:.2f}".format(sum_fluents[computer] / sum_fluents_N[computer])
 	print("\t".join(("FLUENTS",str(sum_fluents_N[computer]), computer, "{:.2f}".format(sum_fluents[computer] / sum_fluents_N[computer], ))))
 
 for computer in summary:
+	if kLaTeXSummary:
+		actionSummary["total"][computer] = "{:.2f}".format(sum_actions[computer] / sum_actions_N[computer])
 	print("\t".join(("ACTIONS",str(sum_actions_N[computer]), computer, "{:.2f}".format(sum_actions[computer] / sum_actions_N[computer], ))))
 
 for computer in summary:
 	print("\t".join(("SUM",str(summary_N[computer]), computer, "{:.2f}".format(summary[computer] / summary_N[computer], ))))
+
+if kLaTeXSummary:
+	print "------ ACTION TABLE ------"
+	printLaTeXSummary(actionSummary)
+	print "------ FLUENT TABLE -------"
+	printLaTeXSummary(fluentSummary)
 
 if kDebugOn:
 	pp.pprint(exceptions)
