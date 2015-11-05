@@ -43,18 +43,33 @@ def findDistanceBetweenTwoVectors(A, B, fields, fluent):
 				distance[TYPE_FLUENT] += diff
 	return distance
 
+def emboldenWinningLine(fluentResult, winningValue):
+	returnLine = " & "
+	if fluentResult == winningValue:
+		returnLine += "\\textbf{" + str(fluentResult) + "}"
+	else:
+		returnLine += str(fluentResult)
+	return returnLine
+
 def printLaTeXSummary(dictToPrint):
+	#print dictToPrint
 	causalLine = "Causal"
 	detectionsLine = "Detection"
 	headerLine = "Object"
-	tableTransposed = "Object & Detection & Causal \\\\ \n \\midrule \n"
+	#tableTransposed = "Object & Detection & Causal \\\\ \n \\midrule \n"
 	for singleFluent in dictToPrint:
-		headerLine += " & " + singleFluent
 		winningLine = min(dictToPrint[singleFluent], key=dictToPrint[singleFluent].get)
-		dictToPrint[singleFluent][winningLine] = "\\textbf{" + str(dictToPrint[singleFluent][winningLine]) + "}"
-		causalLine += " & " + str(dictToPrint[singleFluent]["causalsmrt"])
-		detectionsLine += " & " + str(dictToPrint[singleFluent]["origsmrt"])
-		tableTransposed += "{} & {} & {} \\\\ \n".format(singleFluent, str(dictToPrint[singleFluent]["origsmrt"]), str(dictToPrint[singleFluent]["causalsmrt"]))
+		winningValue = dictToPrint[singleFluent][winningLine]
+		if singleFluent == "total":
+			winningTotalValue = winningValue
+		else:
+			headerLine += " & " + singleFluent
+			causalLine += emboldenWinningLine(dictToPrint[singleFluent]["causalsmrt"], winningValue)
+			detectionsLine += emboldenWinningLine(dictToPrint[singleFluent]["origsmrt"], winningValue)
+			#tableTransposed += "{} & {} & {} \\\\ \n".format(singleFluent, str(dictToPrint[singleFluent]["origsmrt"]), str(dictToPrint[singleFluent]["causalsmrt"]))
+	causalLine += emboldenWinningLine(dictToPrint["total"]["causalsmrt"], winningTotalValue)
+	detectionsLine += emboldenWinningLine(dictToPrint["total"]["origsmrt"], winningTotalValue)
+	headerLine += " & Average"
 	causalLine += ' \\\\'
 	headerLine += ' \\\\'
 	detectionsLine += ' \\\\'
@@ -62,7 +77,7 @@ def printLaTeXSummary(dictToPrint):
 	print "\\midrule"
 	print detectionsLine
 	print causalLine
-	print tableTransposed
+	#print tableTransposed
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -146,6 +161,7 @@ for filename in os.listdir (kCSVDir):
 					## FILENAME, FLUENT, HASH, ORIGDATA SCORE, ORIGSMRT SCORE, CAUSALGRAMMAR SCORE, ORIGDATA HUMANS, ORIGSMRT HUMANS, CAUSALGRAMMAR HUMANS
 					exampleName, room = filename.rsplit('.',1)
 					exampleNameForDB = exampleName.replace("_","")
+					fluent = fluent if fluent else kAllFluentsConstant
 					if not kJustTheSummary:
 						print("\t".join((filename,fluent,hashlib.md5(exampleNameForDB).hexdigest(),
 							str(bestscores['origdata'][TYPE_ACTION]), 
@@ -178,8 +194,8 @@ for filename in os.listdir (kCSVDir):
 #print("{}\t{}\t{}\t{}\t{}".format("AVERAGE",total_origdata_score / N,total_causalgrammar_score / N,"",""))
 if kJustTheSummary:
 	if kLaTeXSummary:
-		actionSummary = {}
-		fluentSummary = {}
+		actionSummary = {"total": {}}
+		fluentSummary = {"total": {}}
 	else:
 		print("\t".join(('fluent','N','computer','distA','distF',u'dist\u2211','avgA','avgF',u'avg\u2211')))
 	totals = {"_count":0}
@@ -225,7 +241,8 @@ if kJustTheSummary:
 		diff_total = diff_action + diff_fluent
 		fluentsN = totals["_count"]
 		if kLaTeXSummary:
-			pass
+			actionSummary["total"][computer_type] = diff_action/fluentsN
+			fluentSummary["total"][computer_type] = diff_fluent/fluentsN
 			# TODO: put in totals/All
 		else:
 			print("\t".join(str(x) for x in ("SUM",fluentsN,computer_type,diff_action,diff_fluent,diff_total,diff_action/fluentsN,diff_fluent/fluentsN,diff_total/fluentsN)))
