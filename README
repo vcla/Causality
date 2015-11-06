@@ -14,6 +14,9 @@ most recent development is around dealWithDBResults.py, uploading/downloading an
 * the CVPR2012_* directories consist of action detections; 
 ** some are directories of directories of frames per event (these are the source data from Ping, if they're pure action detections; from Mingtian if they're parsed). txt files per frame per event along with .mat files
 ** the following matlab files were to smooth the skeleton data: extractingActionResults.m  slidingWindow.m getCutPoints.m             writeTemporalParses.m
+*** extractingActionResult.m is using action results from "results/CVPR2012_computer_test_action_detection_monday". (the mat and txt files should have the same values. txt files are probability of each action (where are the actions defined?)
+**** testingCutPoints.txt is input to extractingActionResult, defines scope of frames to read?
+**** for each directory in CVPR2012_computer_test_action_detection_monday, read the act_parse.mat in that directory. cutPoints = getCutPoints(exampleName, cutPointFileName); writeTemporalParses(slidingWIndow(cutPoints(1),cutPoints(end),frames,logspace)
 ** the various directories (smoothed, smoothed monday, smoothed monday 1000, slidingwindow, etc) are the results of trying different approaches to smoothing the skeleton data to make detections more accurate
 ** CVPR2012_fluent_result are fluent detection results from Bruce
 ** results/cvpr_db_results* are exports of "human" fluent and action detections against the same videos
