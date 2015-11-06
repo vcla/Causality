@@ -153,10 +153,12 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-s","--simplify", action="store_true", required=False, help="simplify the summerdata grammar to only include fluents that start with the example name[s]")
 	parser.add_argument("example", nargs="+", action="store", help="specific example[s] to run, such as screen_1_lounge, light_5_9406, or door_11_9406")
+	parser.add_argument('-i','--ignoreoverlaps', action='store_true', required=False, help='skip the "without overlaps" code')
 	args = parser.parse_args()
 
 	import_failed = list()
 	causal_forest_orig = causal_grammar_summerdata.causal_forest
+	withoutoverlaps = not args.ignoreoverlaps
 	for example in args.example:
 		try:
 			if args.simplify:
@@ -170,7 +172,7 @@ if __name__ == '__main__':
 			print("IMPORT FAILED: {}".format(ie))
 			import_failed.append(example)
 			continue
-		fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, False) # last true: suppress the xml output
+		fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, suppress_output = False, handle_overlapping_events = withoutoverlaps)
 	if len(import_failed):
 		print("FAILED IMPORTING: {}".format(", ".join(import_failed)))
 	print groupings
