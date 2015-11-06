@@ -571,6 +571,8 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	action_parse_frames = sorted(action_parses, key=action_parses.get)
 	action_parse_frames.sort()
 	fluent_and_event_keys_we_care_about = get_fluent_and_event_keys_we_care_about(causal_forest)
+	if not suppress_output:
+		print("CAUSAL FOREST INPUT: {}".format(causal_forest))
 	# kind of a hack to attach fluent and event keys to each causal tree, lots of maps to make looking things up quick and easy
 	event_hash = {}
 	fluent_hash = {}
@@ -692,10 +694,11 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				all_combos = list(list(flatten(x)) for x in itertools.product(all_combos, split_combinations[i]))
 			powersets[fluent] = all_combos
 		powerset_counts = map(lambda x: (x,len(powersets[x]),),powersets.keys())
+		powerset_count_split_combinations = map(lambda x: range(0,x[1]),powerset_counts)
 		if not suppress_output:
 			print("powersets: {}".format(powersets))
 			print("powerset counts: {}".format(powerset_counts))
-		powerset_count_split_combinations = map(lambda x: range(0,x[1]),powerset_counts)
+			print("combinations: {}".format(powerset_count_split_combinations))
 		if len(powerset_count_split_combinations) > 1:
 			merge_combinations = list(itertools.product(powerset_count_split_combinations[0], powerset_count_split_combinations[1]))
 			for item in powerset_count_split_combinations[2:]:
@@ -725,7 +728,11 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	if not handle_overlapping_events or not merge_combinations:
 		result = _without_overlaps([], action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
 		results_for_xml_output.append(copy.deepcopy(result))
-	results_for_xml_output = sorted(results_for_xml_output, key = lambda(k): k[0][0][1])
+	try:
+		results_for_xml_output = sorted(results_for_xml_output, key = lambda(k): k[0][0][1])
+	except IndexError as ie:
+		print("INDEX OUT OF RANGE AGAINST {}".format(results_for_xml_output))
+		raise ie
 	if not suppress_output:
 		print("RESULTS_FOR_XML_OUTPUT (sorted):")
 	doc = build_xml_output_for_chain(results_for_xml_output[0],parse_array,suppress_output) # for lowest energy chain

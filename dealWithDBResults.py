@@ -381,8 +381,12 @@ def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,fra
 		elif old_value == "off":
 			off = 100
 		else:
-			on = 50
-			off = 50
+			#on = 50
+			#off = 50
+			on = 25
+			off = 25
+			on_off = 25
+			off_on = 25
 	retval = {
 		"{}{}_{}".format(prefix,onstring,offstring): on_off,
 		"{}{}_{}".format(prefix,offstring,onstring): off_on,
@@ -684,10 +688,12 @@ if __name__ == '__main__':
 	group.add_argument('-o','--only', action='append', dest='examples_only', required=False, help='specific examples to run, versus all found examples')
 	group.add_argument('-x','--exclude', action='append', dest='examples_exclude', required=False, help='specific examples to exclude, out of all found examples', default=[])
 	parser.add_argument("-s","--simplify", action="store_true", required=False, help="simplify the summerdata grammar to only include fluents that start with the example name[s]")
-	group.add_argument('-i','--ignoreoverlaps', action='store_true', required=False, help='skip the "without overlaps" code')
+	parser.add_argument('-i','--ignoreoverlaps', action='store_true', required=False, help='skip the "without overlaps" code')
+	parser.add_argument('--debug', action='store_true', required=False, help='Spit out a lot more context information during processing')
 	# parser.add_argument("--dry-run",required=False,action="store_true") #TODO: would be nie
 	args = parser.parse_args()
 	withoutoverlaps = not args.ignoreoverlaps
+	suppress_output = not args.debug
 	examples = []
 	globalDryRun = args.dryrun
 	if args.mode in ("list","upanddown",) and globalDryRun:
@@ -728,6 +734,9 @@ if __name__ == '__main__':
 		#raise("MAYBE DELETE 'computer' FROM RESULTS BEFORE RE-RUNNING")
 		for example in examples:
 			print("---------\nEXAMPLE: {}\n-------".format(example))
+			""" -s (simplify) is broken at the moment, on the below example, so ... this can help """
+			#if example == "doorlock_2_8145":
+			#	suppress_output = False
 			if args.simplify:
 				causal_grammar_summerdata.causal_forest = causal_grammar.get_simplified_forest_for_example(causal_forest_orig, example)
 				print("... simplified to {}".format(", ".join(x['symbol'] for x in causal_grammar_summerdata.causal_forest)))
@@ -746,7 +755,7 @@ if __name__ == '__main__':
 				import_failed.append(example)
 				continue
 			orig_xml = munge_parses_to_xml(fluent_parses,temporal_parses)
-			fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, suppress_output = True, handle_overlapping_events = withoutoverlaps)
+			fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, suppress_output = suppress_output, handle_overlapping_events = withoutoverlaps)
 			if debugQuery:
 				print("_____ ORIG FLUENT AND ACTION PARSES _____")
 				#print minidom.parseString(orig_xml).toprettyxml(indent="\t")
