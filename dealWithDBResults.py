@@ -448,7 +448,7 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 	if oject in summerdata.actionPairings:
 		actionpairings = summerdata.actionPairings[oject]
 	else:
-		print("WARNING: missing actionpairing: {}".format(oject))
+		print("WARNING: missing actionpairing: {} (queryXMLForAnswersBetweenFrames)".format(oject))
 	oject2 = False
 	tmpoject = None
 	if oject == "trash":
@@ -556,6 +556,8 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 	elif oject == "water":
 		result = {"act_drink": 0, "act_no_drink": 0}
 		count = queryXMLForActionBetweenFrames(xml,"drink_START",frame1,frame2)
+		if not count:
+			count = queryXMLForActionBetweenFrames(xml,"drink_END",frame1,frame2)
 		if count:
 			result["act_drink"] = 100 * count
 		else:
