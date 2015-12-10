@@ -135,7 +135,7 @@ if __name__ == '__main__':
 	import causal_grammar
 	import causal_grammar_summerdata # sets up causal_forest
 
-	kActionDetections = 'results/CVPR2012_reverse_slidingwindow_action_detection_logspace'
+	kActionDetections = 'results/CVPR2012_reverse_slidingwindow_10_action_detection_logspace'
 
 	# These thresholds tuned for this fluent data because it's not "flipping between on and off", it's 
 	# flipping "did transition closed to on" and "didn't transition closed to on"

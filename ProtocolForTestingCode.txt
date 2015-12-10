@@ -1,0 +1,11 @@
+1) Run causal grammar
+python summerdata.py -s EXAMPLENAME
+		e.g., python summerdata.py -s trash_7_9406
+	* check on the input detections
+	* open causalgrammar_summerdata.py to check if the result is believable with grammar
+
+2) Check answer in DB
+open results/cvpr_db_results/door_1.csv 
+
+3) Check answer for Hit Rate
+python analyzeData-nearesthuman-pr.py -e trash_7

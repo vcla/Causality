@@ -1,7 +1,9 @@
 function results = slidingWindow(startFrame, endFrame, individualFrames, logSpace)
 
-thresh = 0.000001;
-windowSize = 1; % starting window size
+thresh = 0.000001; % added onto 1/7 for threshold for overlap case
+windowSize = 10; % starting window size 
+allowOverlaps = false;
+nonOverlapThresh = .7; %only used if allowOverlaps
 
 
 vectorOfFrames = arrayfun(@(foo) foo.frame_ind, individualFrames);
@@ -20,6 +22,7 @@ maxFrameWidth = windowSize*floor((endFrame - startFrame)/windowSize);
             % results.  
 %for frameWidth = windowSize:windowSize:maxFrameWidth
 for frameWidth = maxFrameWidth:-windowSize:windowSize
+    disp(frameWidth); %CHANGED THIS
     for tryingWindowStart = startFrame:(endFrame-frameWidth+1)
         % gather the frames
         tryingWindowEnd = tryingWindowStart+frameWidth-1;
@@ -63,59 +66,64 @@ for frameWidth = maxFrameWidth:-windowSize:windowSize
             if any(noOverLap ~= (~overlaps))
                 error('problem with my logic')
             end
-            addResult = false;
-            deleteResult = false;
-            if all(noOverLap)
-                % if doesn't overlap, and has "high enough" probability, keep it
-                addResult = true;
-            else % there is an overlap
-                % if has higher probability than something in our stored results
-                % and overlaps, keep it and ditch the other (surround suppression)
-                if maxprob > results(4,overlaps)
-                    % find where that happens
-                    entriesToDelete = (maxprob > results(4,:)) & overlaps;
-                    deleteResult = true;
+            if ~allowOverlaps
+                addResult = false;
+                deleteResult = false;
+                if all(noOverLap)
+                    % if doesn't overlap, and has "high enough" probability, keep it
                     addResult = true;
+                else % there is an overlap
+                    % if has higher probability than something in our stored results
+                    % and overlaps, keep it and ditch the other (surround suppression)
+                    if maxprob > results(4,overlaps)
+                        % find where that happens
+                        entriesToDelete = (maxprob > results(4,:)) & overlaps;
+                        deleteResult = true;
+                        addResult = true;
+                    end
+
+                    % if it has equal probability and overlaps, keep both
+                    %if maxprob - results(4,overlaps) > thresh % then maxprob bigger
+                    if maxprob == results(4,overlaps)
+                        entriesToDelete = (maxprob == results(4,:)) & overlaps;
+                        deleteResult = true;
+
+                        addResult = true;
+                    end
+
+                    % if overlap is equality, pass
+                    if tryingWindowStart == results(1,:) & tryingWindowEnd == results(2,:)
+                        addResult = false;
+                        asdf3
+                    end
+
                 end
 
-                % if it has equal probability and overlaps, keep both
-                %if maxprob - results(4,overlaps) > thresh % then maxprob bigger
-                if maxprob == results(4,overlaps)
-                    entriesToDelete = (maxprob == results(4,:)) & overlaps;
-                    deleteResult = true;
-
-                    addResult = true;
+                if deleteResult
+                    %results
+                    results(:,entriesToDelete) = [];   %CHANGED THIS
+                    %results
+                    %asdf1
+                end
+                
+                if addResult && (maxprob > 1/7 + thresh)
+                    results = [results [tryingWindowStart tryingWindowEnd action maxprob]'];
+                    %disp(results);  
                 end
 
-                % if overlap is equality, pass
-                if tryingWindowStart == results(1,:) & tryingWindowEnd == results(2,:)
-                    addResult = false;
-                    asdf3
+                
+            else
+                if (maxprob > nonOverlapThresh)   
+                    results = [results [tryingWindowStart tryingWindowEnd action maxprob]'];
+                    %disp(results);  
                 end
-
             end
             
-            if deleteResult
-                %results
-                results(:,entriesToDelete) = [];
-                %results
-                %asdf1
-            end
-            
-            if addResult && (maxprob > 1/7 + thresh)
-                results = [results [tryingWindowStart tryingWindowEnd action maxprob]'];
-            end
             
             % TODO: clean up results (only keep top N performers)
             % either keep this in the loop, or move it to the end (probably
             % move to the end)
-
-
         
-        
-%         else
-%             
-%             disp(tryingWindowStart)
         end
          
         

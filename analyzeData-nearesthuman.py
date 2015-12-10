@@ -53,8 +53,8 @@ def emboldenWinningLine(fluentResult, winningValue):
 
 def printLaTeXSummary(dictToPrint):
 	#print dictToPrint
-	causalLine = "Causal"
-	detectionsLine = "Detection"
+	causalLine = "Causal Reasoning"
+	detectionsLine = "Bottom-up Detection"
 	headerLine = "Object"
 	#tableTransposed = "Object & Detection & Causal \\\\ \n \\midrule \n"
 	for singleFluent in dictToPrint:

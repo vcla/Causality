@@ -1,0 +1,565 @@
+-------------------------
+DanXie_8145, (0, 59), computer_1_DanXie_8145
+(0, START)
+(0, 21, hands on trackpad) # infer screen ON
+(22, 59, exit scene) # and is holding cup
+
+
+DanXie_8145, (340, 496), water_1_DanXie_8145
+(340, NA, enter scene)
+(360, 384, dispense water) # water ON, then OFF; agent THIRSTY
+(419, 478, drink water) # water LESS
+
+
+DanXie_8145, (492, 709), door_1_DanXie_8145
+(514, 526, try door handle)
+(531, 572, knock) # door LOCKED
+(614, 685, door OPEN) # because someone opened it
+
+
+DanXie_8145, (729, 809), door_2_DanXie_8145
+(739, 794, door OPEN)
+
+
+DanXie_8145, (810, 1281), printer_computer_1_DanXie_8145
+(830, 1201, hands on trackpad) # infer screen ON; was screensaver on?
+(1246, 1254, retrieve paper from top of printer) # printer LESS; had printed; printer HAD PAPER
+
+
+DanXie_8145, (1346, 1831), phone_1_DanXie_8145
+(1383, 1560, phone in hand)
+(1561, 1811, phone near head) # really, hand holding object near head
+
+
+DanXie_8145, (1822, 1955), trash_1_DanXie_8145
+(1837, 1852, put down paper)
+(1853, 1865, pick up paper)
+(1866, 1885, crumple paper) # IS TRASH, first paper NOT TRASH
+(1903, 1916, drop trash) # trash MORE
+(1917, 1954, exit scene)
+(1955, END)
+
+
+-------------------------
+DanXie_9406, (155, 219), door_light_1_DanXie_9406
+(155, START)
+(180, 203, door open) # lighting changes
+(191, 213, stand near door) #had pushed door
+
+
+DanXie_9406, (218, 370), light_1_DanXie_9406
+(222, 254, touch light switch)
+(265, 277, stand near door) # push door
+(265, 289, door open)
+(312, 338, door open)
+(326, 346, stand near door)
+(357, 362, touch light switch) # Note: it's the 2nd touch light switch that allows inference of the first.  they must be together.
+(362, ***, light on)
+
+
+DanXie_9406, (257, 303), door_3_DanXie_9406
+(265, 277, stand near door) # push door
+(265, 289, door open)
+
+
+DanXie_9406, (306, 347), door_4_DanXie_9406
+(312, 338, door open)
+(326, 346, stand near door)
+
+
+DanXie_9406, (383, 916), computer_2_DanXie_9406
+(415, END, hands on keyboard) # * interesting: I wasn't paying attention to computer--no clue (without rewind) if screensaver was on.
+
+
+-------------------------
+DanXie_Lounge, (295, 660), screen_1_DanXie_Lounge
+(295, START)
+(295, 384, screen dim) # actually, dim on login screen
+(377, 1550, use keyboard/mouse) # logs in
+(385, 3222, screen bright)
+
+
+DanXie_Lounge, (1450, 1650), printer_1_DanXie_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(377, 1550, use keyboard/mouse) # logs in
+(385, 3222, screen bright)
+(1564, 1578, retrieve paper from top of printer) # sent to print, had paper, has less; agent reads paper; MAYBE TODO: merge with later trash to see if they're the same
+
+
+DanXie_Lounge, (2167, 2555), phone_2_DanXie_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(385, 3222, screen bright)
+(1899, 2636, use keyboard/mouse)
+(2215, 2262, phone in hand) # receiving call?; phone ACTIVE; agent HAS PHONE; phone was RINGING
+(2263, 2555, phone near head)
+
+
+DanXie_Lounge, (2619, 2740), trash_2_DanXie_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(385, 3222, screen bright)
+(1899, 2636, use keyboard/mouse)
+(2650, 2673, pick up paper)
+(2675, 2717, crumple paper) # agent HAS TRASH; trash MORE
+(2717, 2727, drop trash)
+
+
+DanXie_Lounge, (3000, 3286), screen_2_DanXie_Lounge
+(385, 3222, screen bright)
+(2769, 3243, use keyboard/mouse)
+(3223, END, screen off) # agent shut  down
+
+
+DanXie_Lounge, (3192, 3400), rest_1_DanXie_Lounge
+(385, 3222, screen bright)
+(2769, 3243, use keyboard/mouse)
+(3223, END, screen off) # agent shut  down
+(3309, 3471, rest) # agent tired
+
+
+-------------------------
+HaoWei_Lounge, (307, 800), screen_3_HaoWei_Lounge
+(307, START)
+(307, 432, screen OFF)
+(384, 1180, use mouse/keyboard)
+(433, 2424, screen ON)
+
+
+HaoWei_Lounge, (800, 1800), printer_2_HaoWei_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(384, 1180, use mouse/keyboard)
+(433, 2424, screen ON)
+(1238, 1318, at printer) # infer: sent to print; TODO: she expected the fluent change -- why she was waiting.  knowledge of how things change explains why waiting.
+(1330, 1338, pick up paper)
+(1363, 1457, insert paper to paper tray) # printer EMPTY
+(1656, 1684, retrieve paper from top of printer) # printer WAS PRINTING, printer LESS
+
+
+HaoWei_Lounge, (2000, 2250), phone_3_HaoWei_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(433, 2424, screen ON)
+(2068, 2185, take phone out) # not held to head; ringing? checking time?
+
+
+HaoWei_Lounge, (2250, 2700), phone_4_HaoWei_Lounge
+(433, 2424, screen ON)
+(2363, 2418, take phone out)
+(2418, 2650, phone near head) # phone RANG, agent HAS PHONE, phone ACTIVE
+(2425, 2868, screen DIM)
+(2651, 2677, put phone away)
+
+
+HaoWei_Lounge, (2700, 2900), trash_3_HaoWei_Lounge
+(2425, 2868, screen DIM)
+(2720, 2794, pick up paper)
+(2791, 2830, crumple paper)
+(2831, 2837, drop trash) # trash MORE
+(2869, 3143, screen ON) # infer: touch mouse/keyboard
+
+
+HaoWei_Lounge, (1000, 2500), screen_timeout_1_HaoWei_Lounge
+(384, 1180, use mouse/keyboard)
+(433, 2424, screen ON)
+(1238, 1318, at printer) # infer: sent to print; TODO: she expected the fluent change -- why she was waiting.  knowledge of how things change explains why waiting.
+(1330, 1338, pick up paper)
+(1363, 1457, insert paper to paper tray) # printer EMPTY
+(1656, 1684, retrieve paper from top of printer) # printer WAS PRINTING, printer LESS
+(2068, 2185, take phone out) # not held to head; ringing? checking time?
+(2363, 2418, take phone out)
+(2418, 2650, phone near head) # phone RANG, agent HAS PHONE, phone ACTIVE
+(2425, 2868, screen DIM)
+
+
+HaoWei_Lounge, (2750, 3289), screen_4_HaoWei_Lounge
+(2425, 2868, screen DIM)
+(2720, 2794, pick up paper)
+(2791, 2830, crumple paper)
+(2831, 2837, drop trash) # trash MORE
+(2869, 3143, screen ON) # infer: touch mouse/keyboard
+(3144, , screen OFF # infer: logout/shutdown
+(3289, END)
+
+
+-------------------------
+Mingtian_8145, (418, 593), drink_1_Mingtian_8145
+(418, START)
+(454, 501, dispense water) # agent THIRSTY, cup MORE, water ON
+(518, 542, drink) # agent THIRSTY, cup LESS
+
+
+Mingtian_8145, (586, 1150), phone_5_Mingtian_8145
+(654, 882, take phone out) # note: he actually looked in wrong pocket first
+(888, 1125, phone near head) # phone ACTIVE, makes call, agent HAS PHONE; hang up, phone not active
+
+
+Mingtian_8145, (1150, 1250), drink_2_Mingtian_8145
+(1195, 1231, dispense water) # note: longer running -- wasn't completely unthirsty OR just getting it for later
+
+
+Mingtian_8145, (418, 1300), drink_3_Mingtian_8145
+(418, START)
+(454, 501, dispense water) # agent THIRSTY, cup MORE, water ON
+(518, 542, drink) # agent THIRSTY, cup LESS
+(654, 882, take phone out) # note: he actually looked in wrong pocket first
+(888, 1125, phone near head) # phone ACTIVE, makes call, agent HAS PHONE; hang up, phone not active
+(1195, 1231, dispense water) # note: longer running -- wasn't completely unthirsty OR just getting it for later
+(1256, 1281, touch handle) # infer: push door; door NOT LOCKED
+(1265, 1318, door OPEN) # infer: agent closed door
+
+
+Mingtian_8145, (1250, 1350), door_5_Mingtian_8145
+(1256, 1281, touch handle) # infer: push door; door NOT LOCKED
+(1265, 1318, door OPEN) # infer: agent closed door
+
+
+Mingtian_8145, (1350, 1550), door_6_Mingtian_8145
+(1387, 1517, door OPEN) # agent left door open
+(1495, 1542, touch handle)
+
+
+Mingtian_8145, (1543, 1647), printer_3_Mingtian_8145
+(1559, 1634, remove paper from paper tray) # paper LESS
+
+
+-------------------------
+Mingtian_9406, (299, 700), door_phone_light_1_Mingtian_9406
+(299, START)
+(314, 334, door open)
+(330, 351, touching door)
+(330, 520, phone near head)
+(356, 391, touching light switch) # note: he actually clicked twice
+(523, 538, phone in hand) # hanging up; phone NOT ACTIVE
+(564, 1752, touch keyboard/trackpad)
+
+
+Mingtian_9406, (1600, 2332), printer_4_Mingtian_9406
+(564, 1752, touch keyboard/trackpad)
+(1801, 1828, look at printer)
+(1829, 1844, open paper tray)
+(1867, 1982, put paper in 3rd tray)
+(2090, 2109, remove paper from top of printer)
+(2136, 2157, look at printer)
+(2199, 2260, put paper in 3rd tray)
+(2293, 2303, remove paper from 3rd tray)
+
+
+Mingtian_9406, (2600, 3025), phone_6_Mingtian_9406
+(2562, 2629, touch keyboard/trackpad)
+(2629, 2817, phone in hand)
+(2817, 2978, phone near head)
+(2984, 3008, phone in hand)
+
+
+Mingtian_9406, (3000, 3068), screen_5_Mingtian_9406
+(2984, 3008, phone in hand)
+(3042, 3053, shut laptop lid)
+
+
+Mingtian_9406, (3081, 3193), door_7_Mingtian_9406
+(3089, 3097, near door)
+(3089, 3135, door OPEN)
+(3193, END)
+
+
+-------------------------
+Mingtian_PingWei_Lounge, (192, 1076), screen_6_Mingtian_PingWei_Lounge
+(192, START)
+(192, 338, screen OFF)
+(284, 986, touch mouse/keyboard)
+(339, 985, screen ON) # on login screen
+(986, 1298, screen OFF)
+
+
+Mingtian_PingWei_Lounge, (1199, 1500), screen_7_Mingtian_PingWei_Lounge
+(986, 1298, screen OFF)
+(1277, 1597, touch mouse/keyboard)
+(1299, 4414, screen ON)
+
+
+Mingtian_PingWei_Lounge, (1542, 1805), phone_7_Mingtian_PingWei_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(1277, 1597, touch mouse/keyboard)
+(1299, 4414, screen ON)
+(1640, 1730, phone near head) # note: getting phone out not visible; phone RINGING; phone ACTIVE
+(1735, 1782, phone in hand)
+(1787, 2820, touch mouse/keyboard)
+
+
+Mingtian_PingWei_Lounge, (2300, 2925), printer_5_Mingtian_PingWei_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(1299, 4414, screen ON)
+(1787, 2820, touch mouse/keyboard)
+(2848, 2880, retrieve paper from top of printer) # printer HAD PAPER, printer LESS
+
+
+Mingtian_PingWei_Lounge, (2925, 3500), phone_8_Mingtian_PingWei_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(1299, 4414, screen ON)
+(3000, 3190, phone in hand) # making a call
+(3194, 3417, phone near head)
+(3422, 3469, phone in hand) # hang up
+(3477, 4428, touch mouse/keyboard)
+
+
+Mingtian_PingWei_Lounge, (4250, 4450), screen_8_Mingtian_PingWei_Lounge
+(1299, 4414, screen ON)
+(3477, 4428, touch mouse/keyboard)
+(4415, , screen OFF) # infer shut off
+
+
+Mingtian_PingWei_Lounge, (4450, 4585), trash_4_Mingtian_PingWei_Lounge
+(4486, 4494, crumple paper)
+(4495, 4506, drop trash)
+
+
+Mingtian_PingWei_Lounge, (4472, 4838), rest_2_Mingtian_PingWei_Lounge
+(4486, 4494, crumple paper)
+(4495, 4506, drop trash)
+(4764, 4846, rest)
+
+
+Mingtian_PingWei_Lounge, (4796, 4892), rest_3_Mingtian_PingWei_Lounge
+(4764, 4846, rest)
+
+
+Mingtian_PingWei_Lounge, (4859, 5075), printer_6_Mingtian_PingWei_Lounge
+(4901, 4986, retrieve paper from paper tray) # printer LESS
+
+
+-------------------------
+PingWei_8145, (251, 376), drink_4_PingWei_8145
+(283, 314, dispense water) # cup MORE, water ON (agent probably THIRSTY)
+(337, 363, drink) # agent THIRSTY, cup LESS
+
+
+PingWei_8145, (251, 524), drink_5_PingWei_8145
+(283, 314, dispense water) # cup MORE, water ON (agent probably THIRSTY)
+(337, 363, drink) # agent THIRSTY, cup LESS
+(431, 441, drink) # agent less THIRST, cup LESS
+
+
+PingWei_8145, (600, 768), printer_7_PingWei_8145
+(712, 719, retrieve paper from top of printer)
+
+
+PingWei_8145, (769, 1053), door_8_PingWei_8145
+(904, 912, touch handle)
+(914, 925, knock) # door CLOSED, door LOCKED
+(939, 961, knock)
+(966, 1023, door OPEN) # infer person opened it
+
+
+PingWei_8145, (1200, 1415), door_9_PingWei_8145
+(1355, 1410, door OPEN) # infer person opened it
+
+
+PingWei_8145, (1403, 1444), trash_5_PingWei_8145
+(1355, 1410, door OPEN) # infer person opened it
+(1417, 1420, drop trash)
+
+
+PingWei_8145, (1422, 1723), phone_9_PingWei_8145
+(1472, 1500, phone in hand)
+(1506, 1680, phone near ear)
+(1685, 1722, phone in hand)
+(1722, 1880, rest)
+
+
+PingWei_8145, (1691, 1870), rest_4_PingWei_8145
+(1685, 1722, phone in hand)
+(1722, 1880, rest)
+
+
+PingWei_8145, (1802, 1954), rest_5_PingWei_8145
+(1722, 1880, rest)
+(1952, 1959, touch handle)
+
+
+PingWei_8145, (1928, 1977), door_10_PingWei_8145
+(1952, 1959, touch handle)
+(1957, , door OPEN) # perfect example: reasoning unlocked over long time
+(1977, END)
+
+
+PingWei_8145, (769, 1977), door_11_PingWei_8145
+(904, 912, touch handle)
+(914, 925, knock) # door CLOSED, door LOCKED
+(939, 961, knock)
+(966, 1023, door OPEN) # infer person opened it
+(1355, 1410, door OPEN) # infer person opened it
+(1417, 1420, drop trash)
+(1472, 1500, phone in hand)
+(1506, 1680, phone near ear)
+(1685, 1722, phone in hand)
+(1722, 1880, rest)
+(1952, 1959, touch handle)
+(1957, , door OPEN) # perfect example: reasoning unlocked over long time
+(1977, END)
+
+
+-------------------------
+PingWei_Lounge, (155, 400), screen_9_PingWei_Lounge
+(155, START)
+(155, 284, screen OFF)
+(257, 1142, touch mouse/keyboard)
+(285, 3967, screen ON)
+
+
+PingWei_Lounge, (1000, 1607), printer_8_PingWei_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(257, 1142, touch mouse/keyboard)
+(285, 3967, screen ON)
+(1184, 1214, look at printer)
+(1252, 1342, add paper to paper tray)
+(1487, 1577, take paper from top of printer)
+
+
+PingWei_Lounge, (2300, 2746), phone_10_PingWei_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(285, 3967, screen ON)
+(1811, 2372, touch mouse/keyboard)
+(2369, 2478, phone in hand)
+(2483, 2629, phone near head)
+(2635, 2658, phone in hand)
+(2710, 3288, touch mouse/keyboard)
+
+
+PingWei_Lounge, (3200, 3533), trash_6_PingWei_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(285, 3967, screen ON)
+(2710, 3288, touch mouse/keyboard)
+(3433, 3458, crumple paper)
+(3473, 3480, drop trash)
+
+
+PingWei_Lounge, (3740, 4061), screen_10_PingWei_Lounge
+(285, 3967, screen ON)
+(3739, 3968, touch mouse/keyboard)
+(3968, 4143, screen OFF)
+
+
+PingWei_Lounge, (4006, 4180), rest_screen_1_PingWei_Lounge
+(3968, 4143, screen OFF)
+(4078, 4190, rest)
+(4144, 4668, screen ON) # with no action
+
+
+PingWei_Lounge, (4145, 4224), rest_6_PingWei_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(4078, 4190, rest)
+(4144, 4668, screen ON) # with no action
+
+
+PingWei_Lounge, (4240, 4668), phone_11_PingWei_Lounge
+(4144, 4668, screen ON) # with no action
+(4332, 4342, phone in hand) # receive call
+(4350, 4445, phone near head)
+(4545, 4565, phone in hand)
+(4668, END)
+
+
+-------------------------
+PingWei_9406, (1, 64), light_2_PingWei_9406
+(23, START)
+(52, 53, touch light) # not detectable.  fluent change is
+
+
+PingWei_9406, (56, 138), door_12_PingWei_9406
+(72, 96, push door)
+
+
+PingWei_9406, (173, 242), door_13_PingWei_9406
+(207, 222, near door)
+(239, 265, touch light switch)
+
+
+PingWei_9406, (223, 336), light_3_PingWei_9406
+(239, 265, touch light switch)
+(262, , light ON)
+
+
+PingWei_9406, (1350, 1887), phone_12_PingWei_9406
+(1332, 1396, read paper)
+(1429, 1622, phone in hand) # making a call
+(1626, 1826, phone near head)
+(1828, 1838, phone in hand)
+(1875, 1887, crumple paper)
+
+
+PingWei_9406, (1849, 1944), trash_7_PingWei_9406
+(1875, 1887, crumple paper)
+(1910, 1913, drop trash)
+(1943, 1990, touch trackpad/keyboard)
+
+
+-------------------------
+Wenze_8145, (288, 349), door_14_Wenze_8145
+(288, START)
+(301, 344, door OPEN)
+(307, 322, touch handle)
+(337, 343, touch handle)
+
+
+Wenze_8145, (343, 677), drink_6_Wenze_8145
+(301, 344, door OPEN)
+(337, 343, touch handle)
+(357, 410, dispense water)
+(433, 444, at printer) # retrieving paper from top
+(495, 516, drink)
+(567, 591, drink)
+
+
+Wenze_8145, (288, 500), printer_9_Wenze_8145
+(288, START)
+(301, 344, door OPEN)
+(307, 322, touch handle)
+(337, 343, touch handle)
+(357, 410, dispense water)
+(433, 444, at printer) # retrieving paper from top
+(495, 516, drink)
+
+
+Wenze_8145, (865, 1184), phone_13_Wenze_8145
+(866, 874, enter scene)
+(953, 1015, phone in hand)
+(1019, 1149, phone near head)
+(1152, 1168, phone in hand)
+
+
+Wenze_8145, (1152, 1250), door_15_Wenze_8145
+(1152, 1168, phone in hand)
+(1190, 1207, near door)
+(1191, 1219, door OPEN)
+
+
+-------------------------
+Wenze_Lounge, (239, 490), screen_11_Wenze_Lounge
+(239, START)
+(239, 322, screen OFF)
+(314, 324, touch monitor)
+(340, 1195, touch mouse/keyboard)
+
+
+Wenze_Lounge, (900, 1500), printer_10_Wenze_Lounge
+(340, 1195, touch mouse/keyboard)
+(1230, 13007, wait at printer)
+(1310, 1321, retrieve paper from top of printer)
+
+
+Wenze_Lounge, (1700, 2209), phone_14_Wenze_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(1230, 13007, wait at printer)
+(1863, 1888, phone in hand) # receive call
+(1895, 2126, phone near head)
+(2134, 2144, phone in hand)
+
+
+Wenze_Lounge, (2644, 2850), phone_15_Wenze_Lounge
+******** THERE IS OVERLAPPING ONE **********
+(1230, 13007, wait at printer)
+(2402, 2662, touch mouse/keyboard) # logged out
+(2719, 2760, phone in hand)
+(2764, , phone near head)
+(2793, , exit scene)
+(2850, END)
+
+

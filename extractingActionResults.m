@@ -1,10 +1,12 @@
 clear all
 
-mainDirectory = 'CVPR2012_computer_test_action_detection_monday/';
+mainDirectory = 'results/CVPR2012_computer_test_action_detection_monday/';
 cutPointFileName = 'testingCutPoints.txt';
-folderName = 'CVPR2012_reverse_slidingwindow_action_detection_logspace/';
+folderName = 'results/CVPR2012_reverse_slidingwindow_10_action_detection_logspace/';
+%folderName = 'results/CVPR2012_xyz/';
+%folderName = 'CVPR2012_reverse_slidingwindow_action_detection_logspace/';
 %folderName = 'CVPR2012_reverse_slidingwindow_action_detection/';
-logSpaceBool = true
+logSpaceBool = true;
 
 actionFiles = dir(mainDirectory);
 for ind = numel(actionFiles):-1:1
@@ -16,11 +18,10 @@ end
 errorCheckProbOrder = {'01_benddown'  '02_drink'  '03_makeacall' ...
     '04_pressbutton'  '05_standing'  '06_throwtrash' '07_usecomputer'};
 
-
-
-
 countMissingSkeletons = 0;
 for ind = 1:numel(actionFiles)
+    
+    %if strcmp(actionFiles(ind).name, 'light_8_screen_50_9404') % ADDED THIS
     disp('-------------------------------------------------------')
     singleFile = actionFiles(ind);
     exampleName = singleFile.name;
@@ -78,4 +79,5 @@ for ind = 1:numel(actionFiles)
         
                                       
     end
+    %end % ADDED THIS
 end
