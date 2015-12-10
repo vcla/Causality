@@ -1,11 +1,23 @@
 import csv
 import hashlib
-import MySQLdb
 import os
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import videoCutpoints
 import summerdata
+
+# sometimes MySQLdb just doesn't want to work....
+try:
+	import MySQLdb
+except ImportError:
+	import pymysql
+	pymysql.install_as_MySQLdb()
+	class MySQLdb:
+		ProgrammingError = pymysql.MySQLError
+
+import sqlite3
+DBTYPE_MYSQL = "mysql"
+DBTYPE_SQLITE = "sqlite"
 
 DBNAME = "amy_cvpr2012"
 DBUSER = "amycvpr2012"
@@ -19,7 +31,31 @@ globalDryRun = None # commandline argument
 
 # managing human responses for comparison - note upload versus download
 
-def getExampleFromDB(exampleName, conn=False):
+def getDB(connType):
+	if connType == DBTYPE_MYSQL:
+		conn = MySQLdb.connect (host = DBHOST, user = DBUSER, passwd = DBPASS, db = DBNAME)
+	else:
+		conn = sqlite3.connect ("{}.db".format(DBNAME))
+	return conn
+
+def getColumns(conn, connType, tableName, exampleNameForDB):
+	retval = False
+	if connType == DBTYPE_MYSQL:
+		query = "SHOW COLUMNS FROM {}".format(tableName)
+	else:
+		query = "PRAGMA table_info({})".format(tableName)
+	try:
+		cursor = conn.cursor()
+		cursor.execute(query)
+		retval = cursor.fetchall()
+		cursor.close()
+	except (MySQLdb.ProgrammingError, sqlite3.Error,) as e:
+		print "TABLE {} not found for example {}: {}".format(tableName,exampleNameForDB, e.args)
+	if connType == DBTYPE_SQLITE:
+		retval = [(x[1],) for x in retval] # weird unSELECTable tuple retval
+	return retval
+
+def getExampleFromDB(exampleName, connType, conn=False):
 	resultStorageFolder = "results/cvpr_db_results/"
 	exampleNameForDB = exampleName.replace("_","")
 	m = hashlib.md5(exampleNameForDB)
@@ -27,14 +63,10 @@ def getExampleFromDB(exampleName, conn=False):
 	leaveconn = True
 	if not conn:
 		leaveconn = False
-		conn = MySQLdb.connect (host = DBHOST, user = DBUSER, passwd = DBPASS, db = DBNAME)
-	cursor = conn.cursor ()
-	try:
-		cursor.execute("SHOW COLUMNS FROM {}".format(tableName))
-	except (MySQLdb.ProgrammingError):
-		print "TABLE {} not found for example {}".format(tableName,exampleNameForDB)
+		conn = getDB(connType)
+	allColumns = getColumns(conn, connType, tableName, exampleNameForDB)
+	if not allColumns:
 		return
-	allColumns = cursor.fetchall()
 	sqlStatement = "SELECT "
 	for singleColumn in allColumns:
 		if "act_made_call" not in singleColumn[0] and "act_unlock" not in singleColumn[0]:
@@ -46,6 +78,7 @@ def getExampleFromDB(exampleName, conn=False):
 	#cursor.execute("SELECT * FROM {} WHERE {} IS NOT NULL".format(tableName, notNullColumn[0]))
 	sqlStatement = sqlStatement[:-2]
 	sqlStatement += " FROM " + tableName + " WHERE " + notNullColumn[0] + " IS NOT NULL"
+	cursor = conn.cursor()
 	cursor.execute(sqlStatement)
 	if not globalDryRun:
 		csv_filename = resultStorageFolder + exampleName + ".csv"
@@ -590,7 +623,7 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 	retval.update(result)
 	return retval
 
-def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = False):
+def uploadComputerResponseToDB(example, fluent_and_action_xml, source, connType, conn = False):
 	debugQuery = False
 	parsedExampleName = example.split('_')
 	# for db lookup, remove "room" at end, and munge _'s away
@@ -602,14 +635,10 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 	leaveconn = True
 	if not conn:
 		leaveconn = False
-		conn = MySQLdb.connect (host = DBHOST, user = DBUSER, passwd = DBPASS, db = DBNAME)
-	cursor = conn.cursor ()
-	try:
-		cursor.execute("SHOW COLUMNS FROM {}".format(tableName))
-	except (MySQLdb.ProgrammingError):
-		print "TABLE {} not found for example {}".format(tableName,exampleNameForDB)
-		return False
-	allColumns = cursor.fetchall()
+		conn = getDB(connType)
+	allColumns = getColumns(conn, connType, tableName, exampleNameForDB)
+	if not allColumns:
+		return
 	# get cutpoints and objects from our columns; we'll build the actions and fluents back up manually from lookups
 	print("{}".format(tableName))
 	cutpoint_lookup = videoCutpoints.cutpoints[exampleNameForCutpoints]
@@ -667,14 +696,14 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, conn = Fa
 			insertion_object[key] = "'{}'".format(insertion_object[key])
 	qry = "INSERT INTO %s (%s) VALUES (%s)" % (tableName, ", ".join(insertion_object.keys()), ", ".join(map(str,insertion_object.values())))
 	if not globalDryRun:
+		cursor = conn.cursor()
 		cursor.execute("DELETE FROM %s WHERE name IN ('%s')" % (tableName,source))
 		cursor.execute(qry)
 		conn.commit()
-	cursor.close()
+		cursor.close()
 	if not leaveconn:
 		conn.close()
 	return True
-
 
 ##########################
 
@@ -692,8 +721,10 @@ if __name__ == '__main__':
 	parser.add_argument("-s","--simplify", action="store_true", required=False, help="simplify the summerdata grammar to only include fluents that start with the example name[s]")
 	parser.add_argument('-i','--ignoreoverlaps', action='store_true', required=False, help='skip the "without overlaps" code')
 	parser.add_argument('--debug', action='store_true', required=False, help='Spit out a lot more context information during processing')
+	parser.add_argument('--database', choices=["mysql","sqlite"],default = "sqlite")
 	# parser.add_argument("--dry-run",required=False,action="store_true") #TODO: would be nie
 	args = parser.parse_args()
+	connType = args.database
 	withoutoverlaps = not args.ignoreoverlaps
 	suppress_output = not args.debug
 	examples = []
@@ -708,7 +739,7 @@ if __name__ == '__main__':
 				example = filename[:-3]
 				if example not in args.examples_exclude:
 					examples.append(filename[:-3])
-	conn = MySQLdb.connect (host = DBHOST, user = DBUSER, passwd = DBPASS, db = DBNAME)
+	conn = getDB(connType)
 	if args.mode in ("list",):
 		for filename in os.listdir (kSummerDataPythonDir):
 			if filename.endswith(".py") and filename != "__init__.py":
@@ -768,22 +799,22 @@ if __name__ == '__main__':
 				xml_stuff.printXMLActionsAndFluents(ET.fromstring(fluent_and_action_xml))
 				print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 			print("------> causalgrammar <------")
-			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalgrammar', conn):
+			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalgrammar', connType, conn):
 				completed.append("{}-{}".format(example,'causalgrammar'))
 			else:
 				oject_failed.append("{}-{}".format(example,'causalgrammar'))
 			print("------> causalsmrt <------")
-			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalsmrt', conn):
+			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalsmrt', connType, conn):
 				completed.append("{}-{}".format(example,'causalsmrt'))
 			else:
 				oject_failed.append("{}-{}".format(example,'causalsmrt'))
 			print("------> origdata <------")
-			if uploadComputerResponseToDB(example, orig_xml, 'origdata', conn):
+			if uploadComputerResponseToDB(example, orig_xml, 'origdata', connType, conn):
 				completed.append("{}-{}".format(example,'origdata'))
 			else:
 				oject_failed.append("{}-{}".format(example,'origdata'))
 			print("------> origsmrt <------")
-			if uploadComputerResponseToDB(example, orig_xml, 'origsmrt', conn):
+			if uploadComputerResponseToDB(example, orig_xml, 'origsmrt', connType, conn):
 				completed.append("{}-{}".format(example,'origsmrt'))
 			else:
 				oject_failed.append("{}-{}".format(example,'origsmrt'))
@@ -801,5 +832,5 @@ if __name__ == '__main__':
 		for example in examples:
 			print("---------\nEXAMPLE: {}\n-------".format(example))
 			example, room = example.rsplit('_',1)
-			getExampleFromDB(example, conn)
+			getExampleFromDB(example, connType, conn)
 	conn.close()
