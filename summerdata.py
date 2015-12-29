@@ -7,6 +7,15 @@
 
 groupings = dict()
 from causal_grammar import TYPE_FLUENT, TYPE_ACTION, kNonActionPenaltyEnergy
+import causal_grammar
+import causal_grammar_summerdata # sets up causal_forest
+kActionDetections = 'results/CVPR2012_reverse_slidingwindow_10_action_detection_logspace'
+
+# These thresholds tuned for this fluent data because it's not "flipping between on and off", it's 
+# flipping "did transition closed to on" and "didn't transition closed to on"
+causal_grammar.kFluentThresholdOnEnergy = 0.6892
+causal_grammar.kFluentThresholdOffEnergy = 0.6972
+
 
 # note that "negative" action must be the last one sepecified for proper P/R and there must be only one "no action"
 # TODO: above note taken from analyzeData-nearesthuman-pr.py which still needs to be refactored appropriately
@@ -132,15 +141,6 @@ fluent_extensions = {
 
 
 if __name__ == '__main__':
-	import causal_grammar
-	import causal_grammar_summerdata # sets up causal_forest
-
-	kActionDetections = 'results/CVPR2012_reverse_slidingwindow_10_action_detection_logspace'
-
-	# These thresholds tuned for this fluent data because it's not "flipping between on and off", it's 
-	# flipping "did transition closed to on" and "didn't transition closed to on"
-	causal_grammar.kFluentThresholdOnEnergy = 0.6892
-	causal_grammar.kFluentThresholdOffEnergy = 0.6972
 
 	### TODO: deal with trash_6_phone_11_screen_22 because it has timer/jump 
 	#screen_1_lounge  7f05529dec6a03d3a459fc2ee1969f7f  580  780  
