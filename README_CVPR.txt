@@ -26,6 +26,7 @@
 * analyzeData-besthuman.py -- best human is the human that was most agreed with by all the other humans (Nov 8 2014)
 * analyzeData-nearesthuman.py -- nearest human is the one that was closest to a given computer algorithm (Nov 8 2014) ... this 
 * analyzeData-nearesthuman-pr.py -- "first pass on trying to do precision and recall against db data" (Nov 14 2014)
+* analyzeData-nearesthuman-hitrate.py -- "hitrate for CVPR 2015 submission" (Nov 2015)
 * plotPR.R generates a set of precision/recall graphs from the output of analyzeData-nearesthuman-pr.py
 * plotPR.sh calls analyzeData-nearesthuman-pr.py and then plotPR.R to generate a set of precision/recall graphs
 
