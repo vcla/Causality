@@ -126,7 +126,6 @@ def munge_parses_to_xml(fluent_parses,action_parses,suppress_output=False):
 		actions = actions.union(action_parses[frame].keys())
 	# continuing to avoid cleverness, now for each fluent in all frames, build our xml
 	for fluent in sorted(fluents):
-		prev_value = None
 		for frame in sorted(fluent_parses):
 			if fluent in fluent_parses[frame]:
 				fluent_value = fluent_parses[frame][fluent]
@@ -150,10 +149,11 @@ def munge_parses_to_xml(fluent_parses,action_parses,suppress_output=False):
 					'frame': str(frame),
 					'energy': str(fluent_value),
 				}
-				if prev_value:
-					fluent_attributes['old_value'] = prev_value
+				if fluent_status == "on":
+					fluent_attributes['old_value'] = "off"
+				else:
+					fluent_attributes['old_value'] = "on"
 				fluent_parse = ET.SubElement(fluent_changes,'fluent_change', fluent_attributes)
-				prev_value = fluent_status
 	# continuing to avoid cleverness, now for each action in all frames, build our xml
 	for action in sorted(actions):
 		prev_value = None
@@ -387,19 +387,20 @@ def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,fra
 				# but we should listen to and trust 'old_value' if we have it. and okay, we'll listen to our previous value a little
 				# just not penalize things for not matching!
 				new_value = fluent_change.attrib['new_value']
-				if 'old_value' in fluent_change.attrib:
-					if fluent_change.attrib['old_value'] == new_value:
-						old_value = new_value
-						continue
-					if debugQuery:
-						print("+ frame {}: now: {} was: {}".format(frame,new_value,fluent_change.attrib['old_value']))
-				else:
-					if debugQuery:
-						print("+ frame {}: now: {} was: {}".format(frame,new_value,old_value))
-				if old_value and old_value == new_value:
-					if debugQuery:
-						print("+ frame {}: still: {}".format(frame,new_value))
-					continue
+				""" removed some smart 'if it hasn't changed' code, because it was being too smart? """
+				#if 'old_value' in fluent_change.attrib:
+				#	if fluent_change.attrib['old_value'] == new_value:
+				#		old_value = new_value
+				#		continue
+				#	if debugQuery:
+				#		print("+ frame {}: now: {} was: {}".format(frame,new_value,fluent_change.attrib['old_value']))
+				#else:
+				#	if debugQuery:
+				#		print("+ frame {}: now: {} was: {}".format(frame,new_value,old_value))
+				#if old_value and old_value == new_value:
+				#	if debugQuery:
+				#		print("+ frame {}: still: {}".format(frame,new_value))
+				#	continue
 				if new_value == 'on':
 					off_on += 100
 				else:
@@ -538,7 +539,6 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 	if oject == "door":
 		result = {"act_opened":0, "act_closed":0, "act_not_opened_closed":0}
 		if source.startswith('orig'):
-			result = {"act_opened":0, "act_closed":0, "act_not_opened_closed":0}
 			count = queryXMLForActionBetweenFrames(xml,"standing_START",frame1,frame2)
 			noaction = True
 			if count:

@@ -39,6 +39,7 @@ class SummerdataTestCases(unittest.TestCase):
 				349: { "benddown_END": {"energy": 1.236692, "agent": "uuid1"} },
 				}
 		orig_xml = xml_stuff.munge_parses_to_xml(fluent_parses, action_parses)
+		sorted_keys = sorted(fluent_parses.keys())
 		causal_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, action_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, suppress_output = suppress_output, handle_overlapping_events = withoutoverlaps)
 		#uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalgrammar', connType, conn)
 		#uploadComputerResponseToDB(example, orig_xml, 'origdata', connType, conn)
@@ -79,7 +80,7 @@ class SummerdataTestCases(unittest.TestCase):
 		assert orig_dict == desired_dict, "\ntest:  {}\ntruth: {}".format(orig_dict, desired_dict)
 		source = 'causaldata'
 		causal_dict = xml_stuff.queryXMLForAnswersBetweenFrames(self.causal_xml, fluent, start_frame, end_frame, source, not source.endswith('smrt') )
-		desired_dict = {'door_314_closed': 0, 'door_314_closed_open': 0, 'door_314_open_closed': 100, 'door_action_314_act_opened': 100, 'door_314_open': 0, 'door_action_314_act_not_opened_closed': 0, 'door_action_314_act_closed': 0}
+		desired_dict = {'door_314_closed': 0, 'door_314_closed_open': 0, 'door_314_open_closed': 100, 'door_action_314_act_opened': 0, 'door_314_open': 0, 'door_action_314_act_not_opened_closed': 0, 'door_action_314_act_closed': 100}
 		assert causal_dict == desired_dict, "\n{}\n{}".format(causal_dict, desired_dict)
 
 if __name__ == "__main__":
