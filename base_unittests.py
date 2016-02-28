@@ -368,7 +368,7 @@ class TrampledMonitorAction(unittest.TestCase):
 			print(xml_string)
 
 	def testCorrectAction(self):
-		action_occurrences = xml_stuff.queryXMLForActionBetweenFrames(self.root,"usecomputer_END",528,558)
+		action_occurrences = xml_stuff.queryXMLForActionBetweenFrames(self.root,"usecomputer_END",528,559)
 		assert (action_occurrences == 1), "should have had action usecomputer_END; n times action occurred: {}".format(action_occurrences)
 
 # TODO: test "nonevent" does what i really want
