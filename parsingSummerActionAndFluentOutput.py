@@ -161,6 +161,7 @@ def readActionResults(module):
 
 
 if __name__ == '__main__':
+	print("WARNING: hardcoded CVPR2012_slidingwindow_action_detection in main; probably just for debugging")
 	#print returnExampleNames()
 	readFluentResults('door_10_phone_14_light_1_screen_29_9406')
 	#readActionResults('door_11_9406', 'CVPR2012_smoothed_action_detections', 10)

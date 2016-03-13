@@ -18,7 +18,8 @@ DBHOST = "127.0.0.1" # forwarding 3306
 DBPASS = "rC2xfLQFDMUZqJxf"
 TBLPFX = "cvpr2012_"
 
-kSummerDataPythonDir="results/CVPR2012_reverse_slidingwindow_action_detection_logspace";
+from summerdata import kActionDetections
+
 kResultStorageFolder = "results/cvpr_db_results/"
 kActionPairings = summerdata.actionPairings
 kOnsOffs = summerdata.onsoffs
@@ -156,7 +157,7 @@ def buildHeatmapForExample(exampleName, prefix, conn=False):
 	# -------------------- STAGE 2: READ FROM PARSE --------------------------
 	# for screen_1_lounge, that's CVPR2012_fluent_result/screen_on_off_fluent_results.txt, CVPR2012_fluent_result/screen_off_on_fluent_results.txt, and results/CVPR2012_reverse_slidingwindow_action_detection_logspace/screen_1_lounge.py
 	# thankfully, import_summerdata uses parsingSummerActionAndFluentOutput's readFluentResults and readActionResults
-	fluent_parses, action_parses = causal_grammar.import_summerdata(exampleName, kSummerDataPythonDir)
+	fluent_parses, action_parses = causal_grammar.import_summerdata(exampleName, kActionDetections)
 	# displaying fluent changes as _impulses_ around their detection,
 	# and 50% everywhere else
 	fluent_matrix = [0.5,]*(end_of_frames-start_of_frames)

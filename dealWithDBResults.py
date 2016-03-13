@@ -200,7 +200,7 @@ if __name__ == '__main__':
 	import xml_stuff
 	debugQuery = False
 	import argparse
-	kSummerDataPythonDir="results/CVPR2012_reverse_slidingwindow_action_detection_logspace";
+	from summerdata import kActionDetections
 	parser = argparse.ArgumentParser()
 	parser.add_argument("mode", choices=["upload","download","upanddown","list"])
 	group = parser.add_mutually_exclusive_group()
@@ -223,14 +223,14 @@ if __name__ == '__main__':
 	if args.examples_only:
 		examples = args.examples_only
 	else:
-		for filename in os.listdir (kSummerDataPythonDir):
+		for filename in os.listdir (kActionDetections):
 			if filename.endswith(".py") and filename != "__init__.py":
 				example = filename[:-3]
 				if example not in args.examples_exclude:
 					examples.append(filename[:-3])
 	conn = getDB(connType)
 	if args.mode in ("list",):
-		for filename in os.listdir (kSummerDataPythonDir):
+		for filename in os.listdir (kActionDetections):
 			if filename.endswith(".py") and filename != "__init__.py":
 				example = filename[:-3]
 				exampleNameForDB, room = example.rsplit('_',1)
@@ -259,7 +259,7 @@ if __name__ == '__main__':
 				causal_grammar_summerdata.causal_forest = causal_grammar.get_simplified_forest_for_example(causal_forest_orig, example)
 				print("... simplified to {}".format(", ".join(x['symbol'] for x in causal_grammar_summerdata.causal_forest)))
 			try:
-				fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,kSummerDataPythonDir)
+				fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,kActionDetections)
 				import pprint
 				pp = pprint.PrettyPrinter(indent=1)
 				print" fluent parses "
