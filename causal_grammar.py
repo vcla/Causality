@@ -571,8 +571,25 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	action_parse_frames = sorted(action_parses, key=action_parses.get)
 	action_parse_frames.sort()
 	fluent_and_event_keys_we_care_about = get_fluent_and_event_keys_we_care_about(causal_forest)
+	insert_empty_fluents = True
+	if insert_empty_fluents:
+		if len(fluent_parse_frames) > 0:
+			empty_fluent = fluent_parses[fluent_parse_frames[0]]
+			empty_fluent = empty_fluent.keys()[0]
+			empty_fluent = { empty_fluent: probability_to_energy(0.5) }
+		else:
+			print("action_parses: {}".format(action_parses))
+			raise Exception("NEED ANOTHER WAY TO GET A RELEVANT 'empty' FLUENT HERE")
+		all_frames = sorted(action_parse_frames + fluent_parse_frames)
+		new_fluents = dict()
+		for x,y in [x for x in itertools.izip(all_frames[:-1],all_frames[1:]) if (x[1] - x[0]) > 1]:
+			inserted_frame = int((y - x)/2)
+			fluent_parses[inserted_frame ] = empty_fluent
+		fluent_parse_frames = sorted(fluent_parses, key=fluent_parses.get)
+		fluent_parse_frames.sort()
 	if not suppress_output:
 		print("CAUSAL FOREST INPUT: {}".format(causal_forest))
+	print("FLUENT PARSES: {}".format(fluent_parses))
 	# kind of a hack to attach fluent and event keys to each causal tree, lots of maps to make looking things up quick and easy
 	event_hash = {}
 	fluent_hash = {}
@@ -657,6 +674,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		print("EVENT_HASH")
 		pp.pprint(event_hash)
 		pp.pprint("----")
+
 	# loop through the parses, getting the "next frame a change happens in"; if a change happens
 	# in both fluents and events at the same time, they will be handled sequentially,
 	# the fluent first
