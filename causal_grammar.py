@@ -895,6 +895,9 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 		print "=-==-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--="
 	if clever:
 		from itertools import izip
+		if not suppress_output:
+			print("TESTING\tframe\tenergy of top-level fluent\tinstantenous parse energy\tsource/trigger\tprevparse id\tprevparse\n")
+			print("match/wrong\tprevchain energy\tprevnode energy of top-level fluent\tprevnode parse energy\n")
 		for fluent in completions.keys():
 			prev_chains = []
 			prev_chain_energies = []
