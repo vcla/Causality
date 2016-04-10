@@ -303,6 +303,10 @@ def generate_parses(causal_tree):
 def energy_to_probability(energy):
 	return math.exp(-energy)
 
+def opposite_energy(energy):
+	p = energy_to_probability(energy)
+	return probability_to_energy(1.-p)
+
 def probability_to_energy(probability):
 	if not type(probability) is int and not type(probability) is float:
 		# TODO: what we've got here is a lambda, and if we're asking this, we're asking wrong
@@ -335,7 +339,7 @@ def calculate_energy(node, fluent_hash, event_hash):
 			tmp_energy = fluent_hash[node["symbol"]]["energy"]
 			node_energy += tmp_energy
 		elif node["symbol_type"] in ("prev_fluent",):
-			tmp_energy = fluent_hash[node["symbol"]]["prev_energy"]
+			tmp_energy = opposite_energy(fluent_hash[node["symbol"]]["energy"])
 			node_energy += tmp_energy
 		elif node["symbol_type"] in ("event",):
 			tmp_energy = event_hash[node["symbol"]]["energy"]
@@ -427,8 +431,14 @@ def print_current_energies(fluent_hash,event_hash):
 def print_previous_energies(fluent_hash):
 	fluent_energies = {}
 	for fluent in fluent_hash:
-		fluent_energies[fluent] = fluent_hash[fluent]["prev_energy"]
+		energy = fluent_hash[fluent]["energy"]
+		energy = probability_to_energy(1.-energy_to_probability(energy))
+		fluent_energies[fluent] = energy
 	print("PREV FLUENT: {}".format(fluent_energies))
+
+def wipe_fluent_hash(fluent_hash):
+	for fluent in fluent_hash:
+		fluent_hash[fluent]['energy'] = kUnknownEnergy
 
 # sets any events that haven't triggered within their timeout number of frames to kUnlikelyEnergy
 # TODO: fix this to work on active_parses instead of event_hash
@@ -580,7 +590,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	# build out the list of all event types in our forest, setting their initial (frame -1) values
 	# to kUnlikelyEnergy, and making a lookup to all relevant causal trees for those event types;
 	# also build out the list of all fluent types in our forest, setting their initial
-	# ('prev_energy' and 'energy') to either unknown or whatever our raw "initial" parses suggest
+	# energy to either unknown or whatever our raw "initial" parses suggest
 	for causal_tree in causal_forest:
 		keys = get_fluent_and_event_keys_we_care_about([causal_tree])
 		for key in keys['events']:
@@ -610,7 +620,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 							initial_condition = kZeroProbabilityEnergy
 						else:
 							initial_condition = probability_to_energy(1-energy_to_probability(initial_condition))
-				fluent_hash[key] = {"energy": initial_condition, "prev_energy": initial_condition, "trees": [causal_tree,]}
+				fluent_hash[key] = {"energy": initial_condition, "trees": [causal_tree,]}
 			#TODO: is this a bug? because we seem to think our status might be known in some cases above
 			fluent_hash[key]["status"] = kFluentStatusUnknown
 
@@ -807,8 +817,6 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 				# fluent_on and fluent_off _should_ never both change to on, so we consider this safe
 				if fluent_changed:
 					#print "fluent changed: {}".format(fluent_changed)
-					fluent_hash[fluent_on_string]["prev_energy"] = fluent_off_energy
-					fluent_hash[fluent_off_string]["prev_energy"] = fluent_on_energy
 					fluent_hash[fluent_on_string]["energy"] = fluent_on_energy
 					fluent_hash[fluent_off_string]["energy"] = fluent_off_energy
 					# go through all parses that this fluent touches, or its inverse
@@ -844,7 +852,6 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 				# by the other...? NOT worrying about this now.
 				info = changes[event]
 				# print("SETTING EVENT {} AT {} TO {}".format(event,frame,info['energy']))
-				event_hash[event]['prev_energy'] = event_hash[event]['energy']
 				event_hash[event]['energy'] = info['energy']
 				event_hash[event]['agent'] = info['agent']
 				event_hash[event]['frame'] = frame
@@ -867,6 +874,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 			# close any completed parse trees? maintain list of completed parse trees (over reporting_threshold_energy)
 			hr()
 		"""
+		wipe_fluent_hash(fluent_hash)
 	# clean up
 	complete_outdated_parses(active_parse_trees, parse_array, fluent_hash, event_hash, event_timeouts, frame+999999, reporting_threshold_energy, completions)
 	if not suppress_output and False:
