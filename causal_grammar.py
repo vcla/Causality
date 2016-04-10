@@ -593,7 +593,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		all_frames = sorted(action_parse_frames + fluent_parse_frames)
 		new_fluents = dict()
 		for x,y in [x for x in itertools.izip(all_frames[:-1],all_frames[1:]) if (x[1] - x[0]) > 1]:
-			inserted_frame = int((y - x)/2)
+			inserted_frame = int((y + x)/2)
 			fluent_parses[inserted_frame ] = empty_fluent
 		fluent_parse_frames = sorted(fluent_parses, key=fluent_parses.get)
 		fluent_parse_frames.sort()
