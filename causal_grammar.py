@@ -613,7 +613,6 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	# to kUnlikelyEnergy, and making a lookup to all relevant causal trees for those event types;
 	# also build out the list of all fluent types in our forest, setting their initial
 	# energy to either unknown or whatever our raw "initial" parses suggest
-	events_and_fluents_at_frame = {} #track energies of events and fluents at every frame, because we're losing it...
 	for causal_tree in causal_forest:
 		keys = get_fluent_and_event_keys_we_care_about([causal_tree])
 		for key in keys['events']:
@@ -675,7 +674,6 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 			#print("*: {}".format(parse))
 			#parse_energy = calculate_energy(parse, fluent_hash, event_hash)
 			#print("E: {}".format(parse_energy))
-	events_and_fluents_at_frame[0] = get_current_energies(fluent_hash, event_hash)
 	# loop through the parses, getting the "next frame a change happens in"; if a change happens
 	# in both at the same time, they will be handled sequentially, the fluent first
 	completions = {}
@@ -805,6 +803,8 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 	frame = -1 # UnboundLocalErorr: local variable 'frame' referenced before assignment in complete_outdated_parses call below. TODO: this should not happen because we only come in here when we have frames. What does that mean!?
 	# TODO: since we complete 'actions' when we look at fluents, if they happen in the same frame
 	# we should probably handling actions first
+	events_and_fluents_at_frame = {} #track energies of events and fluents at every frame, because we're losing it...
+	events_and_fluents_at_frame[0] = get_current_energies(fluent_hash, event_hash)
 	while fluent_parse_index < len(fluent_parses) or action_parse_index < len(action_parses):
 		fluents_complete = fluent_parse_index >= len(fluent_parses)
 		action_complete = action_parse_index >= len(action_parses)
