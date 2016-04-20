@@ -42,8 +42,8 @@ def floatEqualTo(float1, float2):
 	return abs(float1 - float2) < .0000001
 
 kUnknownEnergy = 8#0.7 # TODO: may want to tune
-kUnlikelyEnergy = 10.0 # TODO: may want to tune
-kZeroProbabilityEnergy = 10.0 # TODO: may want to tune: 10.0 = very low
+kUnlikelyEnergy = 20.0 # TODO: may want to tune
+kZeroProbabilityEnergy = 40.0 # TODO: may want to tune: 10.0 = very low
 kNonActionPenaltyEnergy = 0. # TODO: need to validate; kind of matches a penalty energy in readActionResults of parsingSummerActionAndFluentOutput
 
 # these are used to keep something that's flipping "around" 50% to not keep triggering fluent changes TODO: no they're not. but they are used in dealWithDbResults for posting "certain" results to the database... and they're passed into the main causal_grammar fn as fluent_on_probability and fluent_off_probability
@@ -304,7 +304,10 @@ def generate_parses(causal_tree):
 	return partial_causal_parses
 
 def energy_to_probability(energy):
-	return math.exp(-energy)
+	if floatEqualTo(0.,energy):
+		return kZeroProbabilityEnergy
+	else:
+		return math.exp(-energy)
 
 def opposite_energy(energy):
 	p = energy_to_probability(energy)
@@ -330,14 +333,36 @@ def invert_name(fluent):
 	#return "{}_{}".format('_'.join(parts[:-1]),completion[parts[-1]])
 	return '_'.join(parts[:-1] + [completion[parts[-1]],])
 
+def has_prev_symbol(node, symbol):
+	node_type = node.get('node_type',False)
+	node_symbol_type = node.get('symbol_type',False)
+	node_symbol = node.get('symbol',False)
+	if node_symbol_type == 'prev_fluent' and node_symbol == symbol:
+		return True
+	if 'children' in node:
+		for child in node['children']:
+			if has_prev_symbol(child, symbol):
+				return True
+	return False
+
 debug_calculate_energy = False
-def calculate_energy(node, energies):
+def calculate_energy(node, energies, flip = False):
 	fluent_energies = energies[0]
 	event_energies = energies[1]
+	energies = (fluent_energies, event_energies, energies[2], )
+	root = False
+	node_type = node.get('node_type',False)
+	symbol_type = node.get('symbol_type',False)
+	if node_type == 'root':
+		root = True
+		# now we're going to see if we are a "flip" node, because in flip nodes we wholeheartedely trust our detectors...
+		# so we're going to replace the value "unknown energy" with "zero energy" (not to be confused with zero point energy)
+		if symbol_type == 'fluent' and has_prev_symbol(node, invert_name(node['symbol'])):
+			flip = True
 	global debug_calculate_energy
 	if debug_calculate_energy:
-		if 'node_type' in node and node['node_type'] == 'root':
-			print("-------- ROOT ------")
+		if root:
+			print("-------- ROOT [flip: {}]------".format("true" if flip else "false"))
 		print("NODE: {}".format(node))
 	node_energy = 0.0
 	if "probability" in node:
@@ -346,50 +371,61 @@ def calculate_energy(node, energies):
 		node_energy += tmp_energy
 		if debug_calculate_energy:
 			print("+ {} from probability".format(tmp_energy))
-	if "symbol_type" in node:
-		if node["symbol_type"] in ("fluent",):
-			tmp_energy = fluent_energies[node["symbol"]]
+	if symbol_type:
+		symbol = node['symbol']
+		if symbol_type in ("fluent",):
+			if flip and floatEqualTo(tmp_energy,kUnknownEnergy):
+				tmp_energy = kZeroProbabilityEnergy
+			else:
+				tmp_energy = fluent_energies[symbol]
 			node_energy += tmp_energy
 			if debug_calculate_energy:
-				print("+ {} from fluent {}".format(tmp_energy,node['symbol']))
-		elif node["symbol_type"] in ("prev_fluent",):
-			tmp_energy = opposite_energy(fluent_energies[node["symbol"]])
+				print("+ {} from fluent {}".format(tmp_energy,symbol))
+		elif symbol_type in ("prev_fluent",):
+			tmp_energy = fluent_energies[symbol]
+			if floatEqualTo(tmp_energy, kUnknownEnergy):
+				if flip:
+					tmp_energy = kZeroProbabilityEnergy
+				else:
+					tmp_energy = kUnknownEnergy
+			else:
+				tmp_energy = opposite_energy(tmp_energy)
 			if debug_calculate_energy:
-				print("+ {} from prev_fluent {}".format(tmp_energy,node['symbol']))
+				print("+ {} from prev_fluent {}".format(tmp_energy,symbol))
 			node_energy += tmp_energy
-		elif node["symbol_type"] in ("event",):
-			tmp_energy = event_energies[node["symbol"]]
+		elif symbol_type in ("event",):
+			tmp_energy = event_energies[symbol]
 			if debug_calculate_energy:
-				print("+ {} from event {}".format(tmp_energy,node['symbol']))
+				print("+ {} from event {}".format(tmp_energy,symbol))
 			node_energy += tmp_energy
-		elif node["symbol_type"] in ("nonevent",):
-			tmp_energy = opposite_energy(event_energies[node["symbol"]])
+		elif symbol_type in ("nonevent",):
+			tmp_energy = opposite_energy(event_energies[symbol])
 			if debug_calculate_energy:
-				print("+ {} from nonevent {}".format(tmp_energy,node['symbol']))
+				print("+ {} from nonevent {}".format(tmp_energy,symbol))
 				print("+ {} from kNonActionPenalty".format(kNonActionPenaltyEnergy))
 			node_energy += tmp_energy + kNonActionPenaltyEnergy
-		elif node["symbol_type"] in ("timer","jump",):
+		elif symbol_type in ("timer","jump",):
 			# these are zero-probability events at this stage of evaluation
-			#tmp_energy = event_energies[node["symbol"]]["energy"]
+			#tmp_energy = event_energies[symbol]["energy"]
 			#node_energy += probability_to_energy(1-energy_to_probability(tmp_energy))
 			pass # TODO should this be dealt with in some other way?
 		else:
-			raise Exception("unhandled symbol_type '{}'".format(node['symbol_type']))
+			raise Exception("unhandled symbol_type '{}'".format(symbol_type))
 	if "children" in node:
 		# "multiplies" child probabilities on all nodes (note to self: root nodes are always or nodes)
 		# averaging on "and" nodes...need to work through that better
 		# for now, it makes little difference as trees are neither deep nor wide
 		average_ands = False
-		if not average_ands or node["node_type"] in ("or","root",):
+		if not average_ands or node_type in ("or","root",):
 			# "multiplies" child probabilities on "or" nodes (root nodes are always or nodes)
 			for child in node["children"]:
-				child_energy = calculate_energy(child, energies)
+				child_energy = calculate_energy(child, energies, flip)
 				node_energy += child_energy
 		else:
 			# "averages" over the "and" nodes
 			child_energy = 0
 			for child in node["children"]:
-				child_energy += calculate_energy(child, energies)
+				child_energy += calculate_energy(child, energies, flip)
 			node_energy += child_energy / len(node["children"])
 	if debug_calculate_energy:
 		print("TOTAL: {}".format(node_energy))
@@ -868,14 +904,10 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 			for fluent in changes:
 				fluent_changed = False
 				fluent_on_energy = changes[fluent]
-				fluent_on_probability = math.exp(-fluent_on_energy)
+				fluent_on_probability = energy_to_probability(fluent_on_energy)
 				fluent_off_probability = 1 - fluent_on_probability
+				fluent_off_energy = opposite_energy(fluent_on_energy)
 				# print ("Fluent: {}; on probability: {}; off probability: {}".format(fluent,fluent_on_probability,fluent_off_probability))
-				if 0 == fluent_off_probability:
-					# TODO: might also need to catch this for fluent_on_probability
-					fluent_off_energy = kZeroProbabilityEnergy
-				else:
-					fluent_off_energy = -math.log(fluent_off_probability)
 				fluent_on_string = "{}_on".format(fluent)
 				fluent_off_string = "{}_off".format(fluent)
 				fluent_on_status = fluent_hash[fluent_on_string]["status"]
@@ -968,10 +1000,17 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 				next_chains = []
 				next_chain_energies = []
 				for node in completion_data_sorted:
+					global debug_calculate_energy
 					if not suppress_output:
 						#warning TODO: node['energy'] isn't knowable yet because it depends on the chain it's pairing with and whether
 						#that chain has *used* an event that node['energy'] was originally calculated with....
 						print("TESTING {}".format("\t".join(["{:>6.3f}".format(node['status']), node['source'], "?->{:d}".format(node['parse']['id']), str(make_tree_like_lisp(node['parse'])), str(node['agents'])])))
+						if frame == 0:
+							energies = events_and_fluents_at_frame[frame]
+							#debug_calculate_energy = True
+							#print("ENERGIES: {}".format(energies))
+							calculate_energy(node['parse'], energies)
+							#debug_calculate_energy = False
 					# go through each chain and find the lowest energy + transition energy for this node
 					best_energy = -1 # not a possible energy
 					best_chain = None
@@ -985,8 +1024,14 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						energies = [energies[0], energies[1].copy(), energies[2],] # don't need deep, because it's only one level here
 						for action in actions_used:
 							if action in energies[1]:
-								energies[1][action] = kUnlikelyEnergy
+								# quick hack...assume something changed the energy inbetween if it's different now than previous
+								# TODO: better ... check every range(prev_node['frame'],frame) in events_and_fluents_at_frame to look for changes
+								prev_energies = events_and_fluents_at_frame[prev_node['frame']]
+								if floatEqualTo(energies[1][action],prev_energies[1][action]):
+									energies[1][action] = kUnlikelyEnergy
+						#debug_calculate_energy = True
 						node['energy'] = calculate_energy(node['parse'], energies)
+						#debug_calculate_energy = False
 						# if this pairing is possible, see if it's the best pairing so far
 						# TODO: this function will be changed to get an energy-of-transition
 						# which will no longer be "binary"
@@ -1009,6 +1054,8 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						# now we take our best chain for this node, and dump it and its energy in our new list
 						if not suppress_output:
 							print("{}   {}".format(" +match" if matches else " -wrong","\t".join(["{:>6.3f}".format(prev_chain_energy), "{:>6.3f}".format(node['energy']), "{:d}->{:d}".format(prev_node['parse']['id'],node['parse']['id']), str(make_tree_like_lisp(prev_node['parse'])), str(prev_node['agents'])])))
+							#print(make_tree_like_lisp_with_energies(prev_node['parse'])), str(prev_node['agents'])])))
+							#print("{}".format(energies))
 					if best_chain:
 						chain = best_chain[:] # shallow-copies the chain
 						chain.append(node)
