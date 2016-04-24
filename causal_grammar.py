@@ -41,9 +41,8 @@ TYPE_ACTION = "action"
 def floatEqualTo(float1, float2):
 	return abs(float1 - float2) < .0000001
 
-kUnknownEnergy = 8#0.7 # TODO: may want to tune
-kUnlikelyEnergy = 20.0 # TODO: may want to tune
-kZeroProbabilityEnergy = 40.0 # TODO: may want to tune: 10.0 = very low
+kUnknownEnergy = 8.0 #0.7 # TODO: may want to tune
+kZeroProbabilityEnergy = 10.0 # TODO: may want to tune: 10.0 = very low
 kNonActionPenaltyEnergy = 0. # TODO: need to validate; kind of matches a penalty energy in readActionResults of parsingSummerActionAndFluentOutput
 
 # these are used to keep something that's flipping "around" 50% to not keep triggering fluent changes TODO: no they're not. but they are used in dealWithDbResults for posting "certain" results to the database... and they're passed into the main causal_grammar fn as fluent_on_probability and fluent_off_probability
@@ -54,9 +53,10 @@ kDefaultEventTimeout = 10 # shouldn't need to tune because this should be tuned 
 kFilterNonEventTriggeredParseTimeouts = False # what the uber-long variable name implies
 kDebugEnergies = False # if true, print out fluent current/prev and event energies when completing a parse tree
 
-kFluentStatusUnknown = 1
-kFluentStatusOn = 2
-kFluentStatusOff = 3
+kFluentStatusUndetected = 1
+kFluentStatusOnToOff = 2
+kFluentStatusOffToOn = 3
+kFluentStatusInsertion = 4
 
 def get_simplified_forest_for_example(forest, example):
 	splits = example.split("_")
@@ -304,10 +304,7 @@ def generate_parses(causal_tree):
 	return partial_causal_parses
 
 def energy_to_probability(energy):
-	if floatEqualTo(0.,energy):
-		return kZeroProbabilityEnergy
-	else:
-		return math.exp(-energy)
+	return math.exp(-energy)
 
 def opposite_energy(energy):
 	p = energy_to_probability(energy)
@@ -316,8 +313,9 @@ def opposite_energy(energy):
 def probability_to_energy(probability):
 	if not type(probability) is int and not type(probability) is float:
 		# TODO: what we've got here is a lambda, and if we're asking this, we're asking wrong
+		raise Exception("NO, wait... '{}'".format(probability))
 		return kZeroProbabilityEnergy
-	if probability == 0:
+	if floatEqualTo(0.,probability):
 		return kZeroProbabilityEnergy
 	else:
 		return -math.log(probability)
@@ -349,7 +347,6 @@ debug_calculate_energy = False
 def calculate_energy(node, energies, flip = False):
 	fluent_energies = energies[0]
 	event_energies = energies[1]
-	energies = (fluent_energies, event_energies, energies[2], )
 	root = False
 	node_type = node.get('node_type',False)
 	symbol_type = node.get('symbol_type',False)
@@ -358,11 +355,19 @@ def calculate_energy(node, energies, flip = False):
 		# now we're going to see if we are a "flip" node, because in flip nodes we wholeheartedely trust our detectors...
 		# so we're going to replace the value "unknown energy" with "zero energy" (not to be confused with zero point energy)
 		if symbol_type == 'fluent' and has_prev_symbol(node, invert_name(node['symbol'])):
-			flip = True
+			if node['symbol'].endswith("_on"):
+				flip = kFluentStatusOffToOn
+				flip_string = "off->on"
+			else:
+				flip = kFluentStatusOnToOff
+				flip_string = "on->off"
+		else:
+			flip = kFluentStatusUndetected
+			flip_string = "n/a"
 	global debug_calculate_energy
 	if debug_calculate_energy:
 		if root:
-			print("-------- ROOT [flip: {}]------".format("true" if flip else "false"))
+			print("-------- ROOT [flip: {}]------".format(flip_string))
 		print("NODE: {}".format(node))
 	node_energy = 0.0
 	if "probability" in node:
@@ -373,33 +378,41 @@ def calculate_energy(node, energies, flip = False):
 			print("+ {} from probability".format(tmp_energy))
 	if symbol_type:
 		symbol = node['symbol']
-		if symbol_type in ("fluent",):
-			if flip and floatEqualTo(tmp_energy,kUnknownEnergy):
-				tmp_energy = kZeroProbabilityEnergy
-			else:
-				tmp_energy = fluent_energies[symbol]
-			node_energy += tmp_energy
-			if debug_calculate_energy:
-				print("+ {} from fluent {}".format(tmp_energy,symbol))
-		elif symbol_type in ("prev_fluent",):
-			tmp_energy = fluent_energies[symbol]
-			if floatEqualTo(tmp_energy, kUnknownEnergy):
-				if flip:
-					tmp_energy = kZeroProbabilityEnergy
-				else:
+		if symbol_type in ("fluent","prev_fluent",):
+			status = fluent_energies[symbol]['status']
+			if status == kFluentStatusInsertion:
+				if flip == kFluentStatusUndetected:
 					tmp_energy = kUnknownEnergy
+				else:
+					tmp_energy = kZeroProbabilityEnergy
+			elif status == kFluentStatusUndetected:
+				if flip == kFluentStatusUndetected:
+					tmp_energy = kUnknownEnergy
+				else:
+					tmp_energy = kZeroProbabilityEnergy
 			else:
-				tmp_energy = opposite_energy(tmp_energy)
-			if debug_calculate_energy:
-				print("+ {} from prev_fluent {}".format(tmp_energy,symbol))
+				if flip == kFluentStatusUndetected:
+					tmp_energy = kUnknownEnergy
+				else:
+					if flip != status:
+						tmp_energy = kZeroProbabilityEnergy
+					else:
+						if symbol_type in ("prev_fluent",):
+							opposite_symbol = invert_name(symbol)
+							tmp_energy = fluent_energies[opposite_symbol]['energy']
+						else:
+							tmp_energy = fluent_energies[symbol]['energy']
 			node_energy += tmp_energy
+			if debug_calculate_energy:
+				prev = "prev_" if symbol_type in ("prev_fluent",) else "";
+				print("+ {} from {}fluent {} [flip {}; status {}]".format(tmp_energy,prev,symbol,flip,status))
 		elif symbol_type in ("event",):
-			tmp_energy = event_energies[symbol]
+			tmp_energy = event_energies[symbol]['energy']
 			if debug_calculate_energy:
 				print("+ {} from event {}".format(tmp_energy,symbol))
 			node_energy += tmp_energy
 		elif symbol_type in ("nonevent",):
-			tmp_energy = opposite_energy(event_energies[symbol])
+			tmp_energy = opposite_energy(event_energies[symbol]['energy'])
 			if debug_calculate_energy:
 				print("+ {} from nonevent {}".format(tmp_energy,symbol))
 				print("+ {} from kNonActionPenalty".format(kNonActionPenaltyEnergy))
@@ -469,6 +482,8 @@ def make_tree_like_lisp(causal_tree):
 	if "children" not in causal_tree:
 		if "symbol_type" in causal_tree and causal_tree["symbol_type"] in ("nonevent",):
 			return "".join(("NOT ",my_symbol))
+		elif "symbol_type" in causal_tree and causal_tree["symbol_type"] in ("prev_fluent",):
+			return "".join(("PREV ",my_symbol))
 		else:
 			return my_symbol
 	simple_children = []
@@ -489,13 +504,12 @@ def get_actions_used(causal_tree):
 def get_energies(fluent_hash,event_hash):
 	fluent_energies = {}
 	for fluent in fluent_hash:
-		fluent_energies[fluent] = fluent_hash[fluent]["energy"]
+		fluent_energies[fluent] = {"energy":fluent_hash[fluent]["energy"],"status":fluent_hash[fluent]["status"]}
 	event_energies = {}
 	event_frames = {}
 	for event in event_hash:
-		event_energies[event] = event_hash[event]["energy"]
-		event_frames[event] = event_hash[event]["frame"]
-	return (fluent_energies, event_energies, event_frames)
+		event_energies[event] = { "energy":event_hash[event]["energy"],"frame":event_hash[event]['frame'] }
+	return (fluent_energies, event_energies)
 
 def debug_energies(fluent_hash,event_hash):
 	print_energies(fluent_hash,event_hash)
@@ -508,33 +522,26 @@ def print_energies(fluent_hash,event_hash):
 	print("CURRENT FLUENT: {}".format(fluent_energies))
 	print("CURRENT EVENT: {}".format(event_energies))
 
-def print_previous_energies(fluent_hash):
-	fluent_energies = {}
-	for fluent in fluent_hash:
-		energy = fluent_hash[fluent]["energy"]
-		energy = probability_to_energy(1.-energy_to_probability(energy))
-		fluent_energies[fluent] = energy
-	print("PREV FLUENT: {}".format(fluent_energies))
-
 def wipe_fluent_hash(fluent_hash):
 	for fluent in fluent_hash:
 		fluent_hash[fluent]['energy'] = kUnknownEnergy
+		fluent_hash[fluent]['status'] = kFluentStatusUndetected
 
-# sets any events that haven't triggered within their timeout number of frames to kUnlikelyEnergy
+# sets any events that haven't triggered within their timeout number of frames to kZeroProbabilityEnergy
 # TODO: fix this to work on active_parses instead of event_hash
 def clear_outdated_events(event_hash, event_timeouts, frame):
 	for event in event_hash:
-		if (not floatEqualTo(event_hash[event]["energy"],kUnlikelyEnergy)) and (frame - event_hash[event]["frame"] > event_timeouts[event]):
+		if (not floatEqualTo(event_hash[event]["energy"],kZeroProbabilityEnergy)) and (frame - event_hash[event]["frame"] > event_timeouts[event]):
 			# print("CLEARING EVENT {} @ {}".format(event,frame))
 			event_hash[event]["frame"] = -1
-			event_hash[event]["energy"] = kUnlikelyEnergy
+			event_hash[event]["energy"] = kZeroProbabilityEnergy
 			event_hash[event]["agent"] = False
 
 def clear_completed_event(event, event_hash):
 	if event in event_hash:
 		# print("CLEARING EVENT {}".format(event))
 		event_hash[event]["frame"] = -1
-		event_hash[event]["energy"] = kUnlikelyEnergy
+		event_hash[event]["energy"] = kZeroProbabilityEnergy
 		event_hash[event]["agent"] = False
 
 # at all times there is a list of "currently active" parses, which includes a chain back to the beginning
@@ -543,10 +550,6 @@ def clear_completed_event(event, event_hash):
 def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions, source):
 	# we have a winner! let's show them what they've won, bob!
 	global debug_calculate_energy
-	if frame == 7:
-		debug_calculate_energy = True
-	else:
-		debug_calculate_energy = False
 	energy = calculate_energy(active_parse_tree, get_energies(fluent_hash, event_hash))
 	debug_calculate_energy = False
 	fluent = active_parse_tree["symbol"]
@@ -567,7 +570,7 @@ def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, compl
 		if frame not in completion:
 			completion[frame] = []
 		completion_frame = completion[frame]
-		completion_frame.append({"frame": frame, "fluent": fluent, "energy": energy, "parse": active_parse_tree, "agents": agents_responsible, "status": fluent_hash[active_parse_tree['symbol']]['energy'], 'source': source})
+		completion_frame.append({"frame": frame, "fluent": fluent, "energy": energy, "parse": active_parse_tree, "agents": agents_responsible, "sum": fluent_hash[active_parse_tree['symbol']]['energy'], 'source': source})
 	#print("{}".format("\t".join([str(fluent),str(frame),"{:g}".format(energy),str(make_tree_like_lisp(active_parse_tree)),str(agents_responsible)])))
 	#print("{} PARSE TREE {} COMPLETED at {}: energy({}) BY {}\n{}\n***{}***".format(fluent,active_parse_tree['id'],frame,energy,source,make_tree_like_lisp(active_parse_tree),active_parse_tree))
 	#print("Agents responsible: {}".format(agents_responsible))
@@ -601,7 +604,7 @@ def add_missing_parses(fluent, fluent_hash, event_hash, frame, completions):
 						energy = calculate_energy(other_parse, get_energies(fluent_hash, event_hash))
 						agents_responsible = []
 						source = 'missing'
-						completions.append({"frame": frame, "fluent": fluent, "energy": energy, "parse": other_parse, "agents": agents_responsible, "status": fluent_hash[other_parse['symbol']]['energy'], 'source': source})
+						completions.append({"frame": frame, "fluent": fluent, "energy": energy, "parse": other_parse, "agents": agents_responsible, "sum": fluent_hash[other_parse['symbol']]['energy'], 'source': source})
 						#print("{}".format("\t".join([str(fluent),str(frame),"{:g}".format(energy),str(make_tree_like_lisp(other_parse)),str(agents_responsible)])))
 						#print("{} PARSE TREE {} COMPLETED at {}: energy({}) BY {}\n{}\n***{}***".format(fluent,other_parse['id'],frame,energy,source,make_tree_like_lisp(other_parse),other_parse))
 						#print("Agents responsible: {}".format(agents_responsible))
@@ -660,10 +663,11 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 def process_events_and_fluents(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy, suppress_output = False, handle_overlapping_events = False, insert_empty_fluents=True):
 	clever = True # clever (modified viterbi algorithm) or brute force (all possible parses)
 	initial_conditions = False
-	#TODO: initial condition stuff is suspect, investigate if/when these are in our source data. should probably never have assumed initial conditions and instead set everything to 50% likelihood
+	#TODO: investigate where initial conditions are coming from, and terminate them....
 	if "initial" in fluent_parses:
 		initial_conditions = fluent_parses["initial"]
 		del fluent_parses["initial"]
+		raise Exception("we want to remove this")
 	# do these for our local function, because we want these for figuring out which ones overlap
 	fluent_parse_frames = sorted(fluent_parses, key=fluent_parses.get)
 	fluent_parse_frames.sort()
@@ -674,11 +678,10 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		if len(fluent_parse_frames) > 0:
 			empty_fluent = fluent_parses[fluent_parse_frames[0]]
 			empty_fluent = empty_fluent.keys()[0]
-			empty_fluent = { empty_fluent: probability_to_energy(0.5) }
+			empty_fluent = { empty_fluent: -1 }
 		elif len(action_parse_frames) > 0:
-			action_key = action_parses[action_parse_frames[0]].keys()[0]
-			empty_fluent = { "TBD": probability_to_energy(0.5) }
-			# raise Exception("NEED ANOTHER WAY TO GET A RELEVANT 'empty' FLUENT HERE")
+			#empty_action = action_parses[action_parse_frames[0]].keys()[0]
+			empty_fluent = { "TBD": -1 }
 		else:
 			#print("action_parses: {}".format(action_parses))
 			# print("keys: {}".format(fluent_and_event_keys_we_care_about))
@@ -699,15 +702,15 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	fluent_hash = {}
 	event_timeouts = get_event_timeouts(causal_forest)
 	# build out the list of all event types in our forest, setting their initial (frame -1) values
-	# to kUnlikelyEnergy, and making a lookup to all relevant causal trees for those event types;
+	# to kZeroProbabilityEnergy, and making a lookup to all relevant causal trees for those event types;
 	# also build out the list of all fluent types in our forest, setting their initial
-	# energy to either unknown or whatever our raw "initial" parses suggest
+	# energy to unknown/undetected
 	for causal_tree in causal_forest:
 		keys = get_fluent_and_event_keys_we_care_about([causal_tree])
 		for key in keys['events']:
 			if not key in event_hash:
 				# initialize our event_hash for that key if we haven't seen it in another tree
-				event_hash[key] = {"agent": False, "frame": -1, "energy": kUnlikelyEnergy, "trees": [causal_tree,]}
+				event_hash[key] = {"agent": False, "frame": -1, "energy": kZeroProbabilityEnergy, "trees": [causal_tree,]}
 			else:
 				event_hash[key]["trees"].append(causal_tree)
 		for key in keys['fluents']:
@@ -715,25 +718,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				fluent_hash[key]["trees"].append(causal_tree)
 			else:
 				# new fluent goes into our hash, set it up with initial conditions if we have those
-				initial_condition = kUnknownEnergy
-				key_chop = key
-				postfix = False
-				if "_" in key:
-					prefix, postfix = key.rsplit("_",1)
-					if postfix in ("on","off",):
-						key_chop = prefix
-				if initial_conditions and key_chop in initial_conditions:
-					if postfix == "on":
-						initial_condition = initial_conditions[key_chop]
-					else:
-						initial_condition = initial_conditions[key_chop]
-						if initial_condition == 0:
-							initial_condition = kZeroProbabilityEnergy
-						else:
-							initial_condition = probability_to_energy(1-energy_to_probability(initial_condition))
-				fluent_hash[key] = {"energy": initial_condition, "trees": [causal_tree,]}
-			#TODO: is this a bug? because we seem to think our status might be known in some cases above
-			fluent_hash[key]["status"] = kFluentStatusUnknown
+				fluent_hash[key] = {"energy": kUnknownEnergy, "trees": [causal_tree,], 'status': kFluentStatusUndetected, }
 
 	# build lookups by fluent and event -- the parse_array will be all of the parses,
 	# while the parse_id_hash* will list, for each fluent and event respectively, all of the
@@ -900,44 +885,42 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 			changes = fluent_parses[frame]
 			filter_changes(changes, fluent_and_event_keys_we_care_about['fluents'])
 			fluent_parse_index += 1
-			fluents_actually_changed = []
+			# reset all our existing fluents to kUnknownEnergy, because it's a new frame and we're
+			# going to try NOT tracking anything
+			wipe_fluent_hash(fluent_hash)
 			for fluent in changes:
-				fluent_changed = False
 				fluent_on_energy = changes[fluent]
-				fluent_on_probability = energy_to_probability(fluent_on_energy)
-				fluent_off_probability = 1 - fluent_on_probability
-				fluent_off_energy = opposite_energy(fluent_on_energy)
-				# print ("Fluent: {}; on probability: {}; off probability: {}".format(fluent,fluent_on_probability,fluent_off_probability))
-				fluent_on_string = "{}_on".format(fluent)
-				fluent_off_string = "{}_off".format(fluent)
-				fluent_on_status = fluent_hash[fluent_on_string]["status"]
-				fluent_off_status = fluent_hash[fluent_off_string]["status"]
-				# check to see if these fluents changed enough to consider starting a parse
-				# note: we only care about fluents "going to true" (either "door_on" goes to true, or "door_off" does, for instance)
-				# TODO: I think we want to skip this whole "fluent changed" business, because that's handled by node-to-node stuff, and we're essentially suppressing that here!
-				if fluent_on_energy < fluent_threshold_on_energy:
-					fluent_changed = fluent_on_string
-					fluent_hash[fluent_on_string]["status"] = kFluentStatusOn
-				if fluent_off_energy < fluent_threshold_off_energy:
-					fluent_changed = fluent_off_string
-					fluent_hash[fluent_off_string]["status"] = kFluentStatusOn
-				# fluent_on and fluent_off _should_ never both change to on, so we consider this safe
-				if fluent_changed:
-					#print "fluent changed: {}".format(fluent_changed)
-					fluent_hash[fluent_on_string]["energy"] = fluent_on_energy
-					fluent_hash[fluent_off_string]["energy"] = fluent_off_energy
-					# go through all parses that this fluent touches, or its inverse
-					fluents_actually_changed.append(fluent_changed,)
-					for parse_id in parse_id_hash_by_fluent[fluent_changed] + parse_id_hash_by_fluent[invert_name(fluent_changed)]:
-						if parse_id not in active_parse_trees:
-							# create this parse if it's not in our list of active parses
-							active_parse_trees[parse_id] = parse_array[parse_id]
-						active_parse_trees[parse_id]["frame"] = frame
+				fluent_on_name = "{}_on".format(fluent)
+				fluent_off_name = "{}_off".format(fluent)
+				if fluent_on_energy < 0:
+					# this is a special fluent, "insertion", not an actual detection... handled special in calculate_energy
+					fluent_hash[fluent_on_name]["energy"] = fluent_on_energy
+					fluent_hash[fluent_on_name]["status"] = kFluentStatusInsertion
+					fluent_hash[fluent_off_name]["energy"] = fluent_on_energy
+					fluent_hash[fluent_off_name]["status"] = kFluentStatusInsertion
+				elif fluent_on_energy < fluent_threshold_on_energy:
+					# off to on!
+					fluent_hash[fluent_on_name]["energy"] = fluent_on_energy
+					fluent_hash[fluent_on_name]["status"] = kFluentStatusOffToOn
+					fluent_hash[fluent_off_name]["energy"] = kZeroProbabilityEnergy
+					fluent_hash[fluent_off_name]["status"] = kFluentStatusOffToOn
+				else:
+					# on to off!
+					fluent_hash[fluent_off_name]["energy"] = opposite_energy(fluent_on_energy)
+					fluent_hash[fluent_off_name]["status"] = kFluentStatusOnToOff
+					fluent_hash[fluent_on_name]["energy"] = kZeroProbabilityEnergy
+					fluent_hash[fluent_on_name]["status"] = kFluentStatusOnToOff
+				# go through all parses that this fluent touches, or its inverse
+				for parse_id in parse_id_hash_by_fluent[fluent_on_name] + parse_id_hash_by_fluent[fluent_off_name]:
+					if parse_id not in active_parse_trees:
+						# create this parse if it's not in our list of active parses
+						active_parse_trees[parse_id] = parse_array[parse_id]
+					active_parse_trees[parse_id]["frame"] = frame
 			# complete any active parse trees that had their "primary" fluent change (or its inverse)
-			for fluent in fluents_actually_changed:
+			for fluent in changes:
 				for key in active_parse_trees.keys():
 					active_parse_tree = active_parse_trees[key]
-					if active_parse_tree["symbol"] in (fluent, invert_name(fluent)):
+					if active_parse_tree["symbol"] in (fluent_on_name, fluent_off_name):
 						active_parse_trees.pop(key)
 						complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions, 'fluent_changed')
 					elif kFilterNonEventTriggeredParseTimeouts:
@@ -1004,13 +987,13 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 					if not suppress_output:
 						#warning TODO: node['energy'] isn't knowable yet because it depends on the chain it's pairing with and whether
 						#that chain has *used* an event that node['energy'] was originally calculated with....
-						print("TESTING {}".format("\t".join(["{:>6.3f}".format(node['status']), node['source'], "?->{:d}".format(node['parse']['id']), str(make_tree_like_lisp(node['parse'])), str(node['agents'])])))
+						print("TESTING {}".format("\t".join(["{:>6.3f}".format(node['sum']), node['source'], "?->{:d}".format(node['parse']['id']), str(make_tree_like_lisp(node['parse'])), str(node['agents'])])))
 						if frame == 0:
 							energies = events_and_fluents_at_frame[frame]
-							#debug_calculate_energy = True
+							#debug_calculate_energy = frame == 0
 							#print("ENERGIES: {}".format(energies))
 							calculate_energy(node['parse'], energies)
-							#debug_calculate_energy = False
+							debug_calculate_energy = False
 					# go through each chain and find the lowest energy + transition energy for this node
 					best_energy = -1 # not a possible energy
 					best_chain = None
@@ -1018,20 +1001,21 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						prev_node = prev_chain[-1]
 						prev_symbol = prev_node['parse']['symbol'] # TRASH_MORE_on, for example
 						# recalculate the current node energy based on the previous chain, because events may already have been used
-						# TODO: don't just look into the previous node, keep this along the chain... how do we keep this along the chain???????????
+						# TODO: actions_used should be propagated along node chain, with what frame they were used in; then we can see if we've received an action that's newer or not
 						actions_used = get_actions_used(prev_node['parse'])
 						energies = events_and_fluents_at_frame[frame]
-						energies = [energies[0], energies[1].copy(), energies[2],] # don't need deep, because it's only one level here
+						energies = [energies[0].copy(), energies[1].copy(),] # don't need deep, because it's only one level here
 						for action in actions_used:
 							if action in energies[1]:
 								# quick hack...assume something changed the energy inbetween if it's different now than previous
-								# TODO: better ... check every range(prev_node['frame'],frame) in events_and_fluents_at_frame to look for changes
+								# TODO: propagate array of used actions and their frames in nodes (and thus prev_node)
 								prev_energies = events_and_fluents_at_frame[prev_node['frame']]
-								if floatEqualTo(energies[1][action],prev_energies[1][action]):
-									energies[1][action] = kUnlikelyEnergy
+								if floatEqualTo(energies[1][action]['energy'],prev_energies[1][action]['energy']):
+									energies[1][action]['energy'] = kZeroProbabilityEnergy
+						#debug_calculate_energy = frame == 5
 						#debug_calculate_energy = True
 						node['energy'] = calculate_energy(node['parse'], energies)
-						#debug_calculate_energy = False
+						debug_calculate_energy = False
 						# if this pairing is possible, see if it's the best pairing so far
 						# TODO: this function will be changed to get an energy-of-transition
 						# which will no longer be "binary"
@@ -1124,7 +1108,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 					prev_chains = children
 				for completion_data in completion_data_sorted:
 					if not suppress_output:
-						print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(completion_data['status']), "{:>6.3f}".format(completion_data['energy']), completion_data['source'], "{:d}".format(completion_data['parse']['id']), str(make_tree_like_lisp(completion_data['parse'])), str(completion_data['agents'])])))
+						print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(completion_data['sum']), "{:>6.3f}".format(completion_data['energy']), completion_data['source'], "{:d}".format(completion_data['parse']['id']), str(make_tree_like_lisp(completion_data['parse'])), str(completion_data['agents'])])))
 			chain_results = []
 			for chain in prev_chains:
 				items = []

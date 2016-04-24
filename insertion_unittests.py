@@ -88,18 +88,15 @@ class thirst(unittest.TestCase):
 			4:  { "DRINK": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} }, #energy = .11
 			19:  { "DRINK": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} }, #energy = .11
 		}
-		xml_string = causal_grammar.process_events_and_fluents(causal_forest_thirst, fluents_simple_thirst, actions_simple_thirst, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,suppress_output = not kDebug, handle_overlapping_events = True)
+		xml_string = causal_grammar.process_events_and_fluents(causal_forest_thirst, fluents_simple_thirst, actions_simple_thirst, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,suppress_output = not kDebug, handle_overlapping_events = False)
 		cls.root = ET.fromstring(xml_string)
 		if kDebug:
 			print(xml_string)
 
 	def testThirstyBetweenDrinks(self):
 		startframe = 6
-		endframe = 20
+		endframe = 19
 		thirst_changes = xml_stuff.getFluentChangesForFluentBetweenFrames(self.root, 'thirst', startframe, endframe)
-		if kDebug:
-			print "THIRST CHANGES"
-			print(thirst_changes)
 		assert len(thirst_changes) == 1, "found {} changes of thirst between frames {} and {}".format(len(thirst_changes),startframe,endframe)
 
 	def testGetThirstyAction(self):
