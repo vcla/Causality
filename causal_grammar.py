@@ -375,7 +375,7 @@ def calculate_energy(node, energies, flip = False):
 		tmp_energy = probability_to_energy(node["probability"])
 		node_energy += tmp_energy
 		if debug_calculate_energy:
-			print("+ {} from probability".format(tmp_energy))
+			print("+ {:4.3} from probability".format(tmp_energy))
 	if symbol_type:
 		symbol = node['symbol']
 		if symbol_type in ("fluent","prev_fluent",):
@@ -405,17 +405,18 @@ def calculate_energy(node, energies, flip = False):
 			node_energy += tmp_energy
 			if debug_calculate_energy:
 				prev = "prev_" if symbol_type in ("prev_fluent",) else "";
-				print("+ {} from {}fluent {} [flip {}; status {}]".format(tmp_energy,prev,symbol,flip,status))
+				print("+ {:4.3} from {}fluent {} [flip {}; status {}]".format(tmp_energy,prev,symbol,flip,status))
 		elif symbol_type in ("event",):
 			tmp_energy = event_energies[symbol]['energy']
 			if debug_calculate_energy:
-				print("+ {} from event {}".format(tmp_energy,symbol))
+				# throwing in float converters because int-like zeros got in?
+				print("+ {:4.3} from event {}".format(float(tmp_energy),symbol))
 			node_energy += tmp_energy
 		elif symbol_type in ("nonevent",):
 			tmp_energy = opposite_energy(event_energies[symbol]['energy'])
 			if debug_calculate_energy:
-				print("+ {} from nonevent {}".format(tmp_energy,symbol))
-				print("+ {} from kNonActionPenalty".format(kNonActionPenaltyEnergy))
+				print("+ {:4.3} from nonevent {}".format(tmp_energy,symbol))
+				print("+ {:4.3} from kNonActionPenalty".format(kNonActionPenaltyEnergy))
 			node_energy += tmp_energy + kNonActionPenaltyEnergy
 		elif symbol_type in ("timer","jump",):
 			# these are zero-probability events at this stage of evaluation
@@ -441,7 +442,7 @@ def calculate_energy(node, energies, flip = False):
 				child_energy += calculate_energy(child, energies, flip)
 			node_energy += child_energy / len(node["children"])
 	if debug_calculate_energy:
-		print("TOTAL: {}".format(node_energy))
+		print("TOTAL: {:4.3}".format(node_energy))
 	return node_energy
 
 # TODO: this makes some very naiive assumptions about jumping--that the "paired" fluent(s) will all be met, and (others?)
@@ -987,11 +988,11 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 					if not suppress_output:
 						#warning TODO: node['energy'] isn't knowable yet because it depends on the chain it's pairing with and whether
 						#that chain has *used* an event that node['energy'] was originally calculated with....
-						print("TESTING {}".format("\t".join(["{:>6.3f}".format(node['sum']), node['source'], "?->{:d}".format(node['parse']['id']), str(make_tree_like_lisp(node['parse'])), str(node['agents'])])))
+						print("TESTING {}".format("\t".join(["{:>4.3f}".format(node['sum']), node['source'], "?->{:d}".format(node['parse']['id']), str(make_tree_like_lisp(node['parse'])), str(node['agents'])])))
 						if frame == 0:
 							energies = events_and_fluents_at_frame[frame]
-							#debug_calculate_energy = frame == 0
-							#print("ENERGIES: {}".format(energies))
+							debug_calculate_energy = frame == 0
+							print("ENERGIES: {}".format(energies))
 							calculate_energy(node['parse'], energies)
 							debug_calculate_energy = False
 					# go through each chain and find the lowest energy + transition energy for this node
@@ -1013,7 +1014,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 								if floatEqualTo(energies[1][action]['energy'],prev_energies[1][action]['energy']):
 									energies[1][action]['energy'] = kZeroProbabilityEnergy
 						#debug_calculate_energy = frame == 5
-						#debug_calculate_energy = True
+						debug_calculate_energy = True
 						node['energy'] = calculate_energy(node['parse'], energies)
 						debug_calculate_energy = False
 						# if this pairing is possible, see if it's the best pairing so far
@@ -1037,9 +1038,9 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 							pass
 						# now we take our best chain for this node, and dump it and its energy in our new list
 						if not suppress_output:
-							print("{}   {}".format(" +match" if matches else " -wrong","\t".join(["{:>6.3f}".format(prev_chain_energy), "{:>6.3f}".format(node['energy']), "{:d}->{:d}".format(prev_node['parse']['id'],node['parse']['id']), str(make_tree_like_lisp(prev_node['parse'])), str(prev_node['agents'])])))
+							print("{}   {}".format(" +match" if matches else " -wrong","\t".join(["{:>4.3f}".format(prev_chain_energy), "{:>4.3f}".format(node['energy']), "{:d}->{:d}".format(prev_node['parse']['id'],node['parse']['id']), str(make_tree_like_lisp(prev_node['parse'])), str(prev_node['agents'])])))
 							#print(make_tree_like_lisp_with_energies(prev_node['parse'])), str(prev_node['agents'])])))
-							#print("{}".format(energies))
+							print("{}".format(energies))
 					if best_chain:
 						chain = best_chain[:] # shallow-copies the chain
 						chain.append(node)
@@ -1047,7 +1048,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						next_chain_energies.append(best_energy + best_node_energy)
 						if not suppress_output:
 							print(" {}".format("-"*90))
-							print(" >best<   {}\n".format("\t".join(["{:>6.3f}".format(best_energy), "{:>6.3f}".format(best_node_energy), "{:d}->{:d}".format(best_chain[-1]['parse']['id'],node['parse']['id']), str(make_tree_like_lisp(best_chain[-1]['parse'])), str(best_chain[-1]['agents'])])))
+							print(" >best<   {}\n".format("\t".join(["{:>4.3f}".format(best_energy), "{:>4.3f}".format(best_node_energy), "{:d}->{:d}".format(best_chain[-1]['parse']['id'],node['parse']['id']), str(make_tree_like_lisp(best_chain[-1]['parse'])), str(best_chain[-1]['agents'])])))
 					else:
 						if prev_chains:
 							import pprint
@@ -1074,7 +1075,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 				for item in chain:
 					items.append((item['frame'],item['parse']['id']))
 				#print([items,energy])
-				chain_results.append([items,energy])
+				chain_results.append([items,float("{:4.3f}".format(energy))])
 			# print('\n'.join(['\t'.join(l) for l in chain_results]))
 			chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
 			results_for_xml_output.append(chain_results[:1])
@@ -1108,7 +1109,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 					prev_chains = children
 				for completion_data in completion_data_sorted:
 					if not suppress_output:
-						print("{}".format("\t".join(["{:12d}".format(frame), "{:>6.3f}".format(completion_data['sum']), "{:>6.3f}".format(completion_data['energy']), completion_data['source'], "{:d}".format(completion_data['parse']['id']), str(make_tree_like_lisp(completion_data['parse'])), str(completion_data['agents'])])))
+						print("{}".format("\t".join(["{:12d}".format(frame), "{:>4.3f}".format(completion_data['sum']), "{:>4.3f}".format(completion_data['energy']), completion_data['source'], "{:d}".format(completion_data['parse']['id']), str(make_tree_like_lisp(completion_data['parse'])), str(completion_data['agents'])])))
 			chain_results = []
 			for chain in prev_chains:
 				items = []
@@ -1117,7 +1118,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 					items.append((item['frame'],item['parse']['id']))
 					energy += item['energy']
 				#print([items,energy])
-				chain_results.append([items,energy])
+				chain_results.append([items,float("{:4.3f}".format(energy))])
 			# print('\n'.join(['\t'.join(l) for l in chain_results]))
 			chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
 			results_for_xml_output.append(chain_results[:1])
