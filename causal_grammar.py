@@ -868,6 +868,8 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 
 	fluent_parse_index = 0
 	action_parse_index = 0
+	super_debug_energies = False
+	#super_debug_energies = True
 	frame = -1
 	# UnboundLocalErorr: local variable 'frame' referenced before assignment in complete_outdated_parses call below.
 	# TODO: this should not happen because we only come in here when we have frames. What does that mean!?
@@ -991,8 +993,9 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						print("TESTING {}".format("\t".join(["{:>4.3f}".format(node['sum']), node['source'], "?->{:d}".format(node['parse']['id']), str(make_tree_like_lisp(node['parse'])), str(node['agents'])])))
 						if frame == 0:
 							energies = events_and_fluents_at_frame[frame]
-							debug_calculate_energy = frame == 0
-							print("ENERGIES: {}".format(energies))
+							if super_debug_energies:
+								debug_calculate_energy = frame == 0
+								print("ENERGIES: {}".format(energies))
 							calculate_energy(node['parse'], energies)
 							debug_calculate_energy = False
 					# go through each chain and find the lowest energy + transition energy for this node
@@ -1013,8 +1016,9 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 								prev_energies = events_and_fluents_at_frame[prev_node['frame']]
 								if floatEqualTo(energies[1][action]['energy'],prev_energies[1][action]['energy']):
 									energies[1][action]['energy'] = kZeroProbabilityEnergy
-						#debug_calculate_energy = frame == 5
-						debug_calculate_energy = True
+						if super_debug_energies:
+							#debug_calculate_energy = frame == 5
+							debug_calculate_energy = True
 						node['energy'] = calculate_energy(node['parse'], energies)
 						debug_calculate_energy = False
 						# if this pairing is possible, see if it's the best pairing so far
@@ -1040,7 +1044,8 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						if not suppress_output:
 							print("{}   {}".format(" +match" if matches else " -wrong","\t".join(["{:>4.3f}".format(prev_chain_energy), "{:>4.3f}".format(node['energy']), "{:d}->{:d}".format(prev_node['parse']['id'],node['parse']['id']), str(make_tree_like_lisp(prev_node['parse'])), str(prev_node['agents'])])))
 							#print(make_tree_like_lisp_with_energies(prev_node['parse'])), str(prev_node['agents'])])))
-							print("{}".format(energies))
+							if super_debug_energies:
+								print("{}".format(energies))
 					if best_chain:
 						chain = best_chain[:] # shallow-copies the chain
 						chain.append(node)
