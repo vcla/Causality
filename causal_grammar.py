@@ -375,7 +375,7 @@ def calculate_energy(node, energies, flip = False):
 		tmp_energy = probability_to_energy(node["probability"])
 		node_energy += tmp_energy
 		if debug_calculate_energy:
-			print("+ {:4.3} from probability".format(tmp_energy))
+			print("+ {:4.4} from probability".format(tmp_energy))
 	if symbol_type:
 		symbol = node['symbol']
 		if symbol_type in ("fluent","prev_fluent",):
@@ -405,18 +405,18 @@ def calculate_energy(node, energies, flip = False):
 			node_energy += tmp_energy
 			if debug_calculate_energy:
 				prev = "prev_" if symbol_type in ("prev_fluent",) else "";
-				print("+ {:4.3} from {}fluent {} [flip {}; status {}]".format(tmp_energy,prev,symbol,flip,status))
+				print("+ {:4.4} from {}fluent {} [flip {}; status {}]".format(tmp_energy,prev,symbol,flip,status))
 		elif symbol_type in ("event",):
 			tmp_energy = event_energies[symbol]['energy']
 			if debug_calculate_energy:
 				# throwing in float converters because int-like zeros got in?
-				print("+ {:4.3} from event {}".format(float(tmp_energy),symbol))
+				print("+ {:4.4} from event {}".format(float(tmp_energy),symbol))
 			node_energy += tmp_energy
 		elif symbol_type in ("nonevent",):
 			tmp_energy = opposite_energy(event_energies[symbol]['energy'])
 			if debug_calculate_energy:
-				print("+ {:4.3} from nonevent {}".format(tmp_energy,symbol))
-				print("+ {:4.3} from kNonActionPenalty".format(kNonActionPenaltyEnergy))
+				print("+ {:4.4} from nonevent {}".format(tmp_energy,symbol))
+				print("+ {:4.4} from kNonActionPenalty".format(kNonActionPenaltyEnergy))
 			node_energy += tmp_energy + kNonActionPenaltyEnergy
 		elif symbol_type in ("timer","jump",):
 			# these are zero-probability events at this stage of evaluation
@@ -429,7 +429,7 @@ def calculate_energy(node, energies, flip = False):
 		# "multiplies" child probabilities on all nodes (note to self: root nodes are always or nodes)
 		# averaging on "and" nodes...need to work through that better
 		# for now, it makes little difference as trees are neither deep nor wide
-		average_ands = False
+		average_ands = True
 		if not average_ands or node_type in ("or","root",):
 			# "multiplies" child probabilities on "or" nodes (root nodes are always or nodes)
 			for child in node["children"]:
@@ -440,9 +440,9 @@ def calculate_energy(node, energies, flip = False):
 			child_energy = 0
 			for child in node["children"]:
 				child_energy += calculate_energy(child, energies, flip)
-			node_energy += child_energy / len(node["children"])
+			node_energy += 2. * (child_energy / len(node["children"])) # scale back to 2 nodes
 	if debug_calculate_energy:
-		print("TOTAL: {:4.3}".format(node_energy))
+		print("TOTAL: {:4.4}".format(node_energy))
 	return node_energy
 
 # TODO: this makes some very naiive assumptions about jumping--that the "paired" fluent(s) will all be met, and (others?)
@@ -547,17 +547,19 @@ def clear_completed_event(event, event_hash):
 
 # at all times there is a list of "currently active" parses, which includes a chain back to the beginning
 # of events of the "best choice of transition" from each event (action, fluent, or timeout) to each previous
-# COMPLETING a parse tree TODO wut? appends the frame
 def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions, source):
 	# we have a winner! let's show them what they've won, bob!
 	global debug_calculate_energy
+	#debug_calculate_energy = True
 	energy = calculate_energy(active_parse_tree, get_energies(fluent_hash, event_hash))
 	debug_calculate_energy = False
 	fluent = active_parse_tree["symbol"]
 	agents_responsible = []
 	# if there are agents in the parse, print out who they were
 	keys = get_fluent_and_event_keys_we_care_about((active_parse_tree,))
-	for event in keys["events"]:
+	# WARNING: if we have two event types in the same parse, we can wind up adding the same parse multiple times.
+	# TODO: make sure the "if not found" solution below doesn't break anything else
+	for event in keys["events"]: 
 		agent = event_hash[event]["agent"]
 		if agent:
 			agents_responsible.append(agent,)
@@ -571,7 +573,13 @@ def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, compl
 		if frame not in completion:
 			completion[frame] = []
 		completion_frame = completion[frame]
-		completion_frame.append({"frame": frame, "fluent": fluent, "energy": energy, "parse": active_parse_tree, "agents": agents_responsible, "sum": fluent_hash[active_parse_tree['symbol']]['energy'], 'source': source})
+		found = False
+		for item in completion_frame:
+			if item['parse']['id'] == active_parse_tree['id']:
+				found = True
+				break
+		if not found:
+			completion_frame.append({"frame": frame, "fluent": fluent, "energy": energy, "parse": active_parse_tree, "agents": agents_responsible, "sum": fluent_hash[active_parse_tree['symbol']]['energy'], 'source': source})
 	#print("{}".format("\t".join([str(fluent),str(frame),"{:g}".format(energy),str(make_tree_like_lisp(active_parse_tree)),str(agents_responsible)])))
 	#print("{} PARSE TREE {} COMPLETED at {}: energy({}) BY {}\n{}\n***{}***".format(fluent,active_parse_tree['id'],frame,energy,source,make_tree_like_lisp(active_parse_tree),active_parse_tree))
 	#print("Agents responsible: {}".format(agents_responsible))
@@ -947,9 +955,11 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 				# by the other...? NOT worrying about this now.
 				info = changes[event]
 				# print("SETTING EVENT {} AT {} TO {}".format(event,frame,info['energy']))
-				event_hash[event]['energy'] = info['energy']
-				event_hash[event]['agent'] = info['agent']
-				event_hash[event]['frame'] = frame
+				#TODO:this is getting us closer and closer to really needing a better model for tracking actions and their "use" by parses... if we drop a newer action because the older one had a stronger energy, there's a chance then that we lose the parse entirely because the older action's timeout doesn't last long enough
+				if event_hash[event]['energy'] < 0 or event_hash[event]['energy'] > info['energy']:
+					event_hash[event]['energy'] = info['energy']
+					event_hash[event]['agent'] = info['agent']
+					event_hash[event]['frame'] = frame
 				# print_energies(fluent_hash,event_hash)
 				for parse_id in parse_id_hash_by_event[event]:
 					if parse_id not in active_parse_trees:
