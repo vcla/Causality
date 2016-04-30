@@ -176,7 +176,20 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, connType,
 		prev_frame = cutpoints[0]
 		for frame in cutpoints[1:]:
 			#print("{} - {}".format(oject, frame))
-			insertion_object.update(xml_stuff.queryXMLForAnswersBetweenFrames(fluent_and_action_xml_xml,oject,prev_frame,frame,source,not source.endswith('smrt')))
+			answers = xml_stuff.queryXMLForAnswersBetweenFrames(fluent_and_action_xml_xml,oject,prev_frame,frame,source,not source.endswith('smrt'))
+			if source == "random":
+				framestr = "{}".format(prev_frame)
+				things = dict()
+				for key in answers:
+					thing, choice = key.split(framestr)
+					if not thing in things:
+						things[thing] = 1
+					else:
+						things[thing] += 1
+				for key in answers:
+					thing, choice = key.split(framestr)
+					answers[key] = int(100 / things[thing])
+			insertion_object.update(answers)
 			prev_frame = frame
 	print("INSERT: {}".format(insertion_object))
 	# http://stackoverflow.com/a/9336427/856925
@@ -303,6 +316,11 @@ if __name__ == '__main__':
 				completed.append("{}-{}".format(example,'origsmrt'))
 			else:
 				oject_failed.append("{}-{}".format(example,'origsmrt'))
+			print("------> random <------")
+			if uploadComputerResponseToDB(example, orig_xml, 'random', connType, conn):
+				completed.append("{}-{}".format(example,'random'))
+			else:
+				oject_failed.append("{}-{}".format(example,'random'))
 		print("COMPLETED: {}".format(completed))
 		if oject_failed:
 			print("SKIPPED DUE TO OBJECT: {}".format(oject_failed))

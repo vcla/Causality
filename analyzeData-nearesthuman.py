@@ -7,9 +7,10 @@ from causal_grammar import TYPE_FLUENT, TYPE_ACTION
 from summerdata import getPrefixType, getMasterFluentsForPrefix, getFluentsForMasterFluent, getActionsForMasterFluent
 from summerdata import groupings
 kCSVDir = 'results/cvpr_db_results' # from the 'export' option in dealWithDBResults.py
-kComputerTypes = ['causalgrammar', 'origsmrt', 'origdata', 'causalsmrt']
+kComputerTypes = ['causalgrammar', 'origsmrt', 'origdata', 'causalsmrt', 'random']
 kDebugOn = False
-kJustSMRT = True
+kJustSMRT = False
+kNoSMRT = True
 import re
 kPrefixMatch = r'([a-zA-Z_]+)_[0-9]+_'
 
@@ -55,6 +56,7 @@ def printLaTeXSummary(dictToPrint):
 	#print dictToPrint
 	causalLine = "Causal Reasoning"
 	detectionsLine = "Bottom-up Detection"
+	randomLine = "Random"
 	headerLine = "Object"
 	#tableTransposed = "Object & Detection & Causal \\\\ \n \\midrule \n"
 	for singleFluent in dictToPrint:
@@ -66,17 +68,21 @@ def printLaTeXSummary(dictToPrint):
 			headerLine += " & " + singleFluent
 			causalLine += emboldenWinningLine(dictToPrint[singleFluent]["causalsmrt"], winningValue)
 			detectionsLine += emboldenWinningLine(dictToPrint[singleFluent]["origsmrt"], winningValue)
+			randomLine += emboldenWinningLine(dictToPrint[singleFluent]["random"], winningValue)
 			#tableTransposed += "{} & {} & {} \\\\ \n".format(singleFluent, str(dictToPrint[singleFluent]["origsmrt"]), str(dictToPrint[singleFluent]["causalsmrt"]))
 	causalLine += emboldenWinningLine(dictToPrint["total"]["causalsmrt"], winningTotalValue)
 	detectionsLine += emboldenWinningLine(dictToPrint["total"]["origsmrt"], winningTotalValue)
+	randomLine += emboldenWinningLine(dictToPrint["total"]["random"], winningTotalValue)
 	headerLine += " & Average"
 	causalLine += ' \\\\'
 	headerLine += ' \\\\'
+	randomLine += ' \\\\'
 	detectionsLine += ' \\\\'
 	print headerLine
 	print "\\midrule"
 	print detectionsLine
 	print causalLine
+	print randomLine
 	#print tableTransposed
 
 import argparse
@@ -144,6 +150,8 @@ for filename in os.listdir (kCSVDir):
 						raise MissingDataException("NO CAUSALGRAMMAR FOR {}".format(filename))
 					if not 'causalsmrt' in computers:
 						raise MissingDataException("NO CAUSALSMRT FOR {}".format(filename))
+					if not 'random' in computers:
+						raise MissingDataException("NO RANDOM FOR {}".format(filename))
 					humansN = len(humans)
 					bestscores = {}
 					besthumans = {}
@@ -204,6 +212,9 @@ if kJustTheSummary:
 			if kJustSMRT and not computer_type.endswith("smrt"):
 				fluentDiffSums[fluent].pop(computer_type,None)
 				continue
+			if kNoSMRT and computer_type.endswith("smrt"):
+				fluentDiffSums[fluent].pop(computer_type,None)
+				continue
 			clipsN = fluentDiffSums[fluent]["_count"]
 			diff_action = fluentDiffSums[fluent][computer_type][TYPE_ACTION]
 			diff_fluent = fluentDiffSums[fluent][computer_type][TYPE_FLUENT]
@@ -216,6 +227,8 @@ if kJustTheSummary:
 				computer_words = "Causal"
 			elif computer_type.startswith('orig'):
 				computer_words= "Detections"
+			elif computer_type.startswith('random'):
+				computer_words= "Random"
 			if kLaTeXSummary:
 				if fluent not in actionSummary:
 					actionSummary[fluent] = {}
@@ -234,7 +247,11 @@ if kJustTheSummary:
 			computer_words = "Causal"
 		elif computer_type.startswith('orig'):
 			computer_words= "Detections"
+		elif computer_type.startswith('random'):
+			computer_words= "Random"
 		if kJustSMRT and not computer_type.endswith("smrt"):
+			continue
+		if kNoSMRT and computer_type.endswith("smrt"):
 			continue
 		diff_action = totals[computer_type]['action_avg_sum']
 		diff_fluent = totals[computer_type]['fluent_avg_sum']

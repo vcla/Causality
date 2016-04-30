@@ -12,7 +12,7 @@ from causal_grammar import TYPE_FLUENT, TYPE_ACTION
 from summerdata import getPrefixType, getMasterFluentsForPrefix, getFluentsForMasterFluent, getActionsForMasterFluent
 from summerdata import groupings
 kCSVDir = 'results/cvpr_db_results' # from the 'export' option in dealWithDBResults.py
-kComputerTypes = ['causalgrammar', 'origsmrt', 'origdata', 'causalsmrt']
+kComputerTypes = ['causalgrammar', 'origsmrt', 'origdata', 'causalsmrt', 'random']
 #kComputerTypes = ['causalgrammar', 'origdata']
 kDebugOn = False
 import re
