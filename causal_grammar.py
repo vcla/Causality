@@ -1096,7 +1096,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						prev_used = chain[-1]['actions_used']
 						events_used = get_energies_used(actions_used, energies[1], prev_used)
 						node['actions_used'] = merge_actions_used(prev_used,events_used)
-						print("\t\tactions used: {}".format(node['actions_used']))
+						#print("\t\tactions used: {}".format(node['actions_used']))
 						chain.append(node)
 						next_chains.append(chain)
 						next_chain_energies.append(best_energy + best_node_energy)
@@ -1108,7 +1108,8 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 							# this should only happen @ the first frame parse
 							energies = events_and_fluents_at_frame[frame]
 							node['actions_used'] = get_energies_used(get_actions_used(node),energies[1])
-							print("ASSIGNING INITIAL ACTIONS USED: {}".format(node['actions_used']))
+							node['energy'] = calculate_energy(node['parse'], energies, node['actions_used'])
+							#print("ASSIGNING INITIAL ACTIONS USED: {}".format(node['actions_used']))
 							next_chains.append([node,])
 							next_chain_energies.append(node['energy'])
 						else:
