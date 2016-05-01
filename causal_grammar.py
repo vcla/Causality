@@ -1095,6 +1095,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						actions_used = get_actions_used(node['parse'])
 						prev_used = chain[-1]['actions_used']
 						events_used = get_energies_used(actions_used, energies[1], prev_used)
+						node['my_actions_used'] = events_used # this is so we can get the exact frame for actions used...
 						node['actions_used'] = merge_actions_used(prev_used,events_used)
 						#print("\t\tactions used: {}".format(node['actions_used']))
 						chain.append(node)
@@ -1107,7 +1108,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						if not prev_chains:
 							# this should only happen @ the first frame parse
 							energies = events_and_fluents_at_frame[frame]
-							node['actions_used'] = get_energies_used(get_actions_used(node),energies[1])
+							node['my_actions_used'] = node['actions_used'] = get_energies_used(get_actions_used(node),energies[1])
 							node['energy'] = calculate_energy(node['parse'], energies, node['actions_used'])
 							#print("ASSIGNING INITIAL ACTIONS USED: {}".format(node['actions_used']))
 							next_chains.append([node,])
@@ -1124,22 +1125,6 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 							raise Exception("NAW")
 				prev_chains = next_chains
 				prev_chain_energies = next_chain_energies
-			# and now we just wrap up our results... and print them out
-			# TODO: sort by energy... but first let's just see that we're completing ;)
-			chain_results = []
-			for chain, energy in izip(prev_chains, prev_chain_energies):
-				items = []
-				for item in chain:
-					items.append((item['frame'],item['parse']['id']))
-				#print([items,energy])
-				chain_results.append([items,float("{:4.3f}".format(energy))])
-			# print('\n'.join(['\t'.join(l) for l in chain_results]))
-			chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
-			results_for_xml_output.append(chain_results[:1])
-			if not suppress_output:
-				print('\n'.join(map(str,chain_results)))
-				hr()
-				hr()
 	else: # not clever i.e. brute force
 		for fluent in completions.keys():
 			prev_chains = []
@@ -1167,22 +1152,21 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 				for completion_data in completion_data_sorted:
 					if not suppress_output:
 						print("{}".format("\t".join(["{:12d}".format(frame), "{:>4.3f}".format(completion_data['sum']), "{:>4.3f}".format(completion_data['energy']), completion_data['source'], "{:d}".format(completion_data['parse']['id']), str(make_tree_like_lisp(completion_data['parse'])), str(completion_data['agents'])])))
-			chain_results = []
-			for chain in prev_chains:
-				items = []
-				energy = 0
-				for item in chain:
-					items.append((item['frame'],item['parse']['id']))
-					energy += item['energy']
-				#print([items,energy])
-				chain_results.append([items,float("{:4.3f}".format(energy))])
-			# print('\n'.join(['\t'.join(l) for l in chain_results]))
-			chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
-			results_for_xml_output.append(chain_results[:1])
-			if not suppress_output:
-				print('\n'.join(map(str,chain_results)))
-				hr()
-				hr()
+	# and now we just wrap up our results... and print them out
+	chain_results = []
+	for chain, energy in izip(prev_chains, prev_chain_energies):
+		items = []
+		for item in chain:
+			items.append((item['frame'],item['parse']['id'],item['my_actions_used'] if 'my_actions_used' in item else dict()))
+		#print([items,energy])
+		chain_results.append([items,float("{:4.3f}".format(energy))])
+	# print('\n'.join(['\t'.join(l) for l in chain_results]))
+	chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
+	results_for_xml_output.append(chain_results[:1])
+	if not suppress_output:
+		print('\n'.join(map(str,chain_results)))
+		hr()
+		hr()
 	return results_for_xml_output
 
 def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
@@ -1190,9 +1174,9 @@ def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 	fluent_changes = ET.SubElement(temporal,'fluent_changes')
 	actions_el = ET.SubElement(temporal,"actions")
 	seen = [] # keeping track of whether we've seen a fluent and thus have included its initial state
-	for chain in all_chains:
-		energy = chain[0][1]
-		chain = chain[0][0]
+	for chainx in all_chains:
+		energy = chainx[0][1]
+		chain = chainx[0][0]
 		for instance in chain:
 			frame_number = instance[0]
 			parse_id = instance[1]
@@ -1228,9 +1212,12 @@ def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 			# now let's see if there's an action associated with this fluent change and pop that in our bag
 			actions = get_actions_from_parse(parse)
 			if actions:
+				# serious unpacking here
+				chainx_actions = {y[0][0]:y[0][1] for y in [[[z,list(y[2][z])[0]] for z in y[2]] for y in chainx[0][0]] if y != []}
 				for action in actions:
+					action_frame = chainx_actions[action] if action in chainx_actions else frame_number
 					action_el = ET.SubElement(actions_el,"event", {
-						"frame": str(frame_number),
+						"frame": str(action_frame),
 						"energy": str(energy),
 						"action": str(action),
 					});
