@@ -258,7 +258,8 @@ def doit():
 			prefix_hitrate[prefix][computer] = prefix_hitsum[prefix][computer] / prefix_hitN[prefix][computer]
 
 	# now we print out our carefully crafted table :)
-	print("\t".join(("prefix","N","computer","hitrate",)))
+	if not kDontPrint:
+		print("\t".join(("prefix","N","computer","hitrate",)))
 	summary = defaultdict(float)
 	if kLaTeXSummary:
 		actionSummary = {"total": {}}
@@ -272,7 +273,7 @@ def doit():
 		for computer in prefix_hitsum[prefix]:
 			if not args.smart and computer in ["causalsmrt", "origsmrt", ]:
 				continue
-			if not args.summary:
+			if not args.summary and not kDontPrint:
 				print("\t".join((prefix, str(prefix_hitN[prefix][computer]), computer, "{:.3f}".format(prefix_hitrate[prefix][computer]),)))
 				if kLaTeXSummary:
 					#print "----------------------"
@@ -306,23 +307,26 @@ def doit():
 	for computer in summary:
 		if kLaTeXSummary:
 			fluentSummary["total"][computer] = "{:.3f}".format(sum_fluents[computer] / sum_fluents_N[computer])
-		print("\t".join(("FLUENTS",str(sum_fluents_N[computer]), computer, "{:.3f}".format(sum_fluents[computer] / sum_fluents_N[computer], ))))
+		if not kDontPrint:
+			print("\t".join(("FLUENTS",str(sum_fluents_N[computer]), computer, "{:.3f}".format(sum_fluents[computer] / sum_fluents_N[computer], ))))
 
 	for computer in summary:
 		if kLaTeXSummary:
 			actionSummary["total"][computer] = "{:.3f}".format(sum_actions[computer] / sum_actions_N[computer])
-		print("\t".join(("ACTIONS",str(sum_actions_N[computer]), computer, "{:.3f}".format(sum_actions[computer] / sum_actions_N[computer], ))))
+		if not kDontPrint:
+			print("\t".join(("ACTIONS",str(sum_actions_N[computer]), computer, "{:.3f}".format(sum_actions[computer] / sum_actions_N[computer], ))))
 
-	for computer in summary:
-		print("\t".join(("SUM",str(summary_N[computer]), computer, "{:.3f}".format(summary[computer] / summary_N[computer], ))))
+	if not kDontPrint:
+		for computer in summary:
+			print("\t".join(("SUM",str(summary_N[computer]), computer, "{:.3f}".format(summary[computer] / summary_N[computer], ))))
 
-	if kLaTeXSummary:
+	if kLaTeXSummary and not kDontPrint:
 		print "------ ACTION TABLE ------"
 		printLaTeXSummary(actionSummary)
 		print "------ FLUENT TABLE -------"
 		printLaTeXSummary(fluentSummary)
 
-	if kDebugOn:
+	if kDebugOn and not kDontPrint:
 		pp.pprint(exceptions)
 
 	return {computer:summary[computer]/summary_N[computer] for computer in summary}
@@ -342,11 +346,13 @@ if __name__ == "__main__":
 	kDebugOn = args.debug
 	kLaTeXSummary = args.latex
 
+	global kDontPrint
+	global kHitThreshold
 	if args.scan:
 		summaries = list()
-		global kHitThreshold
 		kThreshStart = 0
 		kThreshEnd = 30
+		kDontPrint = True
 		for i in range(kThreshStart,kThreshEnd):
 			exceptions = []
 			kHitThreshold = i
@@ -357,6 +363,7 @@ if __name__ == "__main__":
 			print("{}: [{:.3f}] -- {}".format(i, summary['causalgrammar']-summary['origdata'],summary))
 			i+=1
 	else:
+		kDontPrint = False
 		kHitThreshold = 1
 		exceptions = []
 		doit()
