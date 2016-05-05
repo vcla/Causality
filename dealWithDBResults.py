@@ -7,15 +7,6 @@ import videoCutpoints
 import xml_stuff
 import summerdata
 
-# sometimes MySQLdb just doesn't want to work....
-try:
-	import MySQLdb
-except ImportError:
-	import pymysql
-	pymysql.install_as_MySQLdb()
-	class MySQLdb:
-		ProgrammingError = pymysql.MySQLError
-
 import sqlite3
 DBTYPE_MYSQL = "mysql"
 DBTYPE_SQLITE = "sqlite"
@@ -231,6 +222,15 @@ if __name__ == '__main__':
 	suppress_output = not args.debug
 	examples = []
 	globalDryRun = args.dryrun
+	if args.database in ("mysql",):
+		# sometimes MySQLdb just doesn't want to work....
+		try:
+			import MySQLdb
+		except ImportError:
+			import pymysql
+			pymysql.install_as_MySQLdb()
+			class MySQLdb:
+				ProgrammingError = pymysql.MySQLError
 	if args.mode in ("list","upanddown",) and globalDryRun:
 		raise ValueError("dryrun is only valid for 'download' or 'upload', not 'upanddown' or 'list'")
 	if args.examples_only:
