@@ -176,6 +176,8 @@ def doit():
 						# first column is name; last two columns are timestamp and ... a hash? of ... something?
 						# changing it to a map of name -> values, dropping timestamp and hash
 						name, values = line.rstrip().split(",",1)
+						if not args.smart and name in ["causalsmrt", "origsmrt", ]:
+							continue
 						values = values.rsplit(",",2)[0].split(",")
 						newvalues = [0,] * len(values)
 						if args.normalizefirst:
@@ -216,16 +218,18 @@ def doit():
 						raise MissingDataException("NO HUMANS FOR {}".format(filename))
 					if not 'origdata' in computers:
 						raise MissingDataException("NO ORIGDATA FOR {}".format(filename))
-					if not 'origsmrt' in computers:
+					if args.smart and not 'origsmrt' in computers:
 						raise MissingDataException("NO ORIGSMRT FOR {}".format(filename))
 					if not 'causalgrammar' in computers:
 						raise MissingDataException("NO CAUSALGRAMMAR FOR {}".format(filename))
-					if not 'causalsmrt' in computers:
+					if args.smart and not 'causalsmrt' in computers:
 						raise MissingDataException("NO CAUSALSMRT FOR {}".format(filename))
 					humansN = len(humans)
 					bestdistance = {}
 					besthumans = {}
 					for computerType in kComputerTypes:
+						if not args.smart and computerType in ["causalsmrt", "origsmrt", ]:
+							continue
 						bestdistance[computerType] = 0
 						besthumans[computerType] = []
 						for human in humans:
