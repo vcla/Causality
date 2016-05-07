@@ -170,11 +170,44 @@ def doit():
 					lines = csv.readlines()
 					humans = {}
 					computers = {}
+					if args.debug:
+						print("{}".format(field_lookup))
 					for line in lines:
 						# first column is name; last two columns are timestamp and ... a hash? of ... something?
 						# changing it to a map of name -> values, dropping timestamp and hash
 						name, values = line.rstrip().split(",",1)
 						values = values.rsplit(",",2)[0].split(",")
+						newvalues = [0,] * len(values)
+						if args.normalizefirst:
+							#newvalues = values[:] <--
+							for field_group in field_groups:
+								foo = {field_group: field_groups[field_group]}
+								key = foo.keys()[0] # tuple of ("thing","frame")
+								sum = 0
+								for value in foo[key]:
+									column = field_lookup["_".join((key[0], key[1], value,))]
+									sum += int(values[column]) if values[column] != '' else 0
+								#print("field lookup: {}".format(field_lookup))
+								if sum != 100 and sum != 0:
+									normalization = sum / 100.
+									for value in foo[key]:
+										column = field_lookup["_".join((key[0], key[1], value,))]
+										newvalues[column] = str(int(float(values[column])/normalization))
+									if args.debug:
+										print("{}: {} ->\n{}".format(name, values, newvalues))
+								else:
+									for value in foo[key]:
+										column = field_lookup["_".join((key[0], key[1], value,))]
+										newvalues[column] = str(values[column])
+						else:
+							# it's still important to zero out values we're not evaluating
+							for field_group in field_groups:
+								foo = {field_group: field_groups[field_group]}
+								key = foo.keys()[0] # tuple of ("thing","frame")
+								for value in foo[key]:
+									column = field_lookup["_".join((key[0], key[1], value,))]
+									newvalues[column] = str(values[column])
+						values = newvalues
 						if name in kComputerTypes:
 							computers[name] = values
 						else:
@@ -340,7 +373,9 @@ if __name__ == "__main__":
 	parser.add_argument("-t","--latex", action="store_true", required=False, help="print out summary as LaTeX")
 	parser.add_argument("-m","--smart", action="store_true", required=False, help="include 'smart' computers")
 	parser.add_argument("--scan", action="store_true", default=False, required=False, help="scan thresholds")
+	#parser.add_argument("-n","--normalizefirst", action="store_true", default=False, required=False, help="normalize responses to 100 before doing hit testing")
 	args = parser.parse_args()
+	args.normalizefirst = True
 	
 	kJustTheSummary = args.summary
 	kDebugOn = args.debug
@@ -351,7 +386,7 @@ if __name__ == "__main__":
 	if args.scan:
 		summaries = list()
 		kThreshStart = 0
-		kThreshEnd = 30
+		kThreshEnd = 40
 		kDontPrint = True
 		for i in range(kThreshStart,kThreshEnd):
 			exceptions = []
