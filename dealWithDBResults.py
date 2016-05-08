@@ -211,6 +211,7 @@ if __name__ == '__main__':
 	group.add_argument('-d','--dry-run', action='store_true', dest='dryrun', required=False, help='Do not actually upload data to the db or save downloaded data; only valid for "upload" or "download", does not make sense for "upanddown" or "list"')
 	group.add_argument('-o','--only', action='append', dest='examples_only', required=False, help='specific examples to run, versus all found examples')
 	group.add_argument('-x','--exclude', action='append', dest='examples_exclude', required=False, help='specific examples to exclude, out of all found examples', default=[])
+	group.add_argument('-g','--grep', action='store', dest='examples_grep', required=False, help='class of examples to include', default=[])
 	parser.add_argument("-s","--simplify", action="store_true", required=False, help="simplify the summerdata grammar to only include fluents that start with the example name[s]")
 	parser.add_argument('-i','--ignoreoverlaps', action='store_true', required=False, help='skip the "without overlaps" code')
 	parser.add_argument('--debug', action='store_true', required=False, help='Spit out a lot more context information during processing')
@@ -239,17 +240,34 @@ if __name__ == '__main__':
 		for filename in os.listdir (kActionDetections):
 			if filename.endswith(".py") and filename != "__init__.py":
 				example = filename[:-3]
-				if example not in args.examples_exclude:
-					examples.append(filename[:-3])
+				ok = False
+				if args.examples_grep and example.startswith(args.examples_grep):
+					ok = True
+				elif args.examples_only:
+					if example in args.examples_only:
+						ok = True
+				elif not args.examples_grep and example not in args.examples_exclude:
+					ok = True
+				if ok:
+					examples.append(example)
 	conn = getDB(connType)
 	if args.mode in ("list",):
 		for filename in os.listdir (kActionDetections):
 			if filename.endswith(".py") and filename != "__init__.py":
 				example = filename[:-3]
-				exampleNameForDB, room = example.rsplit('_',1)
-				exampleNameForDB = exampleNameForDB.replace("_","")
-				m = hashlib.md5(exampleNameForDB)
-				print("{}	{}".format(example,m.hexdigest()))
+				ok = False
+				if args.examples_grep and example.startswith(args.examples_grep):
+					ok = True
+				elif args.examples_only:
+					if example in args.examples_only:
+						ok = True
+				elif not args.examples_grep and example not in args.examples_exclude:
+					ok = True
+				if ok:
+					exampleNameForDB, room = example.rsplit('_',1)
+					exampleNameForDB = exampleNameForDB.replace("_","")
+					m = hashlib.md5(exampleNameForDB)
+					print("{}	{}".format(example,m.hexdigest()))
 	if args.mode in ("upload","upanddown",):
 		print("===========")
 		print("UPLOADING")
