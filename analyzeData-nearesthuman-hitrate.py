@@ -101,6 +101,7 @@ def printLaTeXSummary(dictToPrint):
 	#print dictToPrint
 	causalLine = "Causal Reasoning"
 	detectionsLine = "Bottom-Up Detection"
+	randomLine = "Random Selection"
 	headerLine = "Object"
 	#tableTransposed = "Object & Detection & Causal \\\\ \n \\midrule \n"
 	for singleFluent in dictToPrint:
@@ -113,21 +114,26 @@ def printLaTeXSummary(dictToPrint):
 				headerLine += " & " + singleFluent
 				causalLine += emboldenWinningLine(dictToPrint[singleFluent]["causalgrammar"], winningValue)
 				detectionsLine += emboldenWinningLine(dictToPrint[singleFluent]["origdata"], winningValue)
+				randomLine += emboldenWinningLine(dictToPrint[singleFluent]["random"], winningValue)
 				#tableTransposed += "{} & {} & {} \\\\ \n".format(singleFluent, str(dictToPrint[singleFluent]["origsmrt"]), str(dictToPrint[singleFluent]["causalsmrt"]))
 		else:
 			headerLine += " & " + singleFluent
 			causalLine += " & N/A "
+			randomLine += " & N/A "
 			detectionsLine += " & N/A "
 	causalLine += emboldenWinningLine(dictToPrint["total"]["causalgrammar"], winningTotalValue)
 	detectionsLine += emboldenWinningLine(dictToPrint["total"]["origdata"], winningTotalValue)
+	randomLine += emboldenWinningLine(dictToPrint["total"]["random"], winningTotalValue)
 	headerLine += " & Average"
 	causalLine += ' \\\\'
+	randomLine += ' \\\\'
 	headerLine += ' \\\\'
 	detectionsLine += ' \\\\'
 	print headerLine
 	print "\\midrule"
 	print detectionsLine
 	print causalLine
+	print randomLine
 
 def doit():
 	## for storing which field prefixes are actions and which are fluents
