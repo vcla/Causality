@@ -638,6 +638,80 @@ class MultipleTimeoutsLongerTimeoutWins(unittest.TestCase):
 		assert (len(screen_changes) == 1), "found {} unexpected fluent changes".format(len(screen_changes) - 1)
 
 
+class SummerdataDoor1TestCases(unittest.TestCase):
+	@classmethod
+	def setUpClass(cls):
+		import causal_grammar_summerdata
+		causal_forest_orig = causal_grammar_summerdata.causal_forest
+		ignoreoverlaps = False #these really need less-confusing names =/
+		suppress_output = not kDebug
+		#suppress_output = True
+		simplify = True # TODO: I should have a unit test that just makes sure simplifying doesn't break anything
+		example = 'door_1_8145'
+		"""
+		Clip:
+		annotation: 261 - 314: opens, standing; 314 - 349: closes, standing
+		detection: 261 - 314: opens 297, shuts 301; 314-349: closes 322, closes 338, standing
+		origdb: 261 - 314: opens, shuts; 314-349: shuts x 2, stand_start, stand_end
+		causal: 261 - 314: stays open; 314-349: shuts, stand_start
+		"""
+		if simplify:
+			causal_grammar_summerdata.causal_forest = causal_grammar.get_simplified_forest_for_example(causal_forest_orig, example)
+		# fluent_parses, action_parses = causal_grammar.import_summerdata(example,kActionDetections)
+		#fluent_parses = {297: {'door': 0.13272600275231877}, 338: {'door': 1.4261894413473993}, 322: {'door': 1.0789008419993453}, 301: {'door': 1.1634100434038068}, 313: {'screen': 3.203371638332235}}
+		withoutoverlaps = False
+		fluent_parses = {297: {'door': 0.13272600275231877} }
+		action_parses = {
+				296: { "standing_START": {"energy": 0.279449, "agent": "uuid1"} },
+				#297: { "standing_START": {"energy": 0.240229, "agent": "uuid1"} },
+				#326: { "standing_END": {"energy": 0.257439, "agent": "uuid1"} },
+				##328: { "standing_END": {"energy": 0.338959, "agent": "uuid1"} },
+				##320: { "standing_START": {"energy": 0.240229, "agent": "uuid1"} },
+				##346: { "standing_END": {"energy": 0.240229, "agent": "uuid1"} },
+				##347: { "benddown_START": {"energy": 1.236692, "agent": "uuid1"} },
+				##349: { "benddown_END": {"energy": 1.236692, "agent": "uuid1"} },
+				}
+		orig_xml = xml_stuff.munge_parses_to_xml(fluent_parses, action_parses)
+		sorted_keys = sorted(fluent_parses.keys())
+		causal_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, action_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, suppress_output = suppress_output, handle_overlapping_events = withoutoverlaps)
+		#uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalgrammar', connType, conn)
+		#uploadComputerResponseToDB(example, orig_xml, 'origdata', connType, conn)
+		#cls.root = ET.fromstring(xml_string)
+		cls.orig_xml = ET.fromstring(orig_xml)
+		cls.causal_xml = ET.fromstring(causal_xml)
+		if kDebug:
+			print("ORIG XML")
+			xml_stuff.printXMLActionsAndFluents(cls.orig_xml)
+			print("CAUSAL XML")
+			xml_stuff.printXMLActionsAndFluents(cls.causal_xml)
+
+	def testFluentChangeAt297(self):
+		door_297 = self.causal_xml.findall("./fluent_changes/fluent_change[@frame='297']")
+		# off (closed) to on (open) at 297 because of a standing start: parse 1
+		# 0: ('door_on', [('?', ['PREV door_on', 'NOT standing_END'])])
+		# 1: ('door_on', [('?', ['PREV door_off', 'standing_START'])])
+		# 2: ('door_on', [('?', ['PREV door_off', 'NOT standing_END'])])
+		# 3: ('door_off', [('?', ['PREV door_off', 'NOT standing_START'])])
+		# 4: ('door_off', [('?', ['PREV door_on', 'standing_END'])])
+		# 5: ('door_off', [('?', ['PREV door_on', 'standing_START'])])
+		### WRONG TOP ENERGY CHOICES CURRENTLY
+		# [[[[(0, 0, {}), (297, 0, {}), (338, 5, {'standing_START': set([297])})], 38.136]]]
+		# [[[[(0, 0, {}), (297, 0, {}), (338, 5, {'standing_START': set([297])})], 38.136]]]
+		# [[[[(0, 0, {}), (299, 0, {}), (338, 5, {'standing_START': set([297])})], 38.136]]]
+		# [[[[(0, 0, {}), (301, 0, {}), (338, 5, {'standing_START': set([297])})], 38.136]]]
+		# [[[[(0, 0, {}), (307, 0, {}), (338, 5, {'standing_START': set([297])})], 38.136]]]
+		### WANT SOMETHING LIKE:
+		# 0: 3, 297: [1,2]
+		# [[[[0, 3
+
+		assert door_297, "should have decided door change off to on at 297, no change decided"
+		assert door_297[0].attrib['new_value'] == 'on', "should have decided door change to on at 297; was: {}".format(door_297[0].attrib['new_value'])
+
+	def testFluentTooEarly(self):
+		door_changes = xml_stuff.getFluentChangesForFluentBetweenFrames(self.causal_xml, 'door', 0, 350)
+		assert len(door_changes)==1, "found {} unexpected changes before frame {}".format(len(door_changes),frame)
+
+
 # TODO: test "nonevent" does what i really want
 # TODO: make sure not averaging to calculate mismatched number of nodes -- need the probabilities to appropriately compensate for that
 
