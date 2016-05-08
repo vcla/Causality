@@ -168,7 +168,7 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, connType,
 		for frame in cutpoints[1:]:
 			#print("{} - {}".format(oject, frame))
 			answers = xml_stuff.queryXMLForAnswersBetweenFrames(fluent_and_action_xml_xml,oject,prev_frame,frame,source,not source.endswith('smrt'))
-			if source == "random":
+			if source in ("random","origdata",):
 				framestr = "{}".format(prev_frame)
 				things = dict()
 				for key in answers:
@@ -179,6 +179,10 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, connType,
 						things[thing] += 1
 				for key in answers:
 					thing, choice = key.split(framestr)
+					# {door, light, screen} are only detectable fluents. So if it's not door, light, screen, it should be "random" for origdata. which means (tested) ~ we're setting to "random": trash {same, less, more}; phone {off_active, active_off, off, active}; cup {same, less, more}; thirst {not, thirsty, thirsty_not, not_thirsty}; waterstream {water_on, water_off};
+					if source not in ("random",):
+						if thing in ("door_", "light_", "screen_") or choice.startswith("_act_"):
+							continue
 					answers[key] = int(100 / things[thing])
 			insertion_object.update(answers)
 			prev_frame = frame
