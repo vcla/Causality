@@ -21,14 +21,10 @@
 * and then on to actual analysis....
 
 'ANALYSIS
-* analyze_results.go by Mingtian reads cvpr_db_results.csv; "analyzeData.py" refers to the results of the go code in "findDistanceGivenLineOfGoOutput", calling it obsolete.
-* analyzeData.py -- runs on combined cvpr_db_results.csv; "PR DICT" for each action or fluent, not sure how to read it. (Jan 2 2014, from earlier than that, commit comment is "first pass at cleaning things up for handoff")
-* analyzeData-besthuman.py -- best human is the human that was most agreed with by all the other humans (Nov 8 2014)
-* analyzeData-nearesthuman.py -- nearest human is the one that was closest to a given computer algorithm (Nov 8 2014) ... this 
-* analyzeData-nearesthuman-pr.py -- "first pass on trying to do precision and recall against db data" (Nov 14 2014)
-* analyzeData-nearesthuman-hitrate.py -- "hitrate for CVPR 2015 submission" (Nov 2015)
-* plotPR.R generates a set of precision/recall graphs from the output of analyzeData-nearesthuman-pr.py
-* plotPR.sh calls analyzeData-nearesthuman-pr.py and then plotPR.R to generate a set of precision/recall graphs
+* analyze_results.go by Mingtian reads cvpr_db_results.csv; "analyzeData.py" refers to the results of the go code in "findDistanceGivenLineOfGoOutput", calling it obsolete. # analyzeData.py has been removed, last existed in git hash 3032f8
+* hitrate.py, formerly analyzeData-nearesthuman-hitrate.py -- "hitrate for CVPR 2015 submission" (Nov 2015)
+* plotPR.R generates a set of precision/recall graphs from the output of analyzeData-nearesthuman-pr.py # analyzeData-nearesthuman-pr.py has been removed, last existed in git hash 3032f8
+* plotPR.sh calls analyzeData-nearesthuman-pr.py and then plotPR.R to generate a set of precision/recall graphs # analyzeData-nearesthuman-pr.py has been removed, last existed in git hash 3032f8
 
 evaluateCausalGrammer:
 * getFluentChangesForFluent (operates on causal_grammar.process_events_and_fluents xml)
