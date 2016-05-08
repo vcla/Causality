@@ -248,6 +248,7 @@ def doit():
 					clip_hits = defaultdict(lambda: defaultdict(int))
 					clip_misses = defaultdict(lambda: defaultdict(int))
 					clip_hitrate = defaultdict(dict)
+					clip_hits_forfailures = defaultdict(int)
 					# clip_fluent_pr = defaultdict(lambda: defaultdict(int))
 					# clip_action_pr = defaultdict(lambda: defaultdict(int))
 					for computerType in kComputerTypes:
@@ -280,9 +281,14 @@ def doit():
 								clip_misses[computerType][field_group[0]] += 1
 						for key in clip_hits[computerType]:
 							clip_hitrate[computerType][key] = float(clip_hits[computerType][key]) / (clip_hits[computerType][key] + clip_misses[computerType][key])
+							clip_hits_forfailures[computerType] += clip_hits[computerType][key]
 					overall_hitrates[filename] = clip_hitrate
+					if args.failures and clip_hits_forfailures['origdata'] > clip_hits_forfailures['causalgrammar']:
+						print("{}\t{}: [orig: {} hits, causal: {} hits]".format(clip_hits_forfailures['origdata'] - clip_hits_forfailures['causalgrammar'],filename, clip_hits_forfailures['origdata'], clip_hits_forfailures['causalgrammar']))
 				except MissingDataException as foo:
 					exceptions.append(foo)
+	if args.failures:
+		return
 
 	# pp.pprint(json.dumps(overall_hitrates))
 	# now we sum/average our hitrates per prefix (fluent or action)
@@ -383,6 +389,7 @@ if __name__ == "__main__":
 	parser.add_argument("-t","--latex", action="store_true", required=False, help="print out summary as LaTeX")
 	parser.add_argument("-m","--smart", action="store_true", required=False, help="include 'smart' computers")
 	parser.add_argument("--scan", action="store_true", default=False, required=False, help="scan thresholds")
+	parser.add_argument("--failures", action="store_true", default=False, required=False, help="print out examples where causal does worse than orig")
 	#parser.add_argument("-n","--normalizefirst", action="store_true", default=False, required=False, help="normalize responses to 100 before doing hit testing")
 	args = parser.parse_args()
 	args.normalizefirst = True
