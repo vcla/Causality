@@ -186,6 +186,7 @@ def doit():
 							continue
 						values = values.rsplit(",",2)[0].split(",")
 						newvalues = [0,] * len(values)
+						changed = False
 						if args.normalizefirst:
 							#newvalues = values[:] <--
 							for field_group in field_groups:
@@ -201,8 +202,7 @@ def doit():
 									for value in foo[key]:
 										column = field_lookup["_".join((key[0], key[1], value,))]
 										newvalues[column] = str(int(float(values[column])/normalization))
-									if args.debug:
-										print("{}: {} ->\n{}".format(name, values, newvalues))
+									changed = True
 								else:
 									for value in foo[key]:
 										column = field_lookup["_".join((key[0], key[1], value,))]
@@ -215,6 +215,8 @@ def doit():
 								for value in foo[key]:
 									column = field_lookup["_".join((key[0], key[1], value,))]
 									newvalues[column] = str(values[column])
+						if args.debug and changed:
+							print("{}: {} ->\n{}".format(name, values, newvalues))
 						values = newvalues
 						if name in kComputerTypes:
 							computers[name] = values
