@@ -234,40 +234,29 @@ if __name__ == '__main__':
 				ProgrammingError = pymysql.MySQLError
 	if args.mode in ("list","upanddown",) and globalDryRun:
 		raise ValueError("dryrun is only valid for 'download' or 'upload', not 'upanddown' or 'list'")
-	if args.examples_only:
-		examples = args.examples_only
-	else:
-		for filename in os.listdir (kActionDetections):
-			if filename.endswith(".py") and filename != "__init__.py":
-				example = filename[:-3]
-				ok = False
-				if args.examples_grep and example.startswith(args.examples_grep):
+	print("===========")
+	print("LOADING EXAMPLES FROM")
+	print("===========")
+	print("> {}".format(kActionDetections))
+	for filename in os.listdir (kActionDetections):
+		if filename.endswith(".py") and filename != "__init__.py":
+			example = filename[:-3]
+			ok = False
+			if args.examples_grep and example.startswith(args.examples_grep):
+				ok = True
+			elif args.examples_only:
+				if example in args.examples_only:
 					ok = True
-				elif args.examples_only:
-					if example in args.examples_only:
-						ok = True
-				elif not args.examples_grep and example not in args.examples_exclude:
-					ok = True
-				if ok:
-					examples.append(example)
-	conn = getDB(connType)
-	if args.mode in ("list",):
-		for filename in os.listdir (kActionDetections):
-			if filename.endswith(".py") and filename != "__init__.py":
-				example = filename[:-3]
-				ok = False
-				if args.examples_grep and example.startswith(args.examples_grep):
-					ok = True
-				elif args.examples_only:
-					if example in args.examples_only:
-						ok = True
-				elif not args.examples_grep and example not in args.examples_exclude:
-					ok = True
-				if ok:
+			elif not args.examples_grep and example not in args.examples_exclude:
+				ok = True
+			if ok:
+				examples.append(example)
+				if args.mode in ("list",):
 					exampleNameForDB, room = example.rsplit('_',1)
 					exampleNameForDB = exampleNameForDB.replace("_","")
 					m = hashlib.md5(exampleNameForDB)
 					print("{}	{}".format(example,m.hexdigest()))
+	conn = getDB(connType)
 	if args.mode in ("upload","upanddown",):
 		print("===========")
 		print("UPLOADING")
