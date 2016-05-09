@@ -1,10 +1,10 @@
-function results = slidingWindow(startFrame, endFrame, individualFrames, logSpace)
+function results = slidingWindow(startFrame, endFrame, individualFrames, logSpace, allowOverlaps, windowSize, absoluteMaxWindowSize)
+%allowOverlaps = true allows competing solutions; false performs surround suppression
+%windowSize = 50; % starting window size
+%absoluteMaxWindowSize = false; % don't allow windows larger than this; false ignores this
 
 thresh = 0.000001; % added onto 1/7 for threshold for overlap case
-windowSize = 10; % starting window size 
-allowOverlaps = false;
-nonOverlapThresh = .7; %only used if allowOverlaps
-
+nonOverlapThresh = .7; %only used if ~allowOverlaps
 
 vectorOfFrames = arrayfun(@(foo) foo.frame_ind, individualFrames);
 
@@ -12,6 +12,9 @@ results = [0;0;0;0];
     % start, end, action, prob
     
 maxFrameWidth = windowSize*floor((endFrame - startFrame)/windowSize);
+if absoluteMaxWindowSize 
+    maxFrameWidth = min(absoluteMaxWindowSize, maxFrameWidth); 
+end
 
 %for frameWidth = 5:5:40
             % TODO: if there was overlap, then it deleted the lower
@@ -20,8 +23,8 @@ maxFrameWidth = windowSize*floor((endFrame - startFrame)/windowSize);
             % have kept the first.  does running the window size in reverse
             % order fix that?  maybe so...  do it, run diff/compare
             % results.  
-%for frameWidth = windowSize:windowSize:maxFrameWidth
-for frameWidth = maxFrameWidth:-windowSize:windowSize
+for frameWidth = windowSize:windowSize:maxFrameWidth %FOR SLIDING WINDOW
+%for frameWidth = maxFrameWidth:-windowSize:windowSize %FOR REVERSE SLIDING WINDOW
     disp(frameWidth); %CHANGED THIS
     for tryingWindowStart = startFrame:(endFrame-frameWidth+1)
         % gather the frames
