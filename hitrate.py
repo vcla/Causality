@@ -97,12 +97,12 @@ def emboldenWinningLine(fluentResult, winningValue):
 		returnLine += str(fluentResult)
 	return returnLine
 
-def printLaTeXSummary(dictToPrint):
+def printLaTeXSummary(dictToPrint, headerLine):
 	#print dictToPrint
-	causalLine = "Causal Reasoning"
-	detectionsLine = "Bottom-Up Detection"
-	randomLine = "Random Selection"
-	headerLine = "Object"
+	causalLine = "Causal" #"Causal Reasoning"
+	detectionsLine = "Detection" #"Bottom-Up Detection"
+	randomLine = "Noise" #"Random Selection"
+	#headerLine = "Object"
 	#tableTransposed = "Object & Detection & Causal \\\\ \n \\midrule \n"
 	for singleFluent in dictToPrint:
 		if dictToPrint[singleFluent]:
@@ -131,9 +131,9 @@ def printLaTeXSummary(dictToPrint):
 	detectionsLine += ' \\\\'
 	print headerLine
 	print "\\midrule"
+	print randomLine
 	print detectionsLine
 	print causalLine
-	print randomLine
 
 def doit():
 	## for storing which field prefixes are actions and which are fluents
@@ -375,10 +375,10 @@ def doit():
 		import datetime
 		print "------ ACTION TABLE ------"
 		print "% Generated: {}".format(datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S'))
-		printLaTeXSummary(actionSummary)
+		printLaTeXSummary(actionSummary, "Action")
 		print "------ FLUENT TABLE -------"
 		print "% Generated: {}".format(datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S'))
-		printLaTeXSummary(fluentSummary)
+		printLaTeXSummary(fluentSummary, "Fluent")
 
 	if kDebugOn and not kDontPrint:
 		pp.pprint(exceptions)
