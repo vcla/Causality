@@ -372,9 +372,12 @@ def doit():
 			print("\t".join(("SUM",str(summary_N[computer]), computer, "{:.3f}".format(summary[computer] / summary_N[computer], ))))
 
 	if kLaTeXSummary and not kDontPrint:
+		import datetime
 		print "------ ACTION TABLE ------"
+		print "% Generated: {}".format(datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S'))
 		printLaTeXSummary(actionSummary)
 		print "------ FLUENT TABLE -------"
+		print "% Generated: {}".format(datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S'))
 		printLaTeXSummary(fluentSummary)
 
 	if kDebugOn and not kDontPrint:
