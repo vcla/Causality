@@ -184,21 +184,21 @@ abbreviated_summerdata_grammar = [
 	# DOOR CLOSED (DOOR OPEN OFF) 
 	("root", "fluent", "door_off", .5, False, [
 			# inertially OFF
-			("and", False, False, .4, False, [
+			("and", False, False, .34, False, [
 					("leaf", "prev_fluent", "door_off", False, False, False),
 					("leaf", "nonevent", "standing_START", False, 10, False), # TODO: make ONGOING nonaction
 				]
 			),
 			# causally OFF -- close and go through
-			("and", False, False, .3, False, [
+			("and", False, False, .33, False, [
 					("leaf", "prev_fluent", "door_on", False, False, False),
 					("leaf", "event", "standing_END", False, 25, False),
 				]
 			),
 			# causally OFF -- close and stay in room
-			("and", False, False, .3, False, [
+			("and", False, False, .33, False, [
 					("leaf", "prev_fluent", "door_on", False, False, False),
-					("leaf", "event", "standing_START", False, 20, False),
+					("leaf", "event", "standing_START", False, 10, False),
 				]
 			),
 		]
