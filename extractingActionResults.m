@@ -1,19 +1,81 @@
 clear all
 
-folderName = 'results/CVPR2012_reverse_slidingwindow_50_false_action_detection_logspace_surroundsuppression/';
+
+
+folderName = 'results/CVPR2012_reverse_slidingwindow_10_150_action_detection_logspace_allowoverlaps/';
 logSpaceBool = true;
-allowOverlapsBool = false; %false for surroundsuppression
-windowSize = 50;
-absoluteMaxWindowSize = false;
-    % reverse sliding window 50:largest in steps of 50, using logspace surround suppression (NOT allowing overlaps)
-    % logSpaceBool = true;
-    % allowOverlapsBool = false;
+allowOverlapsBool = true; %false for surroundsuppression
+windowSize = 10;
+absoluteMaxWindowSize = 150;
+reverseSlidingWindowBool = true; % this line untested %false for forward
+
+% folderName = 'results/CVPR2012_reverse_slidingwindow_10_150_action_detection_logspace_surroundsuppression/';
+% logSpaceBool = true;
+% allowOverlapsBool = false; %false for surroundsuppression
+% windowSize = 10;
+% absoluteMaxWindowSize = 150;
+% reverseSlidingWindowBool = true; % this line untested %false for forward
+
+% folderName = 'results/CVPR2012_reverse_slidingwindow_10_false_action_detection_logspace_surroundsuppression/';
+% logSpaceBool = true;
+% allowOverlapsBool = false; %false for surroundsuppression
+% windowSize = 10;
+% absoluteMaxWindowSize = false;
+% reverseSlidingWindowBool = true; % this line untested %false for forward
+
+% folderName = 'results/CVPR2012_reverse_slidingwindow_50_false_action_detection_logspace_allowoverlaps/';
+% logSpaceBool = true;
+% allowOverlapsBool = true; %false for surroundsuppression
+% windowSize = 50;
+% absoluteMaxWindowSize = false;
+% reverseSlidingWindowBool = true; % this line untested %false for forward
+% 
+% folderName = 'results/CVPR2012_slidingwindow_50_false_action_detection_logspace_allowoverlaps/';
+% logSpaceBool = true;
+% allowOverlapsBool = true; %false for surroundsuppression
+% windowSize = 50;
+% absoluteMaxWindowSize = false;
+% reverseSlidingWindowBool = false; % this line untested %false for forward
+% 
+% folderName = 'results/CVPR2012_slidingwindow_50_150_action_detection_logspace_allowoverlaps/';
+% logSpaceBool = true;
+% allowOverlapsBool = true; %false for surroundsuppression
+% windowSize = 50;
+% absoluteMaxWindowSize = 150;
+% forward sliding window
+
+% folderName = 'results/CVPR2012_slidingwindow_50_150_action_detection_logspace_surroundsuppression/';
+% logSpaceBool = true;
+% allowOverlapsBool = false; %false for surroundsuppression
+% windowSize = 50;
+% absoluteMaxWindowSize = 150;
+% % forward sliding window 50:150, using logspace surround suppression (NOT allowing overlaps)
+
+% folderName = 'results/CVPR2012_slidingwindow_50_false_action_detection_logspace_surroundsuppression/';
+% logSpaceBool = true;
+% allowOverlapsBool = false; %false for surroundsuppression
+% windowSize = 50;
+% absoluteMaxWindowSize = false;
+% forward sliding window 50:largest in steps of 50, using logspace surround suppression (NOT allowing overlaps)
+
+% folderName = 'results/CVPR2012_reverse_slidingwindow_50_false_action_detection_logspace_surroundsuppression/';
+% logSpaceBool = true;
+% allowOverlapsBool = false; %false for surroundsuppression
+% windowSize = 50;
+% absoluteMaxWindowSize = false;
+% reverse sliding window 50:largest in steps of 50, using logspace surround suppression (NOT allowing overlaps)
+    
 %folderName = 'results/CVPR2012_reverse_slidingwindow_50_150_action_detection_logspace_surroundsuppression/';
-    % reverse sliding window 50:150 in steps of 50, using logspace surround suppression (NOT allowing overlaps)
-    % logSpaceBool = true;
-    % allowOverlapsBool = false;
+% reverse sliding window 50:150 in steps of 50, using logspace surround suppression (NOT allowing overlaps)
+% logSpaceBool = true;
+% allowOverlapsBool = false;
+
 %folderName = 'results/CVPR2012_reverse_slidingwindow_50_150_action_detection_logspace_allowoverlaps/';
-    % reverse sliding window 50:150 in steps of 50, using logspace allowing overlaps
+% reverse sliding window 50:150 in steps of 50, using logspace allowing overlaps
+
+%make the init file so python knows it's a module
+fid = fopen(strcat(folderName,'__init__.py'),'w');
+fclose(fid);
 
 mainDirectory = 'results/CVPR2012_computer_test_action_detection_monday/';
 cutPointFileName = 'testingCutPoints.txt';
@@ -79,7 +141,8 @@ for ind = 1:numel(actionFiles)
             
         % do the entire window
         disp(cutPoints);
-        results = slidingWindow(cutPoints(1),cutPoints(end),individualFrames,logSpaceBool, allowOverlapsBool, windowSize, absoluteMaxWindowSize)
+        results = slidingWindow(cutPoints(1),cutPoints(end),individualFrames, logSpaceBool, ...
+            allowOverlapsBool, windowSize, absoluteMaxWindowSize, reverseSlidingWindowBool)
         writeTemporalParses(results,exampleName,folderName);
         %pause
         

@@ -1,4 +1,5 @@
-function results = slidingWindow(startFrame, endFrame, individualFrames, logSpace, allowOverlaps, windowSize, absoluteMaxWindowSize)
+function results = slidingWindow(startFrame, endFrame, individualFrames, logSpace, ...
+    allowOverlaps, windowSize, absoluteMaxWindowSize, reverseSlidingWindowBool)
 %allowOverlaps = true allows competing solutions; false performs surround suppression
 %windowSize = 50; % starting window size
 %absoluteMaxWindowSize = false; % don't allow windows larger than this; false ignores this
@@ -22,9 +23,16 @@ end
             % 2nd (with higher probability), but not the first.  so should
             % have kept the first.  does running the window size in reverse
             % order fix that?  maybe so...  do it, run diff/compare
-            % results.  
-for frameWidth = windowSize:windowSize:maxFrameWidth %FOR SLIDING WINDOW
+            % results. 
+            
+if reverseSlidingWindowBool
+    slidingWindowFrameWidths = maxFrameWidth:-windowSize:windowSize;
+else
+    slidingWindowFrameWidths = windowSize:windowSize:maxFrameWidth;
+end
+%for frameWidth = windowSize:windowSize:maxFrameWidth %FOR SLIDING WINDOW
 %for frameWidth = maxFrameWidth:-windowSize:windowSize %FOR REVERSE SLIDING WINDOW
+for frameWidth = slidingWindowFrameWidths
     disp(frameWidth); %CHANGED THIS
     for tryingWindowStart = startFrame:(endFrame-frameWidth+1)
         % gather the frames
