@@ -17,6 +17,10 @@ kComputerTypes = ['causalgrammar', 'origsmrt', 'origdata', 'causalsmrt', 'random
 kDebugOn = False
 import re
 kPrefixMatch = r'([a-zA-Z_]+)_([0-9]+)_(.*)'
+kHitThreshold = 1
+global kDontPrint
+kDontPrint = False
+kLaTeXSummary = False
 
 class MissingDataException(Exception):
 	pass
@@ -403,8 +407,6 @@ if __name__ == "__main__":
 	kDebugOn = args.debug
 	kLaTeXSummary = args.latex
 
-	global kDontPrint
-	global kHitThreshold
 	if args.scan:
 		summaries = list()
 		kThreshStart = 0
@@ -420,7 +422,5 @@ if __name__ == "__main__":
 			print("{}: [{:.3f}] -- {}".format(i, summary['causalgrammar']-summary['origdata'],summary))
 			i+=1
 	else:
-		kDontPrint = False
-		kHitThreshold = 1
 		exceptions = []
 		doit()

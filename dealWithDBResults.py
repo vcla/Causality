@@ -202,6 +202,127 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, connType,
 		conn.close()
 	return True
 
+def processAndUploadExamples(examples,conn,simplify=False):
+	print("===========")
+	print("UPLOADING")
+	print("===========")
+	completed = []
+	also_completed = []
+	oject_failed = []
+	also_oject_failed = []
+	import_failed = []
+	import causal_grammar
+	import causal_grammar_summerdata # sets up causal_forest
+	causal_forest_orig = causal_grammar_summerdata.causal_forest
+	#raise("MAYBE DELETE 'computer' FROM RESULTS BEFORE RE-RUNNING")
+	for example in examples:
+		print("---------\nEXAMPLE: {}\n-------".format(example))
+		""" -s (simplify) is broken at the moment, on the below example, so ... this can help """
+		#if example == "doorlock_2_8145":
+		#	suppress_output = False
+		if simplify:
+			causal_grammar_summerdata.causal_forest = causal_grammar.get_simplified_forest_for_example(causal_forest_orig, example)
+			print("... simplified to {}".format(", ".join(x['symbol'] for x in causal_grammar_summerdata.causal_forest)))
+		try:
+			fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,kActionDetections)
+			import pprint
+			pp = pprint.PrettyPrinter(indent=1)
+			print" fluent parses "
+			pp.pprint(fluent_parses)
+			print("")
+			print" action parses "
+			pp.pprint(temporal_parses)
+			print("")
+		except ImportError as ie:
+			print("IMPORT FAILED: {}".format(ie))
+			import_failed.append(example)
+			continue
+		orig_xml = xml_stuff.munge_parses_to_xml(fluent_parses,temporal_parses)
+		fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, suppress_output = suppress_output, handle_overlapping_events = withoutoverlaps)
+		if debugQuery:
+			print("_____ ORIG FLUENT AND ACTION PARSES _____")
+			#print minidom.parseString(orig_xml).toprettyxml(indent="\t")
+			xml_stuff.printXMLActionsAndFluents(ET.fromstring(orig_xml))
+			print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+			print("_____ AFTER CAUSAL GRAMMAR _____")
+			#print minidom.parseString(fluent_and_action_xml).toprettyxml(indent="\t")
+			xml_stuff.printXMLActionsAndFluents(ET.fromstring(fluent_and_action_xml))
+			print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+		print("------> causalgrammar <------")
+		if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalgrammar', connType, conn):
+			completed.append("{}-{}".format(example,'causalgrammar'))
+		else:
+			oject_failed.append("{}-{}".format(example,'causalgrammar'))
+		print("------> causalsmrt <------")
+		if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalsmrt', connType, conn):
+			completed.append("{}-{}".format(example,'causalsmrt'))
+		else:
+			oject_failed.append("{}-{}".format(example,'causalsmrt'))
+		print("------> origdata <------")
+		if uploadComputerResponseToDB(example, orig_xml, 'origdata', connType, conn):
+			completed.append("{}-{}".format(example,'origdata'))
+		else:
+			oject_failed.append("{}-{}".format(example,'origdata'))
+		print("------> origsmrt <------")
+		if uploadComputerResponseToDB(example, orig_xml, 'origsmrt', connType, conn):
+			completed.append("{}-{}".format(example,'origsmrt'))
+		else:
+			oject_failed.append("{}-{}".format(example,'origsmrt'))
+		print("------> random <------")
+		if uploadComputerResponseToDB(example, orig_xml, 'random', connType, conn):
+			completed.append("{}-{}".format(example,'random'))
+		else:
+			oject_failed.append("{}-{}".format(example,'random'))
+	print("COMPLETED: {}".format(completed))
+	if oject_failed:
+		print("SKIPPED DUE TO OBJECT: {}".format(oject_failed))
+	if import_failed:
+		print("SKIPPED DUE TO IMPORT: {}".format(import_failed))
+	print("....................")
+	print("....................")
+
+def downloadExamples(examples,connType,conn=False):
+	print("===========")
+	print("DOWNLOADING")
+	print("===========")
+	leaveconn = True
+	if not conn:
+		leaveconn = False
+		conn = getDB(connType)
+	for example in examples:
+		print("---------\nEXAMPLE: {}\n-------".format(example))
+		example, room = example.rsplit('_',1)
+		getExampleFromDB(example, connType, conn)
+	if not leaveconn:
+		conn.close()
+
+
+def getExamples(directory, exclude=list(), require=list(), grep=list(), mode=None):
+	print("===========")
+	print("LOADING EXAMPLES FROM")
+	print("===========")
+	print("> {}".format(directory))
+	examples = list()
+	for filename in os.listdir (directory):
+		if filename.endswith(".py") and filename != "__init__.py":
+			example = filename[:-3]
+			ok = False
+			if grep and example.startswith(grep):
+				ok = True
+			elif require:
+				if example in require:
+					ok = True
+			elif not grep and example not in exclude:
+				ok = True
+			if ok:
+				examples.append(example)
+				if mode and mode in ("list",):
+					exampleNameForDB, room = example.rsplit('_',1)
+					exampleNameForDB = exampleNameForDB.replace("_","")
+					m = hashlib.md5(exampleNameForDB)
+					print("{}	{}".format(example,m.hexdigest()))
+	return examples
+
 ##########################
 
 if __name__ == '__main__':
@@ -227,6 +348,8 @@ if __name__ == '__main__':
 	suppress_output = not args.debug
 	examples = []
 	globalDryRun = args.dryrun
+	if globalDryRun and args.mode in ("upanddown","download"):
+		raise ValueError("dryrun is not actually valid for download/upanddown")
 	if args.database in ("mysql",):
 		# sometimes MySQLdb just doesn't want to work....
 		try:
@@ -236,115 +359,14 @@ if __name__ == '__main__':
 			pymysql.install_as_MySQLdb()
 			class MySQLdb:
 				ProgrammingError = pymysql.MySQLError
-	if args.mode in ("list","upanddown",) and globalDryRun:
-		raise ValueError("dryrun is only valid for 'download' or 'upload', not 'upanddown' or 'list'")
-	print("===========")
-	print("LOADING EXAMPLES FROM")
-	print("===========")
-	print("> {}".format(kActionDetections))
-	for filename in os.listdir (kActionDetections):
-		if filename.endswith(".py") and filename != "__init__.py":
-			example = filename[:-3]
-			ok = False
-			if args.examples_grep and example.startswith(args.examples_grep):
-				ok = True
-			elif args.examples_only:
-				if example in args.examples_only:
-					ok = True
-			elif not args.examples_grep and example not in args.examples_exclude:
-				ok = True
-			if ok:
-				examples.append(example)
-				if args.mode in ("list",):
-					exampleNameForDB, room = example.rsplit('_',1)
-					exampleNameForDB = exampleNameForDB.replace("_","")
-					m = hashlib.md5(exampleNameForDB)
-					print("{}	{}".format(example,m.hexdigest()))
-	conn = getDB(connType)
+	examples = getExamples(kActionDetections,exclude=args.examples_exclude,require=args.examples_only, grep = args.examples_grep, mode=args.mode)
+	if globalDryRun:
+		conn = None
+	else:
+		conn = getDB(connType)
 	if args.mode in ("upload","upanddown",):
-		print("===========")
-		print("UPLOADING")
-		print("===========")
-		completed = []
-		also_completed = []
-		oject_failed = []
-		also_oject_failed = []
-		import_failed = []
-		import causal_grammar
-		import causal_grammar_summerdata # sets up causal_forest
-		causal_forest_orig = causal_grammar_summerdata.causal_forest
-		#raise("MAYBE DELETE 'computer' FROM RESULTS BEFORE RE-RUNNING")
-		for example in examples:
-			print("---------\nEXAMPLE: {}\n-------".format(example))
-			""" -s (simplify) is broken at the moment, on the below example, so ... this can help """
-			#if example == "doorlock_2_8145":
-			#	suppress_output = False
-			if args.simplify:
-				causal_grammar_summerdata.causal_forest = causal_grammar.get_simplified_forest_for_example(causal_forest_orig, example)
-				print("... simplified to {}".format(", ".join(x['symbol'] for x in causal_grammar_summerdata.causal_forest)))
-			try:
-				fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,kActionDetections)
-				import pprint
-				pp = pprint.PrettyPrinter(indent=1)
-				print" fluent parses "
-				pp.pprint(fluent_parses)
-				print("")
-				print" action parses "
-				pp.pprint(temporal_parses)
-				print("")
-			except ImportError as ie:
-				print("IMPORT FAILED: {}".format(ie))
-				import_failed.append(example)
-				continue
-			orig_xml = xml_stuff.munge_parses_to_xml(fluent_parses,temporal_parses)
-			fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, suppress_output = suppress_output, handle_overlapping_events = withoutoverlaps)
-			if debugQuery:
-				print("_____ ORIG FLUENT AND ACTION PARSES _____")
-				#print minidom.parseString(orig_xml).toprettyxml(indent="\t")
-				xml_stuff.printXMLActionsAndFluents(ET.fromstring(orig_xml))
-				print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-				print("_____ AFTER CAUSAL GRAMMAR _____")
-				#print minidom.parseString(fluent_and_action_xml).toprettyxml(indent="\t")
-				xml_stuff.printXMLActionsAndFluents(ET.fromstring(fluent_and_action_xml))
-				print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-			print("------> causalgrammar <------")
-			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalgrammar', connType, conn):
-				completed.append("{}-{}".format(example,'causalgrammar'))
-			else:
-				oject_failed.append("{}-{}".format(example,'causalgrammar'))
-			print("------> causalsmrt <------")
-			if uploadComputerResponseToDB(example, fluent_and_action_xml, 'causalsmrt', connType, conn):
-				completed.append("{}-{}".format(example,'causalsmrt'))
-			else:
-				oject_failed.append("{}-{}".format(example,'causalsmrt'))
-			print("------> origdata <------")
-			if uploadComputerResponseToDB(example, orig_xml, 'origdata', connType, conn):
-				completed.append("{}-{}".format(example,'origdata'))
-			else:
-				oject_failed.append("{}-{}".format(example,'origdata'))
-			print("------> origsmrt <------")
-			if uploadComputerResponseToDB(example, orig_xml, 'origsmrt', connType, conn):
-				completed.append("{}-{}".format(example,'origsmrt'))
-			else:
-				oject_failed.append("{}-{}".format(example,'origsmrt'))
-			print("------> random <------")
-			if uploadComputerResponseToDB(example, orig_xml, 'random', connType, conn):
-				completed.append("{}-{}".format(example,'random'))
-			else:
-				oject_failed.append("{}-{}".format(example,'random'))
-		print("COMPLETED: {}".format(completed))
-		if oject_failed:
-			print("SKIPPED DUE TO OBJECT: {}".format(oject_failed))
-		if import_failed:
-			print("SKIPPED DUE TO IMPORT: {}".format(import_failed))
-		print("....................")
-		print("....................")
+		processAndUploadExamples(examples,conn,args.simplify)
 	if args.mode in ("download","upanddown"):
-		print("===========")
-		print("DOWNLOADING")
-		print("===========")
-		for example in examples:
-			print("---------\nEXAMPLE: {}\n-------".format(example))
-			example, room = example.rsplit('_',1)
-			getExampleFromDB(example, connType, conn)
-	conn.close()
+		downloadExamples(examples,connType,conn)
+	if conn:
+		conn.close()
