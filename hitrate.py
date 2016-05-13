@@ -267,6 +267,8 @@ def doit():
 							print("human: {}".format(human))
 							print("---")
 						for field_group in field_groups:
+							if field_group[0] == "ringer":
+								continue
 							try:
 								hit = test_hit(computer, human, field_lookup, {field_group: field_groups[field_group]}) # there has to be a better way to do this than this silly re-dicting, right?
 							except MissingDataException as bar:
