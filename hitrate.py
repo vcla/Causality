@@ -108,6 +108,9 @@ def printLaTeXSummary(dictToPrint, headerLine):
 	randomLine = "Noise" #"Random Selection"
 	#headerLine = "Object"
 	#tableTransposed = "Object & Detection & Causal \\\\ \n \\midrule \n"
+	if headerLine == "Action":
+		dictToPrint["thirst"] = dictToPrint["cup"]
+		dictToPrint["cup"] = {}
 	for singleFluent in dictToPrint:
 		if dictToPrint[singleFluent]:
 			winningLine = max(dictToPrint[singleFluent], key=dictToPrint[singleFluent].get)
@@ -344,11 +347,11 @@ def doit():
 						fluentSummary[latexPrefix] = {}
 					#print "{} {} {}".format(latexPrefix, computer, prefix_hitrate[prefix][computer])
 					if prefix in type_fluents:
-						fluentSummary[latexPrefix][computer] = "{:.3f}".format(prefix_hitrate[prefix][computer])
+						fluentSummary[latexPrefix][computer] = "{:.2f}".format(prefix_hitrate[prefix][computer])
 						#print "FLUENT"
 						#print fluentSummary
 					else:
-						actionSummary[latexPrefix][computer] = "{:.3f}".format(prefix_hitrate[prefix][computer])
+						actionSummary[latexPrefix][computer] = "{:.2f}".format(prefix_hitrate[prefix][computer])
 						#print "ACTION"
 						#print fluentSummary
 			hitrate = prefix_hitrate[prefix][computer]
@@ -363,13 +366,13 @@ def doit():
 
 	for computer in summary:
 		if kLaTeXSummary:
-			fluentSummary["total"][computer] = "{:.3f}".format(sum_fluents[computer] / sum_fluents_N[computer])
+			fluentSummary["total"][computer] = "{:.2f}".format(sum_fluents[computer] / sum_fluents_N[computer])
 		if not kDontPrint:
 			print("\t".join(("FLUENTS",str(sum_fluents_N[computer]), computer, "{:.3f}".format(sum_fluents[computer] / sum_fluents_N[computer], ))))
 
 	for computer in summary:
 		if kLaTeXSummary:
-			actionSummary["total"][computer] = "{:.3f}".format(sum_actions[computer] / sum_actions_N[computer])
+			actionSummary["total"][computer] = "{:.2f}".format(sum_actions[computer] / sum_actions_N[computer])
 		if not kDontPrint:
 			print("\t".join(("ACTIONS",str(sum_actions_N[computer]), computer, "{:.3f}".format(sum_actions[computer] / sum_actions_N[computer], ))))
 
