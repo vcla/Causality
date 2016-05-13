@@ -208,6 +208,8 @@ for filename in os.listdir (kCSVDir):
 					computer = computers[computerType]
 					human = humans[besthumans[computerType][0]] # TODO: for now we will always take the "first" of the best humans. in the future, maybe we want to average the human beliefs? should that always give us an equal or better score?
 					for field_group in field_groups:
+						if field_group[0] == "ringer":
+							continue
 						try:
 							hit = test_hit(computer, human, field_lookup, {field_group: field_groups[field_group]}) # there has to be a better way to do this than this silly re-dicting, right?
 						except MissingDataException as bar:
