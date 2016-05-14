@@ -378,9 +378,9 @@ def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,fra
 	for fluent_change in fluent_changes:
 		if fluent_change.attrib['fluent'] == fluent:
 			frame = int(fluent_change.attrib['frame'])
-			if frame < frame1:
+			if frame <= frame1:
 				old_value = fluent_change.attrib['new_value']
-			if frame >= frame1 and frame <= frame2:
+			if frame > frame1 and frame < frame2:
 				# we're only counting "changes" because that's all that was ever really detected, despite what our xml might look like
 				# TODO: penalize conflicts somehow. I think that will require a complete reorg of all the things wrapping this
 				# and technically we're counting /everything/ as a change
@@ -624,14 +624,16 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 	retval.update(result)
 	return retval
 
+# this is used by getFluentChangesForFluentBetweenFrames only?
 def getFluentChangesForFluent(xml, fluent):
 	return xml.findall("./fluent_changes/fluent_change[@fluent='{}'][@old_value]".format(fluent))
 
+# this is used for base_unittests validation, not for actual dealwithdbresults
 def getFluentChangesForFluentBetweenFrames(xml, fluent, frame1, frame2):
 	assert(frame1 <= frame2)
 	changes = getFluentChangesForFluent(xml, fluent)
 	retval = []
 	for change in changes:
-		if int(change.attrib['frame']) >= frame1 and int(change.attrib['frame']) <= frame2:
+		if int(change.attrib['frame']) >= frame1 and int(change.attrib['frame']) < frame2:
 			retval.append(change)
 	return retval

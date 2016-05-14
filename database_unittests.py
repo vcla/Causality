@@ -7,9 +7,10 @@
 import unittest
 import csv
 import os
+import xml.etree.ElementTree as ET
+import xml_stuff
 #import causal_grammar
 #import evaluateCausalGrammar as evaluateXML
-#import xml.etree.ElementTree as ET
 #import dealWithDBResults
 
 kDebug = True
@@ -40,12 +41,48 @@ def getDiffIndices(list1, list2):
 			diffList.append(ind)
 	return diffList
 
+class TestScreen45Trash8_9404Directly(unittest.TestCase):
+	@classmethod
+	def setUpClass(cls):
+		xml = """
+<temporal>
+	<fluent_changes>
+		<fluent_change energy="37.43" fluent="trash_MORE" frame="0" new_value="off"/>
+		<fluent_change energy="37.43" fluent="trash_MORE" frame="1659" new_value="on" old_value="off"/>
+		<fluent_change energy="16.511" fluent="TRASH_LESS" frame="0" new_value="off"/>
+	</fluent_changes>
+	<actions>
+		<event action="throwtrash_END" energy="37.43" frame="1652"/>
+	</actions>
+</temporal>"""
+		cls.parsexml = ET.fromstring(xml)
+
+	def test1490(self):
+		# fluent change to trash_more happens at 1659; human query points are at 1490 and 1659. this should not happen at cutpoint 1490, only cutpoint 1659. ... and 1707???
+		answers = xml_stuff.queryXMLForAnswersBetweenFrames(self.parsexml, "trash", 0, 1490, "causalgrammar", dumb=True)
+		expected = {'trash_0_less':0, 'trash_0_more':0, 'trash_0_same':100}
+		returned = {k:answers[k] for k in expected}
+		assert expected == returned, "{} [returned] != {} [expected]".format(returned,expected)
+
+	def test1659(self):
+		answers = xml_stuff.queryXMLForAnswersBetweenFrames(self.parsexml, "trash", 1490, 1659, "causalgrammar", dumb=True)
+		expected = {'trash_1490_less':0, 'trash_1490_more':0, 'trash_1490_same':100}
+		returned = {k:answers[k] for k in expected}
+		assert expected == returned, "{} [returned] != {} [expected]".format(returned,expected)
+
+	def test1707(self):
+		answers = xml_stuff.queryXMLForAnswersBetweenFrames(self.parsexml, "trash", 1659, 1707, "causalgrammar", dumb=True)
+		expected = {'trash_1659_less':0, 'trash_1659_more':100, 'trash_1659_same':0}
+		returned = {k:answers[k] for k in expected}
+		assert expected == returned, "{} [returned] != {} [expected]".format(returned,expected)
+
+
 class Test_Screen_45_Trash_8(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
 		# regenerate the CSV
-		os.system("python dealWithDBResults.py -o screen_45_trash_8_9404 -s upanddown")
 		cls.fileName = "screen_45_trash_8"
+		os.system("python dealWithDBResults.py -o {} -s upanddown".format(cls.fileName))
 		cls.answers = extractRows(cls.fileName)
 
 	def testCausal(self):

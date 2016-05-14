@@ -104,6 +104,7 @@ temporal_parses
 """
 
 def uploadComputerResponseToDB(example, fluent_and_action_xml, source, connType, conn = False):
+	import causal_grammar_summerdata # sets up causal_forest
 	debugQuery = False
 	parsedExampleName = example.split('_')
 	# for db lookup, remove "room" at end, and munge _'s away
@@ -180,8 +181,46 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, connType,
 				for key in answers:
 					thing, choice = key.split(framestr)
 					# {door, light, screen} are only detectable fluents. So if it's not door, light, screen, it should be "random" for origdata. which means (tested) ~ we're setting to "random": trash {same, less, more}; phone {off_active, active_off, off, active}; cup {same, less, more}; thirst {not, thirsty, thirsty_not, not_thirsty}; waterstream {water_on, water_off};
-					if source not in ("random",):
-						if thing in ("door_", "light_", "screen_") or choice.startswith("_act_"):
+					if source in ("origdata",):
+						if choice.startswith("_act_"):
+							continue
+						elif thing in (x+"_" for x in causal_grammar_summerdata.detectable_fluents):
+							# this is horribly, horribly hardcoded here....
+							# if there's no detection but it's detectable, choice is herein split:
+							# when no detection:
+							# door_{}_closed_open: 0, door_{}_open_closed: 0, door_{}_closed: 50, door_{}_open: 50
+							# light_{}_off_on: 0, light_{}_on_off: 0, light_{}_off: 50, light_{}_on: 50
+							# screen_{}_off_on: 0, screen_{}_on_off: 0, screen_{}_off: 50, screen_{}_on: 50
+							dothisthing = False
+							if thing == "door_" and choice == "_closed_open":
+								dothisthing = True
+								off_on = "_".join(("door",str(prev_frame),"closed_open"))
+								on_off = "_".join(("door",str(prev_frame),"open_closed"))
+								on = "_".join(("door",str(prev_frame),"open"))
+								off = "_".join(("door",str(prev_frame),"closed"))
+							elif thing == "light_" and choice == "_off_on":
+								dothisthing = True
+								off_on = "_".join(("light",str(prev_frame),"off_on"))
+								on_off = "_".join(("light",str(prev_frame),"on_off"))
+								on = "_".join(("light",str(prev_frame),"on"))
+								off = "_".join(("light",str(prev_frame),"off"))
+							elif thing == "screen_" and choice == "_off_on":
+								dothisthing = True
+								off_on = "_".join(("screen",str(prev_frame),"off_on"))
+								on_off = "_".join(("screen",str(prev_frame),"on_off"))
+								on = "_".join(("screen",str(prev_frame),"on"))
+								off = "_".join(("screen",str(prev_frame),"off"))
+							if dothisthing:
+								keys = [off_on, on_off, on, off]
+								# we say there's no detection if everything is even, or if we've got 0 for off_on and on_off
+								if len(set(answers[k] for k in keys)) == 1 or (answers[off_on] == 0 and answers[on_off] == 0):
+									answers[off_on] = 0
+									answers[on_off] = 0
+									answers[on] = 50
+									answers[off] = 50
+									print("FOO+ {} {}".format(example, {k:answers[k] for k in keys}))
+								else:
+									print("FOO- {} {}".format(example, {k:answers[k] for k in keys}))
 							continue
 					answers[key] = int(100 / things[thing])
 			insertion_object.update(answers)
@@ -202,7 +241,7 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, connType,
 		conn.close()
 	return True
 
-def processAndUploadExamples(examples,conn,simplify=False):
+def processAndUploadExamples(directory,examples,conn,simplify=False):
 	print("===========")
 	print("UPLOADING")
 	print("===========")
@@ -224,7 +263,7 @@ def processAndUploadExamples(examples,conn,simplify=False):
 			causal_grammar_summerdata.causal_forest = causal_grammar.get_simplified_forest_for_example(causal_forest_orig, example)
 			print("... simplified to {}".format(", ".join(x['symbol'] for x in causal_grammar_summerdata.causal_forest)))
 		try:
-			fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,kActionDetections)
+			fluent_parses, temporal_parses = causal_grammar.import_summerdata(example,directory)
 			import pprint
 			pp = pprint.PrettyPrinter(indent=1)
 			print" fluent parses "
@@ -365,7 +404,7 @@ if __name__ == '__main__':
 	else:
 		conn = getDB(connType)
 	if args.mode in ("upload","upanddown",):
-		processAndUploadExamples(examples,conn,args.simplify)
+		processAndUploadExamples(kActionDetections,examples,conn,args.simplify)
 	if args.mode in ("download","upanddown"):
 		downloadExamples(examples,connType,conn)
 	if conn:

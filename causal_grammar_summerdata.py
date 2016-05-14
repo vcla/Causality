@@ -15,6 +15,9 @@ abbreviated_xxx_grammar = [
 ]
 """
 
+# {door, light, screen} are only detectable fluents. So if it's not door, light, screen, it should be "random" for origdata. which means (tested) ~ we're setting to "random": trash {same, less, more}; phone {off_active, active_off, off, active}; cup {same, less, more}; thirst {not, thirsty, thirsty_not, not_thirsty}; waterstream {water_on, water_off};
+detectable_fluents = ("door","light","screen",)
+
 # NOTE: unsure of what to put in for probabilities -- using mostly False for now
 ### GRAMMAR FOR SUMMER DATA -- CVPR 2012 ###
 from math import exp, pow
