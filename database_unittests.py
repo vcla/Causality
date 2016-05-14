@@ -15,6 +15,10 @@ import xml_stuff
 
 kDebug = True
 
+def runDBResults(fileName,room,simplify=True):
+		os.system("python dealWithDBResults.py -o {}_{} {}upanddown >& /dev/null".format(fileName,room,"-s " if simplify else ""))
+		return extractRows(fileName)
+
 def extractRows(fileName):
 	fileName = 'results/cvpr_db_results/'+fileName+'.csv'
 	with open(fileName, 'r') as csvfile:
@@ -56,34 +60,33 @@ class TestScreen45Trash8_9404Directly(unittest.TestCase):
 	</actions>
 </temporal>"""
 		cls.parsexml = ET.fromstring(xml)
+	
+	def innertestAnswers(self,expected,answers):
+		returned = {k:answers[k] for k in expected}
+		assert expected == returned, "{} [returned] != {} [expected]".format(returned,expected)
+
+	def getAnswersForFrames(self,frame1,frame2):
+		return xml_stuff.queryXMLForAnswersBetweenFrames(self.parsexml, "trash", frame1, frame2, "causalgrammar", dumb=True)
 
 	def test1490(self):
 		# fluent change to trash_more happens at 1659; human query points are at 1490 and 1659. this should not happen at cutpoint 1490, only cutpoint 1659. ... and 1707???
-		answers = xml_stuff.queryXMLForAnswersBetweenFrames(self.parsexml, "trash", 0, 1490, "causalgrammar", dumb=True)
-		expected = {'trash_0_less':0, 'trash_0_more':0, 'trash_0_same':100}
-		returned = {k:answers[k] for k in expected}
-		assert expected == returned, "{} [returned] != {} [expected]".format(returned,expected)
+		answers = self.getAnswersForFrames(0,1490)
+		self.innertestAnswers({'trash_0_less':0, 'trash_0_more':0, 'trash_0_same':100},answers)
 
 	def test1659(self):
-		answers = xml_stuff.queryXMLForAnswersBetweenFrames(self.parsexml, "trash", 1490, 1659, "causalgrammar", dumb=True)
-		expected = {'trash_1490_less':0, 'trash_1490_more':0, 'trash_1490_same':100}
-		returned = {k:answers[k] for k in expected}
-		assert expected == returned, "{} [returned] != {} [expected]".format(returned,expected)
+		answers = self.getAnswersForFrames(1490,1659)
+		self.innertestAnswers({'trash_1490_less':0, 'trash_1490_more':0, 'trash_1490_same':100},answers)
 
 	def test1707(self):
-		answers = xml_stuff.queryXMLForAnswersBetweenFrames(self.parsexml, "trash", 1659, 1707, "causalgrammar", dumb=True)
-		expected = {'trash_1659_less':0, 'trash_1659_more':100, 'trash_1659_same':0}
-		returned = {k:answers[k] for k in expected}
-		assert expected == returned, "{} [returned] != {} [expected]".format(returned,expected)
-
+		answers = self.getAnswersForFrames(1659,1707)
+		self.innertestAnswers({'trash_1659_less':0, 'trash_1659_more':100, 'trash_1659_same':0},answers)
 
 class Test_Screen_45_Trash_8(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
 		# regenerate the CSV
 		cls.fileName = "screen_45_trash_8"
-		os.system("python dealWithDBResults.py -o {} -s upanddown".format(cls.fileName))
-		cls.answers = extractRows(cls.fileName)
+		cls.answers = runDBResults(cls.fileName,"9404")
 
 	def testCausal(self):
 		amyCausalAnswer = [0,0,100,0, 0,0,100,0, 0,100, 0,100, 0,0,100, 100,0,0, 100,0, 0,100]
@@ -127,13 +130,11 @@ class Test_Screen_45_Trash_8(unittest.TestCase):
 class Test_Waterstream_3_Water_5_8145(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
-		# regenerate the CSV
-		os.system("python dealWithDBResults.py -o waterstream_3_water_5_8145 -s upanddown")
 		cls.fileName = "waterstream_3_water_5"
-		cls.answers = extractRows(cls.fileName)
+		cls.answers = runDBResults(cls.fileName,"8145")
 
 	def testRandom(self):
-		amyRandomAnswer = [50,50, 50,50, 25,25,25,25, 25,25,25,25, 33,33,33, 33,33,33, 50,50, 50,50, 50,50, 50,50]
+		amyRandomAnswer = [50] * 4 + [25] * 8 + [33] * 6 + [50] * 8
 		dbRandomAnswer = self.answers["randomRow"]
 		indices = getDiffIndices(amyRandomAnswer, dbRandomAnswer)
 		if len(indices) > 0:
@@ -174,10 +175,8 @@ class Test_Waterstream_3_Water_5_8145(unittest.TestCase):
 class Test_Water_4_8145(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
-		# regenerate the CSV
-		os.system("python dealWithDBResults.py -o water_4_8145 -s upanddown")
 		cls.fileName = "water_4"
-		cls.answers = extractRows(cls.fileName)
+		cls.answers = runDBResults(cls.fileName,"8145")
 
 	def testRandom(self):
 		amyRandomAnswer = [25,25,25,25, 25,25,25,25, 33,33,33, 33,33,33, 50,50, 50,50]
@@ -221,10 +220,8 @@ class Test_Water_4_8145(unittest.TestCase):
 class Test_Screen_37_door_14_light_4_9406(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
-		# regenerate the CSV
-		os.system("python dealWithDBResults.py -o screen_37_door_14_light_4_9406 -s upanddown")
 		cls.fileName = "screen_37_door_14_light_4"
-		cls.answers = extractRows(cls.fileName)
+		cls.answers = runDBResults(cls.fileName,"9406")
 
 	def testRandom(self):
 		amyRandomAnswer = [25,25,25,25, 25,25,25,25, 25,25,25,25, 50,50, 50,50, 50,50, 25,25,25,25, 25,25,25,25, 25,25,25,25, 33,33,33, 33,33,33, 33,33,33, 25,25,25,25, 25,25,25,25, 25,25,25,25, 50,50, 50,50, 50,50]
@@ -269,9 +266,8 @@ class Test_light_8_screen_50_9404(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
 		# regenerate the CSV
-		os.system("python dealWithDBResults.py -o light_8_screen_50_9404 -s upanddown")
 		cls.fileName = "light_8_screen_50"
-		cls.answers = extractRows(cls.fileName)
+		cls.answers = runDBResults(cls.fileName,"9404")
 
 	def testRandom(self):
 		amyRandomAnswer = [25,25,25,25, 25,25,25,25, 50,50, 50,50, 25,25,25,25, 25,25,25,25, 50,50, 50,50]
@@ -316,9 +312,8 @@ class Test_door_4_trash_1_8145(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
 		# regenerate the CSV
-		os.system("python dealWithDBResults.py -o door_4_trash_1_8145 -s upanddown")
 		cls.fileName = "door_4_trash_1"
-		cls.answers = extractRows(cls.fileName)
+		cls.answers = runDBResults(cls.fileName,"8145")
 
 	def testRandom(self):
 		amyRandomAnswer = [25,25,25,25, 25,25,25,25, 25,25,25,25, 33,33,33, 33,33,33, 33,33,33, 33,33,33, 33,33,33, 33,33,33, 50,50, 50,50, 50,50]
@@ -362,10 +357,8 @@ class Test_door_4_trash_1_8145(unittest.TestCase):
 class Test_trash_10_phone_19_9404(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
-		# regenerate the CSV
-		os.system("python dealWithDBResults.py -o trash_10_phone_19_9404 -s upanddown")
 		cls.fileName = "trash_10_phone_19"
-		cls.answers = extractRows(cls.fileName)
+		cls.answers = runDBResults(cls.fileName,"9404",simplify=False)
 
 	def testRandom(self):
 		amyRandomAnswer = [33,33,33, 33,33,33, 33,33,33, 50,50, 50,50, 50,50, 25,25,25,25, 25,25,25,25, 25,25,25,25, -100,-100, -100,-100, -100,-100, 50,50, 50,50, 50,50]
