@@ -29,7 +29,7 @@ def getDiffIndices(list1, list2):
 	diffList = []
 	if len(list1) != len(list2):
 		raise InputError("Mismatched list lengths")
-	for ind in range(0,len(list1)-1):
+	for ind in range(0,len(list1)):
 		if list1[ind] != list2[ind]:
 			diffList.append(ind)
 	return diffList
@@ -73,6 +73,7 @@ class TestScreen45Trash8_9404Directly(unittest.TestCase):
 def innertest(answerSets, name, expected, excluding = list()):
 	answers = answerSets[name]
 	indices = getDiffIndices(expected, answers)
+	#raise Exception("INDICES ~ {}\nEXCLUDING ~ {}\n{}\n{}".format(indices,excluding,answers,expected))
 	nIgnoring = 0
 	if len(indices) > 0:
 		printText = ""
@@ -81,10 +82,10 @@ def innertest(answerSets, name, expected, excluding = list()):
 			if (ind in excluding) and (expected[ind] == 100) and (answers[ind] >= 100):
 				printText += "IGNORE BECAUSE AMY DIDN'T COUNT ACTIONS (AND IS SUFFICIENTLY OK FOR NOW) "
 				nIgnoring += 1
-			printText += "{}: Amy = {}, orig = {}".format(answerSets["nameRow"][ind], expected[ind], answers[ind])
+			printText += "{}: Amy = {}, {} = {}".format(answerSets["nameRow"][ind], expected[ind], name, answers[ind])
 			printText += "\n"
 	nErrors = len(indices)-nIgnoring
-	assert not nErrors, " -- Amy doesn't agree with the DB in the following {} spots:\n{}".format(nErrors, printText)
+	assert not nErrors, " -- Amy doesn't agree with the DB in the following {} spot{}:\n{}".format(nErrors, "s" if nErrors != 1 else "",printText)
 
 class Test_Screen_45_Trash_8(unittest.TestCase):
 	@classmethod
