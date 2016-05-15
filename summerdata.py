@@ -123,6 +123,9 @@ actionPairings = {
 	"door":(["standing_START","standing_END"],),
 	"light":(["pressbutton_START","pressbutton_END"],),
 	"trash":(["throwtrash_START","throwtrash_END"],),#["PICKUP TRASH]_START","[PICKUP TRASH]_END"],),
+	"phone":(["makecall_START","makecall_END"],),
+	"thirst":(["drink_START","drink_END"],),
+	"water":([],), # water on its own doesn't have an action. it's a combo of thirst action (drink subtracts from water level) and waterstream action (dispense adds to water level)
 }
 
 #water ~ wateraction_#_act_drink, wateraction_#_act_no_drink
@@ -137,6 +140,7 @@ actionPairings = {
 fluent_extensions = {
 	"water": ["thirst","cup",], # thirst_on, thirst_off
 	"waterstream": ["thirst","cup",], # thirst_on, thirst_off
+	"phone": ["PHONE_ACTIVE",],
 }
 
 
