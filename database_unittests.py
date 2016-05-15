@@ -34,6 +34,45 @@ def getDiffIndices(list1, list2):
 			diffList.append(ind)
 	return diffList
 
+class TestTrash10Phone19_9404Directly(unittest.TestCase):
+	@classmethod
+	def setUpClass(cls):
+		xml = """
+<temporal>
+        <fluent_changes>
+                <fluent_change energy="60.281" fluent="PHONE_ACTIVE" frame="0" new_value="off"/>
+                <fluent_change energy="60.281" fluent="PHONE_ACTIVE" frame="3890" new_value="on" old_value="off"/>
+                <fluent_change energy="60.281" fluent="PHONE_ACTIVE" frame="3990" new_value="off" old_value="on"/>
+        </fluent_changes>
+        <actions>
+                <event action="makecall_START" energy="60.281" frame="3718"/>
+                <event action="makecall_END" energy="60.281" frame="3767"/>
+        </actions>
+</temporal>"""
+		cls.parsexml = ET.fromstring(xml)
+	
+	def innertestAnswers(self,expected,answers):
+		returned = {k:answers[k] for k in expected}
+		assert expected == returned, "{} [returned] != {} [expected]".format(returned,expected)
+
+	def getAnswersForFrames(self,frame1,frame2):
+		return xml_stuff.queryXMLForAnswersBetweenFrames(self.parsexml, "phone", frame1, frame2, "causalgrammar", dumb=True)
+
+	def test3663(self):
+		answers = self.getAnswersForFrames(3663,3764)
+		self.innertestAnswers({'phone_3663_off_active':0, 'phone_3663_active_off':0, 'phone_3663_active':0,'phone_3663_off':100},answers)
+
+	def test3764(self):
+		answers = self.getAnswersForFrames(3764,3858)
+		self.innertestAnswers({'phone_3764_off_active':0, 'phone_3764_active_off':0, 'phone_3764_active':0,'phone_3764_off':100},answers)
+
+	def test3858(self):
+		answers = self.getAnswersForFrames(3858,10000)
+		self.innertestAnswers({'phone_3858_off_active':100, 'phone_3858_active_off':100, 'phone_3858_active':0,'phone_3858_off':0},answers)
+
+
+
+
 class TestScreen45Trash8_9404Directly(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):

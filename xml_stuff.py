@@ -401,7 +401,7 @@ def buildDictForDumbFluentBetweenFramesIntoResults(xml,fluent,onsoffs,frame1,fra
 				#	if debugQuery:
 				#		print("+ frame {}: still: {}".format(frame,new_value))
 				#	continue
-				if new_value == 'on':
+				if new_value == "on": #NOT "onsoffs".
 					off_on += 100
 				else:
 					on_off += 100
@@ -493,6 +493,9 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 		tmpoject = oject
 		oject = "_".join((tmpoject,"MORE"))
 		oject2 = "_".join((tmpoject,"LESS"))
+	elif oject == "phone":
+		tmpoject = oject
+		oject = "PHONE_ACTIVE"
 	if dumb:
 		result = buildDictForDumbFluentBetweenFramesIntoResults(xml,oject,onsoffs,frame1,frame2)
 		if oject2:
@@ -501,6 +504,9 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 		result = buildDictForFluentBetweenFramesIntoResults(xml,oject,onsoffs,frame1,frame2)
 		if oject2:
 			result2 = buildDictForFluentBetweenFramesIntoResults(xml,oject2,onsoffs,frame1,frame2)
+	if tmpoject == "phone":
+		result = {k.replace(oject,tmpoject):result[k] for k in result}
+		oject = tmpoject
 	if tmpoject == "trash":
 		resultkeys = result.keys()
 		tmpresult = result
