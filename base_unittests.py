@@ -72,6 +72,13 @@ class LightingTestCaseFirstOfTwoActions(unittest.TestCase):
 		assert action.attrib['action'] == 'FLIPSWITCH', "found wrong action, how did that happen!? ~ {}".format(cls.xml_string)
 		assert abs(float(action.attrib['energy'])-energy) < .000001, "wrong energy ~ {} != expected {}".format(action.attrib['energy'],energy)
 
+	def testFluentChangeAt6(self):
+		light_6 = self.root.findall("./fluent_changes/fluent_change[@frame='6']")
+		assert light_6, "should have decided light change off to on at 6, no change decided"
+		assert light_6[0].attrib['new_value'] == 'on', "should have decided light change to on at 6; was: {}".format(light_6[0].attrib['new_value'])
+
+
+
 # the ideal result: takes the second action because it has lower energy
 class LightingTestCaseSecondOfTwoActions(unittest.TestCase):
 
