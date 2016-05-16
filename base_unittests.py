@@ -64,18 +64,20 @@ class LightingTestCaseFirstOfTwoActions(unittest.TestCase):
 		#assert action, "should have found action at frame 4; instead got {}".format(self.xml_string)
 		#TODO: we don't xml out the individual energies, just the whole energy, so we're going to leave this a little fragile for now
 		#energy = causal_grammar.probability_to_energy(.9)
-		energy = 19.365
 		action = self.root.findall("./actions/event")
 		assert action, "did not complete with /any/ action"
 		assert len(action) == 1, "found multiple actions ~ {}".format(cls.xml_string)
 		action = action[0]
 		assert action.attrib['action'] == 'FLIPSWITCH', "found wrong action, how did that happen!? ~ {}".format(cls.xml_string)
-		assert abs(float(action.attrib['energy'])-energy) < .000001, "wrong energy ~ {} != expected {}".format(action.attrib['energy'],energy)
 
 	def testFluentChangeAt6(self):
 		light_6 = self.root.findall("./fluent_changes/fluent_change[@frame='6']")
 		assert light_6, "should have decided light change off to on at 6, no change decided"
 		assert light_6[0].attrib['new_value'] == 'on', "should have decided light change to on at 6; was: {}".format(light_6[0].attrib['new_value'])
+
+	def testEnergy(self):
+		light_6 = self.root.findall("./fluent_changes/fluent_change[@frame='6']")
+		assert abs(float(light_6[0].attrib['energy']) - 18.55412812) < 0.000001, "should have energy 18.55412812; was: {}".format(light_6[0].attrib['energy'])
 
 
 # the ideal result: takes the second action because it has lower energy
@@ -102,18 +104,20 @@ class LightingTestCaseSecondOfTwoActions(unittest.TestCase):
 		#assert action, "should have found action at frame 5; instead got {}".format(self.xml_string)
 		#TODO: we don't xml out the individual energies, just the whole energy, so we're going to leave this a little fragile for now
 		#energy = causal_grammar.probability_to_energy(.9)
-		energy = 19.365
 		action = self.root.findall("./actions/event")
 		assert action, "did not complete with /any/ action"
 		assert len(action) == 1, "found multiple actions ~ {}".format(cls.xml_string)
 		action = action[0]
 		assert action.attrib['action'] == 'FLIPSWITCH', "found wrong action, how did that happen!? ~ {}".format(cls.xml_string)
-		assert abs(float(action.attrib['energy'])-energy) < .000001, "wrong energy ~ {} != expected {}".format(action.attrib['energy'],energy)
 
 	def testFluentChangeAt6(self):
 		light_6 = self.root.findall("./fluent_changes/fluent_change[@frame='6']")
 		assert light_6, "should have decided light change off to on at 6, no change decided"
 		assert light_6[0].attrib['new_value'] == 'on', "should have decided light change to on at 6; was: {}".format(light_6[0].attrib['new_value'])
+
+	def testEnergy(self):
+		light_6 = self.root.findall("./fluent_changes/fluent_change[@frame='6']")
+		assert abs(float(light_6[0].attrib['energy']) - 18.55412812) < 0.000001, "should have energy 18.55412812; was: {}".format(light_6[0].attrib['energy'])
 
 
 ######################## TEST CLASS: 2 FLUENTS, 2nd IS CORRECT ###################
@@ -194,6 +198,46 @@ class LightingTestCaseExactActionTime2ndOf2Fluents(unittest.TestCase):
 	def testActionTooLate(self):
 		action_occurrences = xml_stuff.queryXMLForActionBetweenFrames(self.root,"FLIPSWITCH",5,15)
 		assert (not action_occurrences), "should have had no action after 5; n times action occurred: {}".format(action_occurrences)
+
+
+########## CLASS: ADDED A 3rd FLUENT DETECTION ##########
+class Lighting2ndOf2FluentsWith3rdFluent(unittest.TestCase):
+
+	@classmethod
+	def setUpClass(cls):
+		fluents_simple_light = {
+			6:  { "light": causal_grammar.probability_to_energy(.6)}, #light turns on at 6 -- energy = .51
+			8:  { "light": causal_grammar.probability_to_energy(.9)}, #light turns on at 8 -- energy = .11
+			28:  { "light": causal_grammar.probability_to_energy(.1)}, #light turns on at 8 -- energy = .11
+		}
+		actions_simple_light = {
+			5:  { "FLIPSWITCH": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} }, #energy = .11
+			25:  { "FLIPSWITCH": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} }, #energy = .11
+		}
+		xml_string = causal_grammar.process_events_and_fluents(causal_forest_light, fluents_simple_light, actions_simple_light, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,not kDebug, handle_overlapping_events = True) # !kDebug: suppress output
+		cls.root = ET.fromstring(xml_string)
+		if kDebug:
+			print(xml_string)
+
+	def testFluentChangeAt8(self):
+		light_8 = self.root.findall("./fluent_changes/fluent_change[@frame='8']")
+		assert light_8, "should have decided light change off to on at 8, no change decided"
+		assert light_8[0].attrib['new_value'] == 'on', "should have decided light change to on at 8; was: {}".format(light_8[0].attrib['new_value'])
+
+	def testFluentChangeAt28(self):
+		light_28 = self.root.findall("./fluent_changes/fluent_change[@frame='28']")
+		assert light_28, "should have decided light change on to off at 28, no change decided"
+		assert light_28[0].attrib['new_value'] == 'off', "should have decided light change to off at 28; was: {}".format(light_28[0].attrib['new_value'])
+
+	def testActionAt25(self):
+		action_occurrences = xml_stuff.queryXMLForActionBetweenFrames(self.root,"FLIPSWITCH",24,26)
+		assert (action_occurrences), "should have had action at 25; n times action occurred: {}".format(action_occurrences)
+		assert (action_occurrences < 2), "should have had action at 25; n times action occurred: {}".format(action_occurrences)
+
+	def testActionAt5(self):
+		action_occurrences = xml_stuff.queryXMLForActionBetweenFrames(self.root,"FLIPSWITCH",4,6)
+		assert (action_occurrences), "should have had action at 5; n times action occurred: {}".format(action_occurrences)
+		assert (action_occurrences < 2), "should have had action at 5; n times action occurred: {}".format(action_occurrences)
 
 
 ######################## NEW TEST CLASS: 2 FLUENTS, 1st IS CORRECT ###################
