@@ -711,6 +711,9 @@ class SummerdataDoor1TestCases(unittest.TestCase):
 		door_changes = xml_stuff.getFluentChangesForFluentBetweenFrames(self.causal_xml, 'door', 0, 350)
 		assert len(door_changes)==1, "found {} unexpected changes before frame {}".format(len(door_changes),frame)
 
+	def testActionJustRight(self):
+		action_occurrences = xml_stuff.queryXMLForActionBetweenFrames(self.causal_xml,"standing_START",295,297)
+		assert (action_occurrences), "should have had action at 295; n times action occurred: {}".format(action_occurrences)
 
 # TODO: test "nonevent" does what i really want
 # TODO: make sure not averaging to calculate mismatched number of nodes -- need the probabilities to appropriately compensate for that
