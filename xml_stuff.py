@@ -515,8 +515,10 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 		result[tmpoject + "_" + str(frame1) + "_more"] = 0
 		result[tmpoject + "_" + str(frame1) + "_same"] = 0
 		if source.startswith('causal'):
-			result[tmpoject + "_" + str(frame1) + "_more"] = tmpresult[oject + "_" + str(frame1) + "_off_on"] + tmpresult[oject + "_" + str(frame1) + "_on"]
-			result[tmpoject + "_" + str(frame1) + "_same"] = tmpresult[oject + "_" + str(frame1) + "_on_off"] + tmpresult[oject + "_" + str(frame1) + "_off"]
+			#result[tmpoject + "_" + str(frame1) + "_more"] = tmpresult[oject + "_" + str(frame1) + "_off_on"] + tmpresult[oject + "_" + str(frame1) + "_on"]
+			#result[tmpoject + "_" + str(frame1) + "_same"] = tmpresult[oject + "_" + str(frame1) + "_on_off"] + tmpresult[oject + "_" + str(frame1) + "_off"]
+			result[tmpoject + "_" + str(frame1) + "_more"] = tmpresult[oject + "_" + str(frame1) + "_off_on"]
+			result[tmpoject + "_" + str(frame1) + "_same"] = 100 - tmpresult[oject + "_" + str(frame1) + "_off_on"]
 		oject = tmpoject
 	elif oject == "waterstream":
 		# we only did "on" and "off" with waterstream
@@ -534,10 +536,16 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 		LESS_offon = result2["_".join((oject2,str(frame1),"off","on"))]
 		LESS_on = result2["_".join((oject2,str(frame1),"on"))]
 		oject = tmpoject
+		## NO BAD WRONG
+		#result = {
+		#	"_".join((oject,str(frame1),"more")): MORE_on + MORE_offon,
+		#	"_".join((oject,str(frame1),"less")): LESS_on + LESS_offon,
+		#	"_".join((oject,str(frame1),"same")): max(0,100-(MORE_on+MORE_offon)-(LESS_on+LESS_offon)),
+		#}
 		result = {
-			"_".join((oject,str(frame1),"more")): MORE_on + MORE_offon,
-			"_".join((oject,str(frame1),"less")): LESS_on + LESS_offon,
-			"_".join((oject,str(frame1),"same")): max(0,100-(MORE_on+MORE_offon)-(LESS_on+LESS_offon)),
+			"_".join((oject,str(frame1),"more")): MORE_offon,
+			"_".join((oject,str(frame1),"less")): LESS_offon,
+			"_".join((oject,str(frame1),"same")): max(0,100-(MORE_offon)-(LESS_offon)),
 		}
 	if oject != "water": # just ... don't even ... yeah.
 		retval.update(result)

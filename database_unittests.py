@@ -76,26 +76,19 @@ class TestWaterstream3Water5_8145Directly(unittest.TestCase):
 		causal_xml = """
 <temporal>
         <fluent_changes>
-                <fluent_change energy="92.684" fluent="door" frame="0" new_value="on"/>
-                <fluent_change energy="17.022" fluent="PHONE_ACTIVE" frame="0" new_value="off"/>
-                <fluent_change energy="16.511" fluent="cup_LESS" frame="0" new_value="off"/>
-                <fluent_change energy="70.972" fluent="screen" frame="0" new_value="on"/>
                 <fluent_change energy="54.701" fluent="cup_MORE" frame="0" new_value="off"/>
                 <fluent_change energy="54.701" fluent="cup_MORE" frame="498" new_value="on" old_value="off"/>
+                <fluent_change energy="16.511" fluent="cup_LESS" frame="0" new_value="off"/>
                 <fluent_change energy="17.609" fluent="thirst" frame="0" new_value="on"/>
-                <fluent_change energy="37.427" fluent="trash_MORE" frame="0" new_value="off"/>
-                <fluent_change energy="37.427" fluent="trash_MORE" frame="593" new_value="on" old_value="off"/>
-                <fluent_change energy="17.204" fluent="light" frame="0" new_value="on"/>
-                <fluent_change energy="16.511" fluent="TRASH_LESS" frame="0" new_value="off"/>
                 <fluent_change energy="74.961" fluent="waterstream" frame="0" new_value="on"/>
                 <fluent_change energy="74.961" fluent="waterstream" frame="551" new_value="off" old_value="on"/>
         </fluent_changes>
         <actions>
                 <event action="benddown_END" energy="54.701" frame="548"/>
-                <event action="throwtrash_END" energy="37.427" frame="575"/>
                 <event action="benddown_END" energy="74.961" frame="548"/>
         </actions>
-</temporal>"""
+</temporal>
+"""
 		orig_xml = """<temporal><fluent_changes><fluent_change energy="0.0989533079441" fluent="door" frame="443" new_value="off" old_value="on" /><fluent_change energy="0.0110478028553" fluent="screen" frame="419" new_value="off" old_value="on" /><fluent_change energy="0.0513722448725" fluent="screen" frame="512" new_value="on" old_value="off" /></fluent_changes><actions>
 	<event action="benddown_END" energy="0.348902" frame="496" />
 	<event action="benddown_END" energy="0.342847" frame="497" />
@@ -362,13 +355,17 @@ class TestWaterstream3Water5_8145Directly(unittest.TestCase):
 		returned = {k:answers[k] for k in expected}
 		assert expected == returned, "{} [returned] != {} [expected]".format(returned,expected)
 
-	def getAnswersForFrames(self,xml,name,frame1,frame2):
-		return xml_stuff.queryXMLForAnswersBetweenFrames(xml, "waterstream", frame1, frame2, name, dumb=True)
+	def getAnswersForFrames(self,xml,name,oject,frame1,frame2):
+		return xml_stuff.queryXMLForAnswersBetweenFrames(xml, oject, frame1, frame2, name, dumb=True)
 
 	#cutpoints: 415, 515, ...
 	def test515(self):
-		answers = self.getAnswersForFrames(self.parse_origxml,"origdata",515,10000)
-		self.innertestAnswers({'dispense_515_act_dispensed':100, 'dispense_515_act_no_dispense':0},answers)
+		answers = self.getAnswersForFrames(self.parse_origxml,"origdata","waterstream",515,10000)
+		self.innertestAnswers({'dispense_515_act_dispensed':0, 'dispense_515_act_no_dispense':100},answers)
+
+	def test515_cup_causal(self):
+		answers = self.getAnswersForFrames(self.parse_causalxml,"causalgrammar","cup",515,10000)
+		self.innertestAnswers({'cup_515_more': 0, 'cup_515_less': 0, 'cup_515_same': 100}, answers)
 
 class TestScreen45Trash8_9404Directly(unittest.TestCase):
 	@classmethod
