@@ -903,7 +903,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		results_for_xml_output.append(copy.deepcopy(result))
 	try:
 		if len(results_for_xml_output[0]) > 0:
-			results_for_xml_output = sorted(results_for_xml_output, key = lambda(k): k[0][0][1])
+			results_for_xml_output = sorted(results_for_xml_output, key = lambda(k): (k[0][0][1] / len(k[0][0][0])))
 	except IndexError as ie:
 		print("INDEX OUT OF RANGE AGAINST {}".format(results_for_xml_output))
 		raise ie
