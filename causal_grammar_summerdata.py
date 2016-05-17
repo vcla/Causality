@@ -167,7 +167,7 @@ abbreviated_summerdata_grammar = [
 			# inertially ON
 			("and", False, False, .34, False, [
 					("leaf", "prev_fluent", "door_on", False, False, False),
-					("leaf", "nonevent", "standing_END", False, 10, False),
+					#("leaf", "nonevent", "standing_END", False, 1, False),
 				]
 			),
 			# causally ON -- open from this side
@@ -189,13 +189,13 @@ abbreviated_summerdata_grammar = [
 			# inertially OFF
 			("and", False, False, .34, False, [
 					("leaf", "prev_fluent", "door_off", False, False, False),
-					("leaf", "nonevent", "standing_START", False, 10, False), # TODO: make ONGOING nonaction
+					#("leaf", "nonevent", "standing_START", False, 1, False), # TODO: make ONGOING nonaction
 				]
 			),
 			# causally OFF -- close and go through
 			("and", False, False, .33, False, [
 					("leaf", "prev_fluent", "door_on", False, False, False),
-					("leaf", "event", "standing_END", False, 25, False),
+					("leaf", "event", "standing_END", False, 20, False),
 				]
 			),
 			# causally OFF -- close and stay in room

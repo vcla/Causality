@@ -1193,11 +1193,14 @@ def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 	actions_el = ET.SubElement(temporal,"actions")
 	seen = [] # keeping track of whether we've seen a fluent and thus have included its initial state
 	for chainx in all_chains:
+		#print("CHAINX: {}".format(chainx)) # there is only one of these
 		energy = chainx[0][1]
 		chain = chainx[0][0]
 		for instance in chain:
+			#print("INSTANCE: {}".format(instance))
 			frame_number = instance[0]
 			parse_id = instance[1]
+			events = instance[2]
 			parse = parse_array[parse_id]
 			# get fluents where there's a prev-fluent and fluent.  or just stick with top level?
 			if not suppress_output:
@@ -1233,7 +1236,8 @@ def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 				# serious unpacking here
 				chainx_actions = {y[0][0]:y[0][1] for y in [[[z,list(y[2][z])[0]] for z in y[2]] for y in chainx[0][0]] if y != []}
 				for action in actions:
-					action_frame = chainx_actions[action] if action in chainx_actions else frame_number
+					#action_frame = chainx_actions[action] if action in chainx_actions else frame_number
+					action_frame = list(events[action])[0] if action in events else frame_number
 					action_el = ET.SubElement(actions_el,"event", {
 						"frame": str(action_frame),
 						"energy": str(energy),

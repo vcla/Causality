@@ -521,10 +521,16 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 			result[tmpoject + "_" + str(frame1) + "_same"] = 100 - tmpresult[oject + "_" + str(frame1) + "_off_on"]
 		oject = tmpoject
 	elif oject == "waterstream":
-		# we only did "on" and "off" with waterstream
-		for key in result.keys():
-			if key.endswith("water_on_water_off") or key.endswith("water_off_water_on"):
-				result.pop(key,None)
+		# we only did "on" and "off" with waterstream in the db; but we only get changes from causal
+		# so if it's on->off, call it off; if it's off->on, call it on
+		# irrelevant for origdata because origdata has no detections
+		result = {
+				"_".join((oject,str(frame1),"water_on")): result["_".join((oject,str(frame1),"water_off_water_on"))],
+				"_".join((oject,str(frame1),"water_off")): result["_".join((oject,str(frame1),"water_on_water_off"))],
+					}
+		#for key in result.keys():
+		#	if not (key.endswith("water_on_water_off") or key.endswith("water_off_water_on")):
+		#		result.pop(key,None)
 	elif tmpoject == "cup":
 		#turn "off", "on_off", "on", "off_on" into "_same", "_less", "_more"
 		MORE_off = result["_".join((oject,str(frame1),"off"))]

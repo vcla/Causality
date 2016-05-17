@@ -367,6 +367,10 @@ class TestWaterstream3Water5_8145Directly(unittest.TestCase):
 		answers = self.getAnswersForFrames(self.parse_causalxml,"causalgrammar","cup",515,10000)
 		self.innertestAnswers({'cup_515_more': 0, 'cup_515_less': 0, 'cup_515_same': 100}, answers)
 
+	def test515_waterstream_causal(self):
+		answers = self.getAnswersForFrames(self.parse_causalxml,"causalgrammar","waterstream",515,10000)
+		self.innertestAnswers({'waterstream_515_water_off': 100, 'waterstream_515_water_on': 0}, answers)
+
 class TestScreen45Trash8_9404Directly(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
