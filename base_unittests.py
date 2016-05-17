@@ -200,6 +200,46 @@ class LightingTestCaseExactActionTime2ndOf2Fluents(unittest.TestCase):
 		assert (not action_occurrences), "should have had no action after 5; n times action occurred: {}".format(action_occurrences)
 
 
+########## CLASS: 2 actions 2 fluents ##########
+class Lighting2Actions2Fluents(unittest.TestCase):
+
+	@classmethod
+	def setUpClass(cls):
+		fluents_simple_light = {
+			6:  { "light": causal_grammar.probability_to_energy(.1)}, #light turns off at 6 -- energy = .51
+			8:  { "light": causal_grammar.probability_to_energy(.9)}, #light turns on at 8 -- energy = .11
+		}
+		actions_simple_light = {
+			5:  { "FLIPSWITCH": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} }, #energy = .11
+			7:  { "FLIPSWITCH": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} }, #energy = .11
+		}
+		xml_string = causal_grammar.process_events_and_fluents(causal_forest_light, fluents_simple_light, actions_simple_light, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,not kDebug, handle_overlapping_events = True) # !kDebug: suppress output
+		cls.root = ET.fromstring(xml_string)
+		if kDebug:
+			print(xml_string)
+
+	def testFluentChangeAt6(self):
+		light_6 = self.root.findall("./fluent_changes/fluent_change[@frame='6']")
+		assert light_6, "should have decided light change on to off at 6, no change decided"
+		assert light_6[0].attrib['new_value'] == 'off', "should have decided light change to off at 6; was: {}".format(light_6[0].attrib['new_value'])
+
+	def testFluentChangeAt8(self):
+		light_8 = self.root.findall("./fluent_changes/fluent_change[@frame='8']")
+		assert light_8, "should have decided light change off to on at 8, no change decided"
+		assert light_8[0].attrib['new_value'] == 'on', "should have decided light change to on at 8; was: {}".format(light_8[0].attrib['new_value'])
+
+	def testActionAt5(self):
+		action_occurrences = xml_stuff.queryXMLForActionBetweenFrames(self.root,"FLIPSWITCH",4,6)
+		assert (action_occurrences), "should have had action at 5; n times action occurred: {}".format(action_occurrences)
+		assert (action_occurrences < 2), "should have had action at 5; n times action occurred: {}".format(action_occurrences)
+
+	def testActionAt7(self):
+		action_occurrences = xml_stuff.queryXMLForActionBetweenFrames(self.root,"FLIPSWITCH",6,8)
+		assert (action_occurrences), "should have had action at 7; n times action occurred: {}".format(action_occurrences)
+		assert (action_occurrences < 2), "should have had action at 7; n times action occurred: {}".format(action_occurrences)
+
+
+
 ########## CLASS: ADDED A 3rd FLUENT DETECTION ##########
 class Lighting2ndOf2FluentsWith3rdFluent(unittest.TestCase):
 
