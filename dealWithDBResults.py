@@ -6,6 +6,7 @@ from xml.dom import minidom
 import videoCutpoints
 import xml_stuff
 import summerdata
+import gc
 
 import sqlite3
 DBTYPE_MYSQL = "mysql"
@@ -312,6 +313,7 @@ def processAndUploadExamples(directory,examples,conn,simplify=False):
 			completed.append("{}-{}".format(example,'random'))
 		else:
 			oject_failed.append("{}-{}".format(example,'random'))
+		gc.collect()
 	print("COMPLETED: {}".format(completed))
 	if oject_failed:
 		print("SKIPPED DUE TO OBJECT: {}".format(oject_failed))
