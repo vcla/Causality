@@ -13,9 +13,18 @@ kActionDetections = 'results/CVPR2012_reverse_slidingwindow_10_action_detection_
 
 # These thresholds tuned for this fluent data because it's not "flipping between on and off", it's 
 # flipping "did transition closed to on" and "didn't transition closed to on"
+
+# 40/60
+#causal_grammar.kFluentThresholdOnEnergy = 0.510825
+#causal_grammar.kFluentThresholdOffEnergy = 0.91629
+
+# 45/55
+#causal_grammar.kFluentThresholdOnEnergy = 0.597837
+#causal_grammar.kFluentThresholdOffEnergy = 0.798507
+
+# 49.7997769 / 50.1977490468
 causal_grammar.kFluentThresholdOnEnergy = 0.6892
 causal_grammar.kFluentThresholdOffEnergy = 0.6972
-
 
 # note that "negative" action must be the last one sepecified for proper P/R and there must be only one "no action"
 # TODO: above note taken from analyzeData-nearesthuman-pr.py which still needs to be refactored appropriately
