@@ -46,11 +46,11 @@ class LightingTestCaseFirstOfTwoActions(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
 		fluents_simple_light = {
-			6:  { "light": causal_grammar.probability_to_energy(.6)}, #light turns on at 6 -- energy = .51
+			6:  { "light": causal_grammar.probability_to_energy(.7)}, #light turns on at 6 -- energy = .36
 		}
 		actions_simple_light = {
 			4:  { "FLIPSWITCH": {"energy": causal_grammar.probability_to_energy(.9), "agent": ("uuid4")} }, #energy = .11
-			5:  { "FLIPSWITCH": {"energy": causal_grammar.probability_to_energy(.6), "agent": ("uuid4")} }, #energy = .51
+			5:  { "FLIPSWITCH": {"energy": causal_grammar.probability_to_energy(.7), "agent": ("uuid4")} }, #energy = .36
 		}
 		xml_string = causal_grammar.process_events_and_fluents(causal_forest_light, fluents_simple_light, actions_simple_light, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy,not kDebug, handle_overlapping_events = True) # !kDebug: suppress output
 		cls.root = ET.fromstring(xml_string)
@@ -77,7 +77,7 @@ class LightingTestCaseFirstOfTwoActions(unittest.TestCase):
 
 	def testEnergy(self):
 		light_6 = self.root.findall("./fluent_changes/fluent_change[@frame='6']")
-		assert abs(float(light_6[0].attrib['energy']) - 18.55412812) < 0.000001, "should have energy 18.55412812; was: {}".format(light_6[0].attrib['energy'])
+		assert abs(float(light_6[0].attrib['energy']) - 18.24582676) < 0.001, "should have energy 18.24582676; was: {}".format(light_6[0].attrib['energy'])
 
 
 # the ideal result: takes the second action because it has lower energy
@@ -117,7 +117,7 @@ class LightingTestCaseSecondOfTwoActions(unittest.TestCase):
 
 	def testEnergy(self):
 		light_6 = self.root.findall("./fluent_changes/fluent_change[@frame='6']")
-		assert abs(float(light_6[0].attrib['energy']) - 18.55412812) < 0.000001, "should have energy 18.55412812; was: {}".format(light_6[0].attrib['energy'])
+		assert abs(float(light_6[0].attrib['energy']) - 18.55412812) < 0.001, "should have energy 18.55412812; was: {}".format(light_6[0].attrib['energy'])
 
 
 ######################## TEST CLASS: 2 FLUENTS, 2nd IS CORRECT ###################
