@@ -47,8 +47,13 @@ kNonActionPenaltyEnergy = 0. # TODO: need to validate; kind of matches a penalty
 
 # TODO: REMEMBER THAT THESE CAN BE/ARE OVERRIDDEN BY SUMMERDATA!!!!! TODO
 # these are used to keep something that's flipping "around" 50% to not keep triggering fluent changes TODO: no they're not. but they are used in dealWithDbResults for posting "certain" results to the database... and they're passed into the main causal_grammar fn as fluent_on_probability and fluent_off_probability
-kFluentThresholdOnEnergy = 0.36 # TODO: may want to tune: 0.36 = 0.7 probability
-kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
+#kFluentThresholdOnEnergy = 0.36 # TODO: may want to tune: 0.36 = 0.7 probability
+#kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
+
+#from summerdata, these are performing well over there....
+kFluentThresholdOnEnergy = 0.6892 # 49.7997769
+kFluentThresholdOffEnergy = 0.6972 # 50.1977490468
+
 kReportingThresholdEnergy = 0.5 # TODO: may want to tune
 kDefaultEventTimeout = 10 # shouldn't need to tune because this should be tuned in grammar
 kFilterNonEventTriggeredParseTimeouts = False # what the uber-long variable name implies
