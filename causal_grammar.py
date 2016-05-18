@@ -45,6 +45,7 @@ kUnknownEnergy = 8.0 #0.7 # TODO: may want to tune
 kZeroProbabilityEnergy = 10.0 # TODO: may want to tune: 10.0 = very low
 kNonActionPenaltyEnergy = 0. # TODO: need to validate; kind of matches a penalty energy in readActionResults of parsingSummerActionAndFluentOutput
 
+# TODO: REMEMBER THAT THESE CAN BE/ARE OVERRIDDEN BY SUMMERDATA!!!!! TODO
 # these are used to keep something that's flipping "around" 50% to not keep triggering fluent changes TODO: no they're not. but they are used in dealWithDbResults for posting "certain" results to the database... and they're passed into the main causal_grammar fn as fluent_on_probability and fluent_off_probability
 kFluentThresholdOnEnergy = 0.36 # TODO: may want to tune: 0.36 = 0.7 probability
 kFluentThresholdOffEnergy = 1.2 # TODO: may want to tune: 1.2 = 0.3 probability
@@ -967,12 +968,14 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 					fluent_hash[fluent_on_name]["status"] = kFluentStatusOffToOn
 					fluent_hash[fluent_off_name]["energy"] = kZeroProbabilityEnergy
 					fluent_hash[fluent_off_name]["status"] = kFluentStatusOffToOn
-				else:
+				elif fluent_on_energy > fluent_threshold_off_energy:
 					# on to off!
 					fluent_hash[fluent_off_name]["energy"] = opposite_energy(fluent_on_energy)
 					fluent_hash[fluent_off_name]["status"] = kFluentStatusOnToOff
 					fluent_hash[fluent_on_name]["energy"] = kZeroProbabilityEnergy
 					fluent_hash[fluent_on_name]["status"] = kFluentStatusOnToOff
+				else:
+					continue
 				# go through all parses that this fluent touches, or its inverse
 				for parse_id in parse_id_hash_by_fluent[fluent_on_name] + parse_id_hash_by_fluent[fluent_off_name]:
 					if parse_id not in active_parse_trees:
