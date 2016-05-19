@@ -128,7 +128,8 @@ onsoffs["cup"] = ["on","off"] # gleep; do we not need cup_MORE, cup_LESS? action
 actionPairings = {
 	"screen":(["usecomputer_START","usecomputer_END"],),
 	"cup":(["benddown_START","benddown_END"],["drink_START","drink_END"]),
-	"waterstream":(["benddown_START","benddown_END"],["drink_START","drink_END"]),
+	"waterstream":(["benddown_START","benddown_END"],),
+	#"waterstream":(["benddown_START","benddown_END"],["drink_START","drink_END"]),
 	"door":(["standing_START","standing_END"],),
 	"light":(["pressbutton_START","pressbutton_END"],),
 	"trash":(["throwtrash_START","throwtrash_END"],),#["PICKUP TRASH]_START","[PICKUP TRASH]_END"],),

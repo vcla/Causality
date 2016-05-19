@@ -521,16 +521,34 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 			result[tmpoject + "_" + str(frame1) + "_same"] = 100 - tmpresult[oject + "_" + str(frame1) + "_off_on"]
 		oject = tmpoject
 	elif oject == "waterstream":
+		# we only did "on" and "off" with waterstream
+		"""
 		# we only did "on" and "off" with waterstream in the db; but we only get changes from causal
 		# so if it's on->off, call it off; if it's off->on, call it on
 		# irrelevant for origdata because origdata has no detections
 		result = {
-				"_".join((oject,str(frame1),"water_on")): result["_".join((oject,str(frame1),"water_off_water_on"))],
-				"_".join((oject,str(frame1),"water_off")): result["_".join((oject,str(frame1),"water_on_water_off"))],
-					}
-		#for key in result.keys():
-		#	if not (key.endswith("water_on_water_off") or key.endswith("water_off_water_on")):
-		#		result.pop(key,None)
+		"_".join((oject,str(frame1),"water_on")): result["_".join((oject,str(frame1),"water_off_water_on"))],
+		"_".join((oject,str(frame1),"water_off")): result["_".join((oject,str(frame1),"water_on_water_off"))],
+		}
+		"""
+		# ANOTHER WRONG APPROACH, BUT IT'S THE BEST WE'VE GOT SO FAR
+		"""
+		for key in result.keys():
+			if key.endswith("water_on_water_off") or key.endswith("water_off_water_on"):
+				result.pop(key,None)
+		"""
+		# ALTERNATE APPROACH: if waterstream turns on inside interval at all, choose "ON"; else "OFF"
+		# THIS ONE'S GOOD! :D
+		changes = getFluentChangesForFluentBetweenFrames(xml,"waterstream",frame1,frame2)
+		turnedon = False
+		for change in changes:
+			if change.attrib['new_value'] == "on":
+				turnedon = True
+				break
+		result = {
+		"_".join((oject,str(frame1),"water_on")): 100 if turnedon else 0,
+		"_".join((oject,str(frame1),"water_off")): 0 if turnedon else 100,
+		}
 	elif tmpoject == "cup":
 		#turn "off", "on_off", "on", "off_on" into "_same", "_less", "_more"
 		MORE_off = result["_".join((oject,str(frame1),"off"))]
@@ -596,7 +614,8 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 		# act_no_call, act_received_call 
 		result = {"act_no_call":0, "act_received_call":0}
 		# don't need to worry about end
-		count = queryXMLForActionBetweenFrames(xml,"makecall_START",frame1,frame2)
+		#count = queryXMLForActionBetweenFrames(xml,"makecall_START",frame1,frame2)
+		count = queryXMLForActionsBetweenFrames(xml,actionpairings,frame1,frame2)
 		if count:
 			result['act_received_call'] = 100 * count
 		else:
@@ -618,14 +637,16 @@ def queryXMLForAnswersBetweenFrames(xml,oject,frame1,frame2,source,dumb=False):
 			result["act_no_drink"] = 100
 	elif oject == "waterstream":
 		result = {"act_dispensed": 0, "act_no_dispense": 0}
-		count = queryXMLForActionBetweenFrames(xml,"benddown_START",frame1,frame2)
+		#count = queryXMLForActionBetweenFrames(xml,"benddown_START",frame1,frame2)
+		count = queryXMLForActionsBetweenFrames(xml,actionpairings,frame1,frame2)
 		if count:
 			result["act_dispensed"] = 100 * count
 		else:
 			result["act_no_dispense"] = 100
 	elif oject == "trash":
 		result = {"act_benddown": 0, "act_no_benddown": 0}
-		count = queryXMLForActionBetweenFrames(xml,"throwtrash_END",frame1,frame2)
+		#count = queryXMLForActionBetweenFrames(xml,"throwtrash_END",frame1,frame2)
+		count = queryXMLForActionsBetweenFrames(xml,actionpairings,frame1,frame2)
 		if count:
 			result["act_benddown"] = 100 * count
 		else:

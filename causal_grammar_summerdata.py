@@ -133,13 +133,13 @@ abbreviated_summerdata_grammar = [
 	# WATER STREAM ON
 	("root", "fluent", "waterstream_on", .4, False, [
 			# ON INERTIALLY
-			("and", False, False, .6, False, [
+			("and", False, False, .01, False, [
 					("leaf", "prev_fluent", "waterstream_on", False, False, False),
 					("leaf", "nonevent", "benddown_END", False, 1, False), # or ONGOING? TODO -- or is this how we signal "ongoing"?
 				]
 			),
 			# ON CAUSALLY
-			("and", False, False, .4, False, [
+			("and", False, False, .99, False, [
 					("leaf", "prev_fluent", "waterstream_off", False, False, False),
 					("leaf", "event", "benddown_START", False, 1, False),
 				]
@@ -149,13 +149,13 @@ abbreviated_summerdata_grammar = [
 	# WATER STREAM OFF (waterstream_on_OFF)
 	("root", "fluent", "waterstream_off", .6, False, [
 			# OFF INERTIALLY
-			("and", False, False, .6, False, [
+			("and", False, False, .01, False, [
 					("leaf", "prev_fluent", "waterstream_off", False, False, False),
 					("leaf", "nonevent", "benddown_START", False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
-			("and", False, False, .4, False, [
+			("and", False, False, .99, False, [
 					("leaf", "prev_fluent", "waterstream_on", False, False, False),
 					("leaf", "event", "benddown_END", False, 1, False)
 				]
@@ -163,11 +163,11 @@ abbreviated_summerdata_grammar = [
 		]
 	),
 	# DOOR OPEN
-	("root", "fluent", "door_on", .5, False, [
+	("root", "fluent", "door_on", .4, False, [
 			# inertially ON
 			("and", False, False, .34, False, [
 					("leaf", "prev_fluent", "door_on", False, False, False),
-					("leaf", "nonevent", "standing_END", False, 10, False),
+					("leaf", "nonevent", "standing_END", False, 1, False),
 				]
 			),
 			# causally ON -- open from this side
@@ -185,11 +185,11 @@ abbreviated_summerdata_grammar = [
 		]
 	),
 	# DOOR CLOSED (DOOR OPEN OFF) 
-	("root", "fluent", "door_off", .5, False, [
+	("root", "fluent", "door_off", .6, False, [
 			# inertially OFF
 			("and", False, False, .34, False, [
 					("leaf", "prev_fluent", "door_off", False, False, False),
-					("leaf", "nonevent", "standing_START", False, 10, False), # TODO: make ONGOING nonaction
+					("leaf", "nonevent", "standing_START", False, 1, False), # TODO: make ONGOING nonaction
 				]
 			),
 			# causally OFF -- close and go through
@@ -207,15 +207,15 @@ abbreviated_summerdata_grammar = [
 		]
 	),
 	# PHONE ACTIVE
-	("root", "fluent", "PHONE_ACTIVE_on", .4, False, [
+	("root", "fluent", "PHONE_ACTIVE_on", .3, False, [
 			# ON INERTIALLY
-			("and", False, False, .6, False, [
+			("and", False, False, .01, False, [
 					("leaf", "prev_fluent", "PHONE_ACTIVE_on", False, False, False),
 					("leaf", "nonevent", "makecall_END", False, 1, False),
 				]
 			),
 			# ON CAUSALLY
-			("and", False, False, .4, False, [
+			("and", False, False, .99, False, [
 					("leaf", "prev_fluent", "PHONE_ACTIVE_off", False, False, False),
 					("leaf", "event", "makecall_START", False, 1, False),
 				]
@@ -223,15 +223,15 @@ abbreviated_summerdata_grammar = [
 		]
 	),
 	# PHONE STANDBY (PHONE_ACTIVE_OFF)
-	("root", "fluent", "PHONE_ACTIVE_off", .6, False, [
+	("root", "fluent", "PHONE_ACTIVE_off", .7, False, [
 			# OFF INERTIALLY
-			("and", False, False, .6, False, [
+			("and", False, False, .01, False, [
 					("leaf", "prev_fluent", "PHONE_ACTIVE_off", False, False, False),
 					("leaf", "nonevent", "makecall_START", False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
-			("and", False, False, .4, False, [
+			("and", False, False, .99, False, [
 					("leaf", "prev_fluent", "PHONE_ACTIVE_on", False, False, False),
 					("leaf", "event", "makecall_END", False, 1, False)
 				]
@@ -243,13 +243,13 @@ abbreviated_summerdata_grammar = [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "light_on", False, False, False),
-					("leaf", "nonevent", "pressbutton_START",  False, 10, False),
+					("leaf", "nonevent", "pressbutton_START",  False, 1, False),
 				]
 			),
 			# ON CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "light_off", False, False, False),
-					("leaf", "event", "pressbutton_START",  False, 30, False),
+					("leaf", "event", "pressbutton_START",  False, 10, False),
 				]
 			)
 		]
@@ -259,13 +259,13 @@ abbreviated_summerdata_grammar = [
 			# ON INERTIALLY
 			("and", False, False, .6, False, [
 					("leaf", "prev_fluent", "light_off", False, False, False),
-					("leaf", "nonevent", "pressbutton_START",  False, 10, False),
+					("leaf", "nonevent", "pressbutton_START",  False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
 			("and", False, False, .4, False, [
 					("leaf", "prev_fluent", "light_on", False, False, False),
-					("leaf", "event", "pressbutton_START",  False, 30, False),
+					("leaf", "event", "pressbutton_START",  False, 10, False),
 				]
 			)
 		]
@@ -273,13 +273,13 @@ abbreviated_summerdata_grammar = [
 	# TRASH MORE
 	("root", "fluent", "trash_MORE_on", .4, False, [
 			# ON CAUSALLY (NEVER ON INERTIALLY)
-			("and", False, False, False, False, [
+			("and", False, False, .01, False, [
 					("leaf", "prev_fluent", "trash_MORE_on", False, False, False),
 					("leaf", "event", "throwtrash_END", False, 1, False),
 				]
 			),
 			# ON CAUSALLY
-			("and", False, False, False, False, [
+			("and", False, False, .99, False, [
 					("leaf", "prev_fluent", "trash_MORE_off", False, False, False),
 					("leaf", "event", "throwtrash_END", False, 1, False)
 				]
@@ -289,13 +289,13 @@ abbreviated_summerdata_grammar = [
 	# TRASH MORE OFF (STAYS)
 	("root", "fluent", "trash_MORE_off", .6, False, [
 			# OFF INERTIALLY
-			("and", False, False, False, False, [
+			("and", False, False, .01, False, [
 					("leaf", "prev_fluent", "trash_MORE_off", False, False, False),
 					("leaf", "nonevent", "throwtrash_END", False, 1, False),
 				]
 			),
 			# OFF CAUSALLY
-			("and", False, False, False, False, [
+			("and", False, False, .99, False, [
 					("leaf", "prev_fluent", "trash_MORE_on", False, False, False),
 					("leaf", "nonevent", "throwtrash_END", False, 1, False),
 				]
