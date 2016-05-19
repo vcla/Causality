@@ -350,8 +350,9 @@ def has_prev_symbol(node, symbol):
 	return False
 
 # get lowest "energy" out of list of dicts {'energy':,'frame':}
-def get_best_energy_event(events, used=set()):
-	filtered = [event for event in events if event['frame'] not in used]
+def get_best_energy_event(events, used=set(), newerthan=0):
+	newerthan = 0
+	filtered = [event for event in events if event['frame'] not in used and event['frame'] > newerthan]
 	foo = sorted(filtered, key = lambda(k): k['energy'])
 
 	if len(foo) == 0:
@@ -364,7 +365,7 @@ def get_best_energy_event(events, used=set()):
 	return retval
 
 debug_calculate_energy = False
-def calculate_energy(node, energies, actions_used = None, is_flip = False):
+def calculate_energy(node, energies, actions_used = None, is_flip = False, frame=-1, event_timeouts=dict()):
 	fluent_energies = energies[0]
 	event_energies = energies[1]
 	root = False
@@ -436,7 +437,8 @@ def calculate_energy(node, energies, actions_used = None, is_flip = False):
 				print("+ {:4.4} from {}fluent {} [flip {}; status {}]".format(tmp_energy,prev,symbol,flip_string,status))
 		elif symbol_type in ("event",):
 			frames_used = actions_used[symbol] if actions_used and symbol in actions_used else set()
-			tmp_energy_event = get_best_energy_event(event_energies[symbol], frames_used)
+			newerthan=(frame - event_timeouts[symbol])
+			tmp_energy_event = get_best_energy_event(event_energies[symbol], frames_used, newerthan = newerthan)
 			tmp_energy = tmp_energy_event['energy']
 			if debug_calculate_energy:
 				# throwing in float converters because int-like zeros got in?
@@ -444,7 +446,10 @@ def calculate_energy(node, energies, actions_used = None, is_flip = False):
 			node_energy += tmp_energy
 		elif symbol_type in ("nonevent",):
 			frames_used = actions_used[symbol] if actions_used and symbol in actions_used else set()
-			tmp_energy_event = get_best_energy_event(event_energies[symbol], frames_used)
+			if not symbol in event_timeouts:
+				raise Exception("{} not found in {}".format(symbol,event_timeouts))
+			newerthan=(frame - event_timeouts[symbol])
+			tmp_energy_event = get_best_energy_event(event_energies[symbol], frames_used, newerthan=newerthan)
 			tmp_energy = opposite_energy(tmp_energy_event['energy'])
 			if debug_calculate_energy:
 				print("+ {:4.4} from nonevent {} [{}]".format(float(tmp_energy),symbol,tmp_energy_event))
@@ -465,13 +470,13 @@ def calculate_energy(node, energies, actions_used = None, is_flip = False):
 		if not average_ands or node_type in ("or","root",):
 			# "multiplies" child probabilities on "or" nodes (root nodes are always or nodes)
 			for child in node["children"]:
-				child_energy = calculate_energy(child, energies, actions_used, is_flip)
+				child_energy = calculate_energy(child, energies, actions_used, is_flip,frame,event_timeouts)
 				node_energy += child_energy
 		else:
 			# "averages" over the "and" nodes
 			child_energy = 0
 			for child in node["children"]:
-				child_energy += calculate_energy(child, energies, actions_used, is_flip)
+				child_energy += calculate_energy(child, energies, actions_used, is_flip,frame,event_timeouts)
 			node_energy += 2. * (child_energy / len(node["children"])) # scale back to 2 nodes
 	if debug_calculate_energy:
 		print("TOTAL: {:4.4}".format(node_energy))
@@ -592,7 +597,7 @@ def clear_outdated_events(event_hash, event_timeouts, frame):
 
 # at all times there is a list of "currently active" parses, which includes a chain back to the beginning
 # of events of the "best choice of transition" from each event (action, fluent, or timeout) to each previous
-def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions, source):
+def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions, source, event_timeouts):
 	# we have a winner! let's show them what they've won, bob!
 	global debug_calculate_energy
 	#debug_calculate_energy = True
@@ -604,8 +609,8 @@ def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, compl
 	keys = get_fluent_and_event_keys_we_care_about((active_parse_tree,))
 	# WARNING: if we have two event types in the same parse, we can wind up adding the same parse multiple times.
 	# TODO: make sure the "if not found" solution below doesn't break anything else when it solves the above
-	for event_key in keys["events"]: 
-		event = get_best_energy_event(event_hash[event_key]['energies'])
+	for event_key in keys["events"]:
+		event = get_best_energy_event(event_hash[event_key]['energies'],newerthan=(frame - event_timeouts[event_key]))
 		agent = event["agent"]
 		if agent:
 			agents_responsible.append(agent,)
@@ -696,7 +701,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 			parse_ids_completed.append(parse_id,)
 			parse_symbols_completed.append(symbol,)
 			effective_frames[symbol] = effective_frame
-			complete_parse_tree(active_parse, fluent_hash, event_hash, effective_frame, completions, 'timeout')
+			complete_parse_tree(active_parse, fluent_hash, event_hash, effective_frame, completions, 'timeout', event_timeouts)
 	for symbol in parse_symbols_completed:
 		anti_symbol = invert_name(symbol)
 		possible_trees = fluent_hash[symbol]['trees']
@@ -714,7 +719,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 						# id multiple times here
 						# raise Exception("TODO, EH??")
 						parse_ids_completed.append(other_parse['id'])
-						complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frames[symbol], completions, 'timeout alt')
+						complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frames[symbol], completions, 'timeout alt', event_timeouts)
 	clear_outdated_events(event_hash, event_timeouts, frame)
 
 def process_events_and_fluents(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy, suppress_output = False, handle_overlapping_events = False, insert_empty_fluents=True):
@@ -812,7 +817,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	pp = pprint.PrettyPrinter(depth=6)
 	# "complete" the initial parses, which is to say "make the energies for all of our initial state possibilities"
 	for parse in parse_array:
-		complete_parse_tree(parse, fluent_hash, event_hash, 0, completions, 'initial')
+		complete_parse_tree(parse, fluent_hash, event_hash, 0, completions, 'initial', event_timeouts)
 	if not suppress_output:
 		print("PARSE_ARRAY")
 		#pp.pprint(parse_array)
@@ -826,7 +831,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 				for parse in completion:
 					# TODO: this shouldn't be necessary, but... let's follow it through...
 					# TODO: they are ... coming out right I think. and keeping it from crashing...
-					parse['energy'] = calculate_energy(parse['parse'], get_energies(fluent_hash, event_hash))
+					parse['energy'] = calculate_energy(parse['parse'], get_energies(fluent_hash, event_hash),frame=frame,event_timeouts=event_timeouts)
 					print("\t{} [id {}]".format(parse['energy'],parse['parse']['id']))
 		hr()
 		#pp.pprint("----")
@@ -993,7 +998,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 					active_parse_tree = active_parse_trees[key]
 					if active_parse_tree["symbol"] in (fluent_on_name, fluent_off_name):
 						active_parse_trees.pop(key)
-						complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions, 'fluent_changed')
+						complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions, 'fluent_changed', event_timeouts)
 					elif kFilterNonEventTriggeredParseTimeouts:
 						# TODO: this is a bug!  this will kill all but the first type of fluent
 						# if we want to remove the case of parses timing out when they never
@@ -1056,7 +1061,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 							energies = events_and_fluents_at_frame[frame]
 							debug_calculate_energy = True
 							print("ENERGIES: {}".format(energies))
-							calculate_energy(node['parse'], energies)
+							calculate_energy(node['parse'], energies,frame=frame,event_timeouts=event_timeouts)
 							debug_calculate_energy = False
 					# go through each chain and find the lowest energy + transition energy for this node
 					best_energy = -1 # not a possible energy
@@ -1070,7 +1075,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						if super_debug_energies:
 							#debug_calculate_energy = frame == 5
 							debug_calculate_energy = True
-						node['energy'] = calculate_energy(node['parse'], energies, prev_actions_used)
+						node['energy'] = calculate_energy(node['parse'], energies, prev_actions_used,frame=frame,event_timeouts=event_timeouts)
 						debug_calculate_energy = False
 						# if this pairing is possible, see if it's the best pairing so far
 						# TODO: this function will be changed to get an energy-of-transition
@@ -1118,7 +1123,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 							energies = events_and_fluents_at_frame[frame]
 							events_used = get_energies_used(get_actions_used(node),energies[1])
 							node['my_actions_used'] = node['actions_used'] = events_used
-							node['energy'] = calculate_energy(node['parse'], energies, node['actions_used'])
+							node['energy'] = calculate_energy(node['parse'], energies, node['actions_used'],frame=frame,event_timeouts=event_timeouts)
 							#print("ASSIGNING INITIAL ACTIONS USED: {}".format(node['actions_used']))
 							next_chains.append([node,])
 							next_chain_energies.append(node['energy'])
