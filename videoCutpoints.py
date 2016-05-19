@@ -1,7 +1,7 @@
 kHumanAnnotationClippoints = "results/CVPR2012_humanTestAnnotation.txt"
 cutpoints = dict()
 import re
-with open(kHumanAnnotationClippoints, 'ra') as file:
+with open(kHumanAnnotationClippoints, 'r') as file:
 	clip_frames_regexp = re.compile(r"Frame: (\d+).*End: (\d+)")
 	newlines = (line.rstrip() for line in file)
 	nextexample = dict()
