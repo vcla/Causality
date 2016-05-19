@@ -549,7 +549,7 @@ class NoneventTimeouts(unittest.TestCase):
 			print(xml_string)
 
 	def testFluentNonEvent(self):
-		assert 0
+		assert "WHAT IS THIS EVEN" == "I DON'T KNOW"
 
 ######################## NEW TEST CLASS: TWO ACTIONS, FIRST GETS LOST
 # the ideal result:  action 
@@ -723,10 +723,8 @@ class MultipleTimeoutsLongerTimeoutWins(unittest.TestCase):
 
 	def testFluentChangeAt600(self):
 		screen_600 = self.root.findall("./fluent_changes/fluent_change[@frame='600']")
-		if (len(screen_600) > 0):
-			assert screen_600[0].attrib['new_value'] == 'off', "should have decided screen changed to off once; was: {}".format(screen_600[0].attrib['new_value'])
-		else:
-			assert 0, "should have decided screen changed to off once; didn't even make it to 600"
+		assert len(screen_600) > 0, "should have decided screen changed to off once; didn't even make it to 600"
+		assert screen_600[0].attrib['new_value'] == 'off', "should have decided screen changed to off once; was: {}".format(screen_600[0].attrib['new_value'])
 
 	def testTooManyFluentChanges(self):
 		screen_changes = xml_stuff.getFluentChangesForFluentBetweenFrames(self.root, 'screen', 0, 1000)
@@ -808,7 +806,7 @@ class SummerdataDoor1TestCases(unittest.TestCase):
 
 	def testActionJustRight(self):
 		action_occurrences = xml_stuff.queryXMLForActionBetweenFrames(self.causal_xml,"standing_START",295,297)
-		assert (action_occurrences), "should have had action at 295; n times action occurred: {}".format(action_occurrences)
+		assert (action_occurrences), "should have had action at 296; n times action occurred: {}".format(action_occurrences)
 
 # TODO: test "nonevent" does what i really want
 # TODO: make sure not averaging to calculate mismatched number of nodes -- need the probabilities to appropriately compensate for that
