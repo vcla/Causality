@@ -151,6 +151,8 @@ def doit():
 	overall_hitrates = dict()
 	## for each file in our csvs directory, find the smallest "human" distance for each "computer" vector
 	for filename in os.listdir (kCSVDir):
+		if "conflicted" in filename:
+			continue
 		if args.examples_only:
 			found = False
 			for example in args.examples_only:
