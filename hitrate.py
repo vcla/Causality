@@ -103,12 +103,13 @@ def emboldenWinningLine(fluentResult, winningValue):
 
 def printLaTeXSummary(dictToPrint, headerLine):
 	#print dictToPrint
-	causalLine = "Causal" #"Causal Reasoning"
-	detectionsLine = "Detection" #"Bottom-Up Detection"
-	randomLine = "Noise" #"Random Selection"
+	causalLine = "& Causal" #"Causal Reasoning"
+	detectionsLine = "& Detection" #"Bottom-Up Detection"
+	randomLine = "& Noise" #"Random Selection"
 	#headerLine = "Object"
 	#tableTransposed = "Object & Detection & Causal \\\\ \n \\midrule \n"
 	if headerLine == "Action":
+		headerLine = "\\multirow{3}{*}{\\rotatebox{90}{Action}} &"
 		dictToPrint["thirst"] = dictToPrint["cup"]
 		dictToPrint["cup"] = {}
 	for singleFluent in dictToPrint:
@@ -382,12 +383,10 @@ def doit():
 
 	if kLaTeXSummary and not kDontPrint:
 		import datetime
-		print "------ ACTION TABLE ------"
-		print "% Generated: {}".format(datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S'))
 		printLaTeXSummary(actionSummary, "Action")
-		print "------ FLUENT TABLE -------"
+		print "\\midrule"
+		printLaTeXSummary(fluentSummary, "\\multirow{3}{*}{\\rotatebox{90}{Fluent}} &")
 		print "% Generated: {}".format(datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S'))
-		printLaTeXSummary(fluentSummary, "Fluent")
 
 	if kDebugOn and not kDontPrint:
 		pp.pprint(exceptions)
