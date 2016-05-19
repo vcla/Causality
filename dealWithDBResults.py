@@ -380,6 +380,7 @@ if __name__ == '__main__':
 	group.add_argument('-g','--grep', action='store', dest='examples_grep', required=False, help='class of examples to include', default=[])
 	parser.add_argument("-s","--simplify", action="store_true", required=False, help="simplify the summerdata grammar to only include fluents that start with the example name[s]")
 	parser.add_argument('-i','--ignoreoverlaps', action='store_true', required=False, help='skip the "without overlaps" code')
+	parser.add_argument('-a','--actionfolder', action='store', default=kActionDetections, required=False, help='specify the action folder to run against')
 	parser.add_argument('--debug', action='store_true', required=False, help='Spit out a lot more context information during processing')
 	parser.add_argument('--database', choices=["mysql","sqlite"],default = "sqlite")
 	# parser.add_argument("--dry-run",required=False,action="store_true") #TODO: would be nie
@@ -400,13 +401,13 @@ if __name__ == '__main__':
 			pymysql.install_as_MySQLdb()
 			class MySQLdb:
 				ProgrammingError = pymysql.MySQLError
-	examples = getExamples(kActionDetections,exclude=args.examples_exclude,require=args.examples_only, grep = args.examples_grep, mode=args.mode)
+	examples = getExamples(args.actionfolder,exclude=args.examples_exclude,require=args.examples_only, grep = args.examples_grep, mode=args.mode)
 	if globalDryRun:
 		conn = None
 	else:
 		conn = getDB(connType)
 	if args.mode in ("upload","upanddown",):
-		processAndUploadExamples(kActionDetections,examples,conn,args.simplify)
+		processAndUploadExamples(args.actionfolder,examples,conn,args.simplify)
 	if args.mode in ("download","upanddown"):
 		downloadExamples(examples,connType,conn)
 	if conn:
