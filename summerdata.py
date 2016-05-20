@@ -148,8 +148,8 @@ actionPairings = {
 
 # for "file name"-level fluents, what other fluents are important to consider?
 fluent_extensions = {
-	"water": ["thirst","cup",], # thirst_on, thirst_off
-	"waterstream": ["thirst","cup",], # thirst_on, thirst_off
+	"water": ["thirst","cup","drink",], # thirst_on, thirst_off
+	"waterstream": ["thirst","cup","drink",], # thirst_on, thirst_off
 	"phone": ["PHONE_ACTIVE",],
 }
 
