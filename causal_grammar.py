@@ -351,15 +351,13 @@ def has_prev_symbol(node, symbol):
 
 # get lowest "energy" out of list of dicts {'energy':,'frame':}
 def get_best_energy_event(events, used=set(), newerthan=0):
-	newerthan = 0
 	filtered = [event for event in events if event['frame'] not in used and event['frame'] > newerthan]
 	foo = sorted(filtered, key = lambda(k): k['energy'])
-
 	if len(foo) == 0:
 		retval = {'energy': kZeroProbabilityEnergy, 'frame': -1, 'agent': None }
 	else:
 		retval = foo[0]
-	#print("Getting best energy from {} excepting {}\n->{}".format(events, used, retval))
+	#print("Getting best energy from {} excepting {}\n->{} Newerthan {}".format(events, used, retval, newerthan))
 	#print("\tFiltered: {}".format(filtered))
 	#print("\tSorted: {}".format(foo))
 	return retval
