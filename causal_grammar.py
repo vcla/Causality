@@ -913,19 +913,28 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		result = _without_overlaps(fluent_parses, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
 		results_for_xml_output.append(copy.deepcopy(result))
 	try:
+		#TODO TODO TODO
+		#winner-takes-all per overlaps based on the sorting of the first fluent's score...
+		#doesn't entirely make sense in retrospect
 		if len(results_for_xml_output[0]) > 0:
-			results_for_xml_output = sorted(results_for_xml_output, key = lambda(k): (k[0][0][1] / len(k[0][0][0])))
+				results_for_xml_output = sorted(results_for_xml_output, key = lambda(k): k[0][0][2])
+		# this should be the better answer, sorting each fluent chain instead of winner-takes all....
+		"""
+		columns = len(results_for_xml_output[0])
+		for column in range(0,columns):
+			column_sorted = sorted([result[column] for result in results_for_xml_output], key = lambda(k): (k[0][2]))
+			for row in range(0,len(column_sorted)):
+				results_for_xml_output[row][column] = column_sorted[row]
+		"""
 	except IndexError as ie:
 		print("INDEX OUT OF RANGE AGAINST {}".format(results_for_xml_output))
 		raise ie
-	if not suppress_output:
-		print("RESULTS_FOR_XML_OUTPUT (sorted):")
 	doc = build_xml_output_for_chain(results_for_xml_output[0],parse_array,suppress_output) # for lowest energy chain
+	bests = list()
 	if not suppress_output:
-		for result in results_for_xml_output:
-			print result
 		print("BEST RESULT ::")
-		print(results_for_xml_output[0])
+		import pprint as pp
+		pp.pprint(results_for_xml_output[0])
 		print("BEST RESULT as XML::")
 		print("{}".format(minidom.parseString(ET.tostring(doc,method='xml',encoding='utf-8')).toprettyxml(encoding="utf-8",indent="\t")))
 		print "----------------------------------------------------"
@@ -1147,9 +1156,10 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 				for item in chain:
 					items.append((item['frame'],item['parse']['id'],item['my_actions_used']))
 				#print([items,energy])
-				chain_results.append([items,float("{:4.3f}".format(energy))])
+				# tracking total energy as well as "average" energy to normalize for chain length
+				chain_results.append([items,float("{:4.3f}".format(energy)),float("{:4.3f}".format(energy/len(items)))])
 			# print('\n'.join(['\t'.join(l) for l in chain_results]))
-			chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
+			chain_results = sorted(chain_results,key=lambda(k): k[2])[:20]
 			results_for_xml_output.append(chain_results[:1])
 			if not suppress_output:
 				print('\n'.join(map(str,chain_results)))
@@ -1190,9 +1200,9 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 					items.append((item['frame'],item['parse']['id']))
 					energy += item['energy']
 				#print([items,energy])
-				chain_results.append([items,float("{:4.3f}".format(energy))])
+				chain_results.append([items,float("{:4.3f}".format(energy)),float("{:4.3f}".format(energy/len(items)))])
 			# print('\n'.join(['\t'.join(l) for l in chain_results]))
-			chain_results = sorted(chain_results,key=lambda(k): k[1])[:20]
+			chain_results = sorted(chain_results,key=lambda(k): k[2])[:20]
 			results_for_xml_output.append(chain_results[:1])
 			if not suppress_output:
 				print('\n'.join(map(str,chain_results)))
@@ -1219,7 +1229,8 @@ def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 			if not suppress_output:
 				#print("{}".format(frame_number))
 				#print("{}".format(parse['symbol']))
-				print("{}".format(parse))
+				#print("{}".format(parse))
+				pass
 			fluent, fluent_value = parse['symbol'].rsplit("_",1)
 			fluent_attributes = {
 				"fluent": fluent,
