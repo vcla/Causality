@@ -1,7 +1,7 @@
 """
 causal grammar parser and helper functions
 """
-# TODO: filter out "competing" parse trees below thresh
+# BACKGLOG: filter out "competing" parse trees below thresh? when is this from?
 
 import itertools
 import math # for log, etc
@@ -54,7 +54,7 @@ kNonActionPenaltyEnergy = 0. # TODO: need to validate; kind of matches a penalty
 kFluentThresholdOnEnergy = 0.6892 # 49.7997769
 kFluentThresholdOffEnergy = 0.6972 # 50.1977490468
 
-kReportingThresholdEnergy = 0.5 # TODO: may want to tune
+kReportingThresholdEnergy = 0.5 # may want to tune
 kDefaultEventTimeout = 10 # shouldn't need to tune because this should be tuned in grammar
 kFilterNonEventTriggeredParseTimeouts = False # what the uber-long variable name implies
 kDebugEnergies = False # if true, print out fluent current/prev and event energies when completing a parse tree
@@ -69,7 +69,7 @@ def get_simplified_forest_for_example(forest, example):
 	fluents = splits[::2]
 	if len(splits) % 2:
 		fluents = fluents[:-1]
-	#TODO: pulling in "fluent_extensions" is a hack needed for summerdata, we should figure out how to generalize or remove.... (water/waterstream root nodes specified at the "file name" level also want their "thirst_*" and "cup_*" fluents to be pulled in, don't oversimplify!)
+	#pulling in "fluent_extensions" is a hack needed for summerdata, we should figure out how to generalize or remove.... (water/waterstream root nodes specified at the "file name" level also want their "thirst_*" and "cup_*" fluents to be pulled in, don't oversimplify!)
 	import summerdata
 	more_fluents = []
 	for fluent in fluents:
@@ -79,7 +79,7 @@ def get_simplified_forest_for_example(forest, example):
 	return get_simplified_forest_for_fluents(forest,fluents)
 
 def get_simplified_forest_for_fluents(forest, fluents):
-	#TODO: does not work with phone ~ PHONE_ACTIVE ... fluent = "PHONE_ACTIVE" ... need more universal munging or to make our data uniform throughout
+	#BACKLOG: does not work with phone ~ PHONE_ACTIVE ... fluent = "PHONE_ACTIVE" ... need more universal munging or to make our data uniform throughout
 	simplified_forest = []
 	for root in forest:
 		found = False
@@ -233,7 +233,7 @@ def import_csv(filename, fluents, events):
 def hr():
 	print("---------------------------------")
 
-# TODO: a given event is assumed to have the same timeout everywhere in the grammar
+# BACKLOG: a given event is assumed to have the same timeout everywhere in the grammar
 def get_event_timeouts(forest):
 	events = {}
 	for tree in forest:
@@ -318,7 +318,7 @@ def opposite_energy(energy):
 
 def probability_to_energy(probability):
 	if not type(probability) is int and not type(probability) is float:
-		# TODO: what we've got here is a lambda, and if we're asking this, we're asking wrong
+		# what we've got here is a lambda, and if we're asking this, we're asking wrong
 		raise Exception("NO, wait... '{}'".format(probability))
 		return kZeroProbabilityEnergy
 	if floatEqualTo(0.,probability):
@@ -459,7 +459,7 @@ def calculate_energy(node, energies, actions_used = None, is_flip = False, frame
 			# these are zero-probability events at this stage of evaluation
 			#tmp_energy = event_energies[symbol]["energy"]
 			#node_energy += probability_to_energy(1-energy_to_probability(tmp_energy))
-			pass # TODO should this be dealt with in some other way?
+			pass # BACKLOG: should this be dealt with in some other way?
 		else:
 			raise Exception("unhandled symbol_type '{}'".format(symbol_type))
 	if "children" in node:
@@ -482,7 +482,7 @@ def calculate_energy(node, energies, actions_used = None, is_flip = False, frame
 		print("TOTAL: {:4.4}".format(node_energy))
 	return node_energy
 
-# TODO: this makes some very naiive assumptions about jumping--that the "paired" fluent(s) will all be met, and (others?)
+# this makes some very naiive assumptions about jumping--that the "paired" fluent(s) will all be met, and (others?)
 def parse_can_jump_from(parse,prev_parse):
 	# "timer" -> "jump"
 	timer = get_symbol_matches_from_parse("timer",prev_parse)
@@ -608,7 +608,7 @@ def complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, compl
 	# if there are agents in the parse, print out who they were
 	keys = get_fluent_and_event_keys_we_care_about((active_parse_tree,))
 	# WARNING: if we have two event types in the same parse, we can wind up adding the same parse multiple times.
-	# TODO: make sure the "if not found" solution below doesn't break anything else when it solves the above
+	# BACKLOG: make sure the "if not found" solution below doesn't break anything else when it solves the above
 	for event_key in keys["events"]:
 		event = get_best_energy_event(event_hash[event_key]['energies'],newerthan=(frame - event_timeouts[event_key]))
 		agent = event["agent"]
@@ -712,12 +712,12 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 				other_parses = possible_tree['parses']
 				for other_parse in other_parses:
 					if other_parse['id'] not in parse_ids_completed:
-						# TODO: dealing with a bug somewhere that's adding duplicate
+						# BACKLOG: dealing with a bug somewhere that's adding duplicate
 						# copies of (some?) parses into fluent_hash[symbol][trees][parses]
 						# maybe the trees themselves are referenced multiple times and so
 						# added to? anyway, we can work around that by not doing the same
 						# id multiple times here
-						# raise Exception("TODO, EH??")
+						# raise Exception("ERROR 0x5410269 - EH??")
 						parse_ids_completed.append(other_parse['id'])
 						complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frames[symbol], completions, 'timeout alt', event_timeouts)
 	clear_outdated_events(event_hash, event_timeouts, frame)
@@ -725,7 +725,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 def process_events_and_fluents(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy, suppress_output = False, handle_overlapping_events = False, insert_empty_fluents=True):
 	clever = True # clever (modified viterbi algorithm) or brute force (all possible parses)
 	initial_conditions = False
-	#TODO: investigate where initial conditions are coming from, and terminate them....
+	#BACKLOG: investigate where initial conditions are coming from, and terminate them....
 	if "initial" in fluent_parses:
 		initial_conditions = fluent_parses["initial"]
 		del fluent_parses["initial"]
@@ -829,8 +829,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 			for frame, completion in frames.items():
 				print("{} [frame {}]".format(symbol_key, frame))
 				for parse in completion:
-					# TODO: this shouldn't be necessary, but... let's follow it through...
-					# TODO: they are ... coming out right I think. and keeping it from crashing...
+					# this shouldn't be necessary, but it /seems/ to be necessary at the moment to keep it from crashing....
 					parse['energy'] = calculate_energy(parse['parse'], get_energies(fluent_hash, event_hash),frame=frame,event_timeouts=event_timeouts)
 					print("\t{} [id {}]".format(parse['energy'],parse['parse']['id']))
 		hr()
@@ -844,7 +843,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 	# loop through the parses, getting the "next frame a change happens in"; if a change happens
 	# in both fluents and events at the same time, they will be handled sequentially,
 	# the fluent first
-	# TODO: create every combination that removes overlapping fluents and overlapping actions....
+	# BACKLOG: create every combination that removes overlapping fluents and overlapping actions....
 
 	#print "-=-=-=-=-=-=-= fluent parses -=-=-=-=-=-=-="
 	#print fluent_parses
@@ -913,7 +912,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		result = _without_overlaps(fluent_parses, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
 		results_for_xml_output.append(copy.deepcopy(result))
 	try:
-		#TODO TODO TODO
+		#TODO
 		#winner-takes-all per overlaps based on the sorting of the first fluent's score...
 		#doesn't entirely make sense in retrospect
 		if len(results_for_xml_output[0]) > 0:
@@ -952,8 +951,9 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 	#super_debug_energies = True
 	frame = -1
 	# UnboundLocalErorr: local variable 'frame' referenced before assignment in complete_outdated_parses call below.
-	# TODO: this should not happen because we only come in here when we have frames. What does that mean!?
-	# TODO: since we complete 'actions' when we look at fluents, if they happen in the same frame, we should probably be handling actions first
+	# BACKLOG
+	# this should not happen because we only come in here when we have frames. What does that mean!?
+	# since we complete 'actions' when we look at fluents, if they happen in the same frame, we should probably be handling actions first
 	events_and_fluents_at_frame = {} # track energies of events and fluents at every frame, because we're losing it...
 	events_and_fluents_at_frame[0] = get_energies(fluent_hash, event_hash)
 	while fluent_parse_index < len(fluent_parses) or action_parse_index < len(action_parses):
@@ -1009,10 +1009,10 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						active_parse_trees.pop(key)
 						complete_parse_tree(active_parse_tree, fluent_hash, event_hash, frame, completions, 'fluent_changed', event_timeouts)
 					elif kFilterNonEventTriggeredParseTimeouts:
-						# TODO: this is a bug!  this will kill all but the first type of fluent
+						# this is a bug!  this will kill all but the first type of fluent
 						# if we want to remove the case of parses timing out when they never
 						# actually had an event create them
-						raise Exception("@TODO: this is a bug! WUT!?")
+						raise Exception("@ERROR 0xa888321: this is a bug! WUT!?")
 						active_parse_trees.pop(key)
 			events_and_fluents_at_frame[frame] = get_energies(fluent_hash, event_hash)
 		else:
@@ -1087,7 +1087,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						node['energy'] = calculate_energy(node['parse'], energies, prev_actions_used,frame=frame,event_timeouts=event_timeouts)
 						debug_calculate_energy = False
 						# if this pairing is possible, see if it's the best pairing so far
-						# TODO: this function will be changed to get an energy-of-transition
+						# BACKLOG: this function will be changed to get an energy-of-transition
 						# which will no longer be "binary"
 						matches = False
 						if parse_is_consistent_with_requirement(node['parse'],prev_symbol):
@@ -1148,8 +1148,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 							raise Exception("NAW")
 				prev_chains = next_chains
 				prev_chain_energies = next_chain_energies
-			# and now we just wrap up our results... and print them out
-			# TODO: sort by energy... but first let's just see that we're completing ;)
+			# and now we just wrap up our results... 
 			chain_results = []
 			for chain, energy in izip(prev_chains, prev_chain_energies):
 				items = []
@@ -1159,8 +1158,10 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 				# tracking total energy as well as "average" energy to normalize for chain length
 				chain_results.append([items,float("{:4.3f}".format(energy)),float("{:4.3f}".format(energy/len(items)))])
 			# print('\n'.join(['\t'.join(l) for l in chain_results]))
+			# and sort our results
 			chain_results = sorted(chain_results,key=lambda(k): k[2])[:20]
 			results_for_xml_output.append(chain_results[:1])
+			# and maybe print them out
 			if not suppress_output:
 				print('\n'.join(map(str,chain_results)))
 				hr()
@@ -1216,7 +1217,7 @@ def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 	actions_el = ET.SubElement(temporal,"actions")
 	seen = [] # keeping track of whether we've seen a fluent and thus have included its initial state
 	for chainx in all_chains:
-		#print("CHAINX: {}".format(chainx)) # there is only one of these
+		#print("CHAINX: {}".format(chainx))
 		energy = chainx[0][1]
 		chain = chainx[0][0]
 		for instance in chain:
@@ -1246,14 +1247,11 @@ def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 			#print("{}".format(prev_value))
 			if prev_value[0] != fluent_value:
 				fluent_attributes['old_value'] = prev_value[0];
-			elif fluent in seen:
-				# if we've been seen and there's no change, don't include it
-				# TODO: is this okay even though it skips us getting actions from the "non"-parse?
-				continue
+			if prev_value[0] != fluent_value or fluent not in seen:
+				fluent_parse = ET.SubElement(fluent_changes, "fluent_change", fluent_attributes)
 			if not fluent in seen:
 				seen.append(fluent,)
-			fluent_parse = ET.SubElement(fluent_changes, "fluent_change", fluent_attributes)
-			#TODO: missing attributes id, object, time in fluent_change
+			# BACKGLOG: missing attributes id, object, time in fluent_change
 			# now let's see if there's an action associated with this fluent change and pop that in our bag
 			actions = get_actions_from_parse(parse)
 			if actions:
@@ -1269,7 +1267,7 @@ def build_xml_output_for_chain(all_chains,parse_array,suppress_output=False):
 					});
 	return temporal
 
-# TODO: this assumes we're only going to find one previous fluent value for the given fluent
+# WARNING: this assumes we're only going to find one previous fluent value for the given fluent
 def get_prev_fluent_value_from_parse(parse,fluent):
 	prev_fluents = []
 	# get prev fluent
