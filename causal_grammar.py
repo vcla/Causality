@@ -720,7 +720,7 @@ def complete_outdated_parses(active_parses, parse_array, fluent_hash, event_hash
 						complete_parse_tree(other_parse, fluent_hash, event_hash, effective_frames[symbol], completions, 'timeout alt', event_timeouts)
 	clear_outdated_events(event_hash, event_timeouts, frame)
 
-def process_events_and_fluents(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy, suppress_output = False, handle_overlapping_events = False, insert_empty_fluents=True):
+def process_events_and_fluents(causal_forest, fluent_parses, action_parses, fluent_threshold_on_energy, fluent_threshold_off_energy, reporting_threshold_energy, suppress_output = False, handle_overlapping_events = False, insert_empty_fluents=True, require_consistency=True):
 	clever = True # clever (modified viterbi algorithm) or brute force (all possible parses)
 	initial_conditions = False
 	#BACKLOG: investigate where initial conditions are coming from, and terminate them....
@@ -904,10 +904,10 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 			for fluent in parses_to_recombine:
 				for frame in parses_to_recombine[fluent]:
 					recombined_parses[frame][fluent] = fluent_parses[frame][fluent]
-			result = _without_overlaps(recombined_parses, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
+			result = _without_overlaps(recombined_parses, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever, require_consistency)
 			results_for_xml_output.append(copy.deepcopy(result))
 	if not handle_overlapping_events or not merge_combinations:
-		result = _without_overlaps(fluent_parses, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever)
+		result = _without_overlaps(fluent_parses, action_parses, parse_array, copy.deepcopy(event_hash), copy.deepcopy(fluent_hash), event_timeouts, reporting_threshold_energy, copy.deepcopy(completions), fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever, require_consistency)
 		results_for_xml_output.append(copy.deepcopy(result))
 	try:
 		#TODO
@@ -937,7 +937,7 @@ def process_events_and_fluents(causal_forest, fluent_parses, action_parses, flue
 		print "----------------------------------------------------"
 	return ET.tostring(doc,encoding="utf-8",method="xml")
 
-def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, fluent_hash, event_timeouts, reporting_threshold_energy, completions, fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever):
+def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, fluent_hash, event_timeouts, reporting_threshold_energy, completions, fluent_and_event_keys_we_care_about, parse_id_hash_by_fluent, parse_id_hash_by_event, fluent_threshold_on_energy, fluent_threshold_off_energy, suppress_output, clever, require_consistency):
 	results_for_xml_output = []
 	active_parse_trees = {}
 	fluent_parse_frames = sorted(fluent_parses)
@@ -1088,7 +1088,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						# BACKLOG: this function will be changed to get an energy-of-transition
 						# which will no longer be "binary"
 						matches = False
-						if parse_is_consistent_with_requirement(node['parse'],prev_symbol):
+						if not require_consistency or parse_is_consistent_with_requirement(node['parse'],prev_symbol):
 							matches = True
 							if best_energy == -1 or best_energy > prev_chain_energy:
 								best_energy = prev_chain_energy
@@ -1183,7 +1183,7 @@ def _without_overlaps(fluent_parses, action_parses, parse_array, event_hash, flu
 						for child in completion_data_sorted:
 							# if this pairing is possible, cross it on down
 							# pairing is considered "possible" if the parent's primary fluent status agrees with all relevant child fluent pre-requisites
-							if parse_is_consistent_with_requirement(child['parse'],last_parent_symbol):
+							if not requires_consistency or parse_is_consistent_with_requirement(child['parse'],last_parent_symbol):
 								chain = list(prev_chain)
 								chain.append(child)
 								children.append(chain)

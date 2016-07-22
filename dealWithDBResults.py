@@ -242,7 +242,7 @@ def uploadComputerResponseToDB(example, fluent_and_action_xml, source, connType,
 		conn.close()
 	return True
 
-def processAndUploadExamples(directory,examples,conn,simplify=False):
+def processAndUploadExamples(directory,examples,conn,simplify=False,require_consistency=True):
 	print("===========")
 	print("UPLOADING")
 	print("===========")
@@ -278,7 +278,7 @@ def processAndUploadExamples(directory,examples,conn,simplify=False):
 			import_failed.append(example)
 			continue
 		orig_xml = xml_stuff.munge_parses_to_xml(fluent_parses,temporal_parses)
-		fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, suppress_output = suppress_output, handle_overlapping_events = withoutoverlaps)
+		fluent_and_action_xml = causal_grammar.process_events_and_fluents(causal_grammar_summerdata.causal_forest, fluent_parses, temporal_parses, causal_grammar.kFluentThresholdOnEnergy, causal_grammar.kFluentThresholdOffEnergy, causal_grammar.kReportingThresholdEnergy, suppress_output = suppress_output, handle_overlapping_events = withoutoverlaps, require_consistency=require_consistency)
 		if debugQuery:
 			print("_____ ORIG FLUENT AND ACTION PARSES _____")
 			#print minidom.parseString(orig_xml).toprettyxml(indent="\t")
@@ -381,6 +381,7 @@ if __name__ == '__main__':
 	parser.add_argument("-s","--simplify", action="store_true", required=False, help="simplify the summerdata grammar to only include fluents that start with the example name[s]")
 	parser.add_argument('-i','--ignoreoverlaps', action='store_true', required=False, help='skip the "without overlaps" code')
 	parser.add_argument('-a','--actionfolder', action='store', default=kActionDetections, required=False, help='specify the action folder to run against')
+	parser.add_argument('-n','--inconsistentok', action='store_true', default=False, required=False, help='don\'t require consistency in parse building')
 	parser.add_argument('--debug', action='store_true', required=False, help='Spit out a lot more context information during processing')
 	parser.add_argument('--database', choices=["mysql","sqlite"],default = "sqlite")
 	# parser.add_argument("--dry-run",required=False,action="store_true") #TODO: would be nie
@@ -407,7 +408,7 @@ if __name__ == '__main__':
 	else:
 		conn = getDB(connType)
 	if args.mode in ("upload","upanddown",):
-		processAndUploadExamples(args.actionfolder,examples,conn,args.simplify)
+		processAndUploadExamples(args.actionfolder,examples,conn,args.simplify,not args.inconsistentok)
 	if args.mode in ("download","upanddown"):
 		downloadExamples(examples,connType,conn)
 	if conn:
