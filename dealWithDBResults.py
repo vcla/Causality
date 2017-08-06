@@ -19,6 +19,7 @@ DBPASS = "rC2xfLQFDMUZqJxf"
 TBLPFX = "cvpr2012_"
 kKnownObjects = ["screen","door","light","phone","ringer","trash","dispense","thirst","waterstream","cup","water"]
 kInsertionHash = "1234567890"
+kResultStorageFolder = "results/cvpr_db_results/"
 
 globalDryRun = None # commandline argument
 
@@ -49,7 +50,6 @@ def getColumns(conn, connType, tableName, exampleNameForDB):
 	return retval
 
 def getExampleFromDB(exampleName, connType, conn=False):
-	resultStorageFolder = "results/cvpr_db_results/"
 	exampleNameForDB = exampleName.replace("_","")
 	m = hashlib.md5(exampleNameForDB)
 	tableName = TBLPFX + m.hexdigest()
@@ -74,7 +74,7 @@ def getExampleFromDB(exampleName, connType, conn=False):
 	cursor = conn.cursor()
 	cursor.execute(sqlStatement)
 	if not globalDryRun:
-		csv_filename = resultStorageFolder + exampleName + ".csv"
+		csv_filename = kResultStorageFolder + exampleName + ".csv"
 		print(" as {}".format(csv_filename))
 		csv_writer = csv.writer(open(csv_filename, "wt"))
 		csv_writer.writerow([i[0] for i in cursor.description]) # write headers
@@ -326,6 +326,11 @@ def downloadExamples(examples,connType,conn=False):
 	print("===========")
 	print("DOWNLOADING")
 	print("===========")
+	try:
+		os.makedirs(kResultStorageFolder)
+	except OSError:
+		if not os.path.isdir(kResultStorageFolder):
+			raise
 	leaveconn = True
 	if not conn:
 		leaveconn = False
