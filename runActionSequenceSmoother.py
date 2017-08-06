@@ -1,4 +1,4 @@
-import parsingSummerActionAndFluentOutput
+import parsingSummerActionAndFluentOutput 
 import os
 
 actionResults = "CVPR2012_computer_test_action_detection_monday/"
