@@ -9,7 +9,12 @@ groupings = dict()
 from causal_grammar import TYPE_FLUENT, TYPE_ACTION, kNonActionPenaltyEnergy
 import causal_grammar
 import causal_grammar_summerdata # sets up causal_forest
-kActionDetections = 'results/CVPR2012_reverse_slidingwindow_10_action_detection_logspace'
+
+# for 'detections' aka 'origdata' per CVPR 2017 workshop
+#kActionDetections = 'results/CVPR2012_slidingwindow_50_150_action_detection_logspace_surroundsuppression'
+
+# for 'sequential causal' aka 'origdata' per CVPR 2017 workshop
+kActionDetections = 'results/CVPR2012_slidingwindow_50_150_action_detection_logspace_allowoverlaps'
 
 # These thresholds tuned for this fluent data because it's not "flipping between on and off", it's 
 # flipping "did transition closed to on" and "didn't transition closed to on"
