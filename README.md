@@ -1,8 +1,12 @@
 Causal And-Or Graph Inference Project
 =====================================
 
+The associated paper and data can be found at [http://amyfire.com/projects/inferringcausality/](http://amyfire.com/projects/inferringcausality/).
+
 Required Data
 -------------
+
+The required data can be obtained from the [project page](http://amyfire.com/projects/inferringcausality/).
 
 ### Source Data for Learning + Inference
 
