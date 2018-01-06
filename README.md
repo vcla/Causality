@@ -27,17 +27,19 @@ Workflow
 
 ### dealWithDBResults.py 
 
-requires `CVPR2012_humanTestAnnotation.txt`, `CVPR2012_fluent_result` and `CVPR2012_reverse_slidingwindow_action_detection_logspace/*`
+requires `CVPR2012_humanTestAnnotation.txt`, `CVPR2012_fluent_result` (fluent detections) and `CVPR2012_*/*` (one directory of action detections).
 
 #### Typical usage:
 
 `python dealWithDBResults.py (upload|download|upanddown)`
 
+You can specify a non-default action directory with the -a parameter. (the default will not run out of the box as it was essentially a symlink to two different directories, depending). Those directories are in the "minimal" dataset--see the minimal dataset readme for details.
+
 ##### upload: 
 
 Runs the following methods: 
 
-* `causal_grammar.import_summerdata` -- importing from `CVPR2012_reverse_slidingwindow_action_detection_logspace/*` - (python files)
+* `causal_grammar.import_summerdata` -- importing from `CVPR2012_reverse_slidingwindow_action_detection_logspace/*` by default, which was changed in the "minimal" dataset to two different choices--see the minimal dataset readme for details - (python files)
 * `munge_parses_to_xml(fluent_parses, temporal_parses)` --> `orig_xml` results
 * `causal_grammar.process_events_and_fluents` --> `fluent_and_action_xml` results
 * `orig_xml` results are inserted to db as 'origdata' and 'origsmrt'
